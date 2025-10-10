@@ -1,0 +1,29 @@
+<!-- TODO: Code refactor  -->
+<label for="{{labelforId}}">{{label}}</label>
+<input class="form-control"
+       spellcheck="false"
+       type="text"
+       id="{{labelforId}}"
+       [value]="city"
+       (change)="onValueChange($event)"
+       (blur)="onBlur($event)"
+       [disabled]="disabled"
+       [required]="required"
+       [attr.maxlength]="maxlength"
+       [placeholder]="placeholder"
+       autocomplete="off"/>
+
+ <!-- Error messages for component -->
+        <common-error-container
+      [displayError]="(controlDir && !disabled && ((controlDir.dirty || controlDir.touched) && !!controlDir.errors)) ??  false">
+      <div *ngIf="controlDir?.errors?.['required']">
+        {{_defaultErrMsg.required}}
+      </div>
+      <div *ngIf="controlDir?.errors?.['invalidChar']">
+        {{_defaultErrMsg.invalidChar}}
+      </div>
+      <div *ngIf="controlDir?.errors?.['maxlength']">
+        {{_defaultErrMsg.maxlength}}
+      </div>
+    </common-error-container>
+

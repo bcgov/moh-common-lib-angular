@@ -1,0 +1,16 @@
+
+<input #checkbox
+      type="checkbox"
+      class="input-lg form-check-input"
+      name="checkbox_{{objectId}}"
+      id="checkbox_{{objectId}}"
+      [ngModel]="data"
+      (ngModelChange)="setCheckboxVal($event);"
+      [disabled]="disabled"
+      [required]="required">
+<label for="checkbox_{{objectId}}" class="mb-2 pl-3 form-check-label">{{label}}</label>
+
+<common-error-container
+  [displayError]="(controlDir && !disabled && ((controlDir.touched || controlDir.dirty) && !!controlDir.errors)) ??  false">
+  <div *ngIf="controlDir?.errors?.['required']">{{_defaultErrMsg.required}}</div>
+</common-error-container>

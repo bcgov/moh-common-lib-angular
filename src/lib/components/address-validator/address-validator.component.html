@@ -1,0 +1,75 @@
+<!-- TODO: Code refactor -->
+<label for="address-validator_{{label}}" class='text-nowrap'>{{label}}
+  <span class="address-validator-status">
+    <ng-container *ngIf="isTypeaheadLoading; else statusContainer"> &mdash; Loading
+      <i class="fa fa-spinner fa-pulse fa-fw"></i>
+    </ng-container>
+  </span>
+
+  <ng-template #statusContainer>
+    <ng-template *ngIf="selectedAddress; then addressSelected; else error;"></ng-template>
+  </ng-template>
+</label>
+<!-- <input class="form-control"
+       type="text"
+       id="address-validator_{{label}}"
+       name="address-validator_{{label}}"
+       [(ngModel)]='search'
+       (ngModelChange)='setSearchValue($event)'
+       (keyup)='onKeyUp($event)'
+       [typeahead]="typeaheadList$"
+       [typeaheadIsFirstItemActive]="false"
+       [typeaheadSelectFirstItem]="false"
+       (typeaheadLoading)="onLoading($event)"
+       (typeaheadOnSelect)="onSelect($event)"
+       (typeaheadNoResults)="onNoResults($event)"
+       (blur)="onBlur($event)"
+       [attr.maxlength]='maxlength'
+       typeaheadOptionField='AddressComplete'
+       [typeaheadMinLength]="3"
+       autocomplete="off"
+       spellcheck="false"
+        /> -->
+  <input class="form-control"
+       type="text"
+       id="address-validator_{{label}}"
+       name="address-validator_{{label}}"
+       [(ngModel)]='search'
+       (ngModelChange)='setSearchValue($event)'
+       (keyup)='onKeyUp($event)'
+    
+      
+       
+       [attr.maxlength]='maxlength'
+       typeaheadOptionField='AddressComplete'
+     
+       autocomplete="off"
+       spellcheck="false"
+        />
+        <!-- Intentionally using 'nope' for autocomplete as it is invalid and forces false - https://developer.mozilla.org/en-US/docs/Web/Security/Securing_your_site/Turning_off_form_autocompletion -->
+  <common-error-container
+  [displayError]="(controlDir && !disabled && ((controlDir.dirty || controlDir.touched) && !!controlDir.errors)) ??  false">
+  <div *ngIf="controlDir?.errors?.['required']">
+    {{_defaultErrMsg.required}}
+  </div>
+  <div *ngIf="controlDir?.errors?.['invalidChar']">
+    {{_defaultErrMsg.invalidChar}}
+  </div>
+</common-error-container>
+
+<ng-template #addressSelected>
+    <span> &mdash; Selected
+        <i class="fa fa-check fa-fw text-success"></i>
+    </span>
+</ng-template>
+
+<ng-template #noResults>
+    <span *ngIf="search !== '' && hasNoResults"> &mdash; No Results</span>
+</ng-template>
+
+
+<ng-template #error>
+    <span *ngIf='hasError; else noResults'> &mdash; Error
+        <i class="fa fa-exclamation-triangle fa-fw text-danger"></i>
+    </span>
+</ng-template>

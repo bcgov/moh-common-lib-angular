@@ -1,0 +1,40 @@
+<label for="{{labelforId}}" class="control-label">{{label}}</label>
+
+<div *ngIf="useDropDownList; else NotDropDownList">
+  <ng-select [items]="provinceList"
+             [ngModel]="province"
+             (ngModelChange)="onValueChange($event)"
+             (blur)="onBlur($event)"
+             [required]="required"
+             [disabled]="disabled"
+             labelForId="{{labelforId}}"
+             bindValue="provinceCode"
+             bindLabel="description"
+             [clearable]="!required"
+             placeholder="{{ placeholder }}"></ng-select>
+</div>
+
+<!-- Error messages for component -->
+   <common-error-container
+  [displayError]="(controlDir && !disabled && ((controlDir.dirty || controlDir.touched) && !!controlDir.errors)) ??  false">
+  <div *ngIf="controlDir?.errors?.['required']">
+    {{_defaultErrMsg.required}}
+  </div>
+  <div *ngIf="controlDir?.errors?.['invalidChar']">
+    {{_defaultErrMsg.invalidChar}}
+  </div>
+</common-error-container>
+
+<ng-template #NotDropDownList>
+  <input class="form-control"
+          spellcheck="false"
+          type="text"
+          id="{{labelforId}}"
+          [value]="province"
+          (change)="onValueChange($event)"
+          (blur)="onBlur($event)"
+          [disabled]="disabled"
+          [attr.maxlength]="maxlength"
+          [placeholder]="placeholder"
+          autocomplete="off"/>
+</ng-template>
