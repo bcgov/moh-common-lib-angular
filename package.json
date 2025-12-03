@@ -10,7 +10,7 @@
     "lint": "ng lint",
     "prettier": "./node_modules/.bin/prettier --single-quote --write './src/**/*.{ts,js,css,json,scss,html}'",
     "precommit": "lint-staged",
-    "prepare": "husky"
+    "prepare": "husky && husky install"
   },
   "lint-staged": {
     "src/**/*.**.{ts,js,html,scss}": [
@@ -46,7 +46,7 @@
     "bootstrap": "^5.3.6",
     "date-fns": "^4.1.0",
     "eslint-config-prettier": "^10.1.8",
-    "husky": "^9.1.7",
+    "husky": "^8.0.0",
     "jasmine-core": "~5.6.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
