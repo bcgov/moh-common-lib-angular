@@ -47,6 +47,6 @@ export class ButtonComponent {
 
     // Emit click event to parent component
      onClick($event: Event) {
-     this.btnClick.emit($event);
+     this.btnClick.emit($event); 
   }
 }
