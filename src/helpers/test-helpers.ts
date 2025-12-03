@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ComponentFixture, tick, ComponentFixtureAutoDetect, TestBed } from '@angular/core/testing';
 import { Type, DebugElement } from '@angular/core';
 import { BrowserModule, By } from '@angular/platform-browser';

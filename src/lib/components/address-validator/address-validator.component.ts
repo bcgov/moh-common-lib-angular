@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @angular-eslint/no-output-native */
 import { Component, OnInit, Input, ChangeDetectorRef, Output, EventEmitter, Optional, Self } from '@angular/core';
 import { Subject, Observable, of, throwError } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, map, catchError } from 'rxjs/operators';

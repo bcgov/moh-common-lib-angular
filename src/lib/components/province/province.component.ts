@@ -1,7 +1,5 @@
 
 
-// TODO: Code refactor
-/* eslint-disable @angular-eslint/no-output-native */
 import { Component, Input, Output, EventEmitter, Optional, Self, OnInit } from '@angular/core';
 import { FormsModule, NgControl } from '@angular/forms';
 import { CANADA } from '../country/country.component';

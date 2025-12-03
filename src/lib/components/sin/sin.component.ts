@@ -1,5 +1,4 @@
-// TODO: Code refactor
-/* eslint-disable @angular-eslint/no-output-native */
+
 import { Component, EventEmitter, Input, Output, Optional, Self, OnInit} from '@angular/core';
 import { FormsModule, NgControl, ValidationErrors } from '@angular/forms';
 import { AbstractFormControl } from '../../models/abstract-form-control';

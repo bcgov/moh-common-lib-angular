@@ -1,7 +1,3 @@
-// TODO: code refactor
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-empty-function */
-
 import { forwardRef, Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { Person } from '../../models/person.model';
 import { Base } from '../../models/base';

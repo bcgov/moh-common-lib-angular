@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import {  ComponentFixture, TestBed } from '@angular/core/testing';
 import { PasswordComponent } from './password.component';
 import { FormsModule, NgForm } from '@angular/forms';

@@ -22,9 +22,7 @@ export class AccordionCommonComponent  {
   @Input() isOpen: boolean = false;
 
   public expandText: string =  '(click to expand)';
-  
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   constructor() { }
 
 

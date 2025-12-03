@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-empty-function */
 import { Component, Input, Output, EventEmitter, Optional, Self, OnInit, NgModule} from '@angular/core';
 import { Base } from '../../models/base';
 import { ControlValueAccessor, NgControl, FormsModule} from '@angular/forms';

@@ -1,7 +1,3 @@
-
-// TODO: code refactor
-/* eslint-disable @typescript-eslint/no-empty-function */
-
 import {
   ComponentFixture,
   ComponentFixtureAutoDetect,

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { TestBed } from '@angular/core/testing';
 import { PageStateService, PageList } from './page-state.service';
 import { Component } from '@angular/core';
@@ -12,7 +11,7 @@ import { Routes } from '@angular/router';
 })
 class RouteOneComponent {
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
+
   constructor() {}
 }
 
@@ -21,7 +20,6 @@ class RouteOneComponent {
 })
 class RouteTwoComponent {
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   constructor() {}
 }
 
@@ -30,7 +28,7 @@ class RouteTwoComponent {
 })
 class RouteThreeComponent {
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
+ 
   constructor() {}
 }
 

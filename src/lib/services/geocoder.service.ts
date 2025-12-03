@@ -1,5 +1,4 @@
 // Contains information licensed under the Open Government Licence  British Columbia.
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable } from '@angular/core';
 import { AbstractHttpService } from './abstract-api-service';
 import { HttpClient, HttpHeaders, HttpErrorResponse, HttpParams } from '@angular/common/http';

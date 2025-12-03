@@ -1,5 +1,4 @@
-//TODO: Code refactor 
-/* eslint-disable @angular-eslint/no-output-native */
+
 import { Component, EventEmitter, Input, Output, Optional, Self, OnInit, /*input*/} from '@angular/core';
 //import { NUMBER, SPACE } from '../../models/mask.constants';
 import { ControlValueAccessor, NgControl, ValidationErrors, FormsModule } from '@angular/forms';

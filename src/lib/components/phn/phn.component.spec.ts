@@ -1,5 +1,4 @@
 // TODO: code refactor
-/* eslint-disable @typescript-eslint/no-empty-function */
 import { ComponentFixture, ComponentFixtureAutoDetect, TestBed, fakeAsync } from '@angular/core/testing';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PhnComponent } from './phn.component';

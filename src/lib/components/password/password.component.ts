@@ -1,6 +1,3 @@
-// TODOD: Code refactor
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import { Component, OnInit, Input, Output, EventEmitter, HostListener, OnChanges, forwardRef } from '@angular/core';
 import { Base } from '../../models/base';
 import { ControlContainer, FormsModule, NgForm } from '@angular/forms';

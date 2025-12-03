@@ -1,6 +1,3 @@
-// TODO: Code refactor 
-/* eslint-disable @typescript-eslint/consistent-indexed-object-style */
-/* eslint-disable @angular-eslint/directive-selector */
 import { Directive } from '@angular/core';
 import { NG_VALIDATORS, Validator, AbstractControl, ValidatorFn, ValidationErrors } from '@angular/forms';
 

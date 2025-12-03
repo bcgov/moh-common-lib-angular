@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-empty-function */
+
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 

@@ -11,7 +11,6 @@ export class Base {
   /** An identifier for parents to keep track of components */
   public objectId: string = uuidv4();
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   constructor() {}
 }
 

@@ -1,5 +1,3 @@
-// TODO: Code refactor 
-/* eslint-disable @angular-eslint/no-output-native */
 import {
   Component,
   Input,
