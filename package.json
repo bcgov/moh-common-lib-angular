@@ -8,7 +8,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint",
-    "prettier": ".node_modules/.bin/prettier --write \"src/**/*.ts\" \"src/**/*.html\" \"src/**/*.scss\" \"projects/**/*.ts\" \"projects/**/*.html\" \"projects/**/*.scss\" \"*.json\"",
+    "prettier": "./node_modules/.bin/prettier --single-quote --write './src/**/*.{ts,js,css,json,scss,html}'",
     "precommit": "lint-staged"
   },
   "private": true,
@@ -27,7 +27,7 @@
   },
   "lint-staged": {
     "*.{ts,js,css,json}": [
-      ".node_modules/.bin/prettier --write",
+      "./node_modules/.bin/prettier --write",
       "git add"
     ]
   },
