@@ -1,6 +1,17 @@
 import { TestBed } from '@angular/core/testing';
 import { ButtonComponent } from './button.component';
 
+
+function createButtonComponent() {
+  const fixture = TestBed.createComponent(ButtonComponent);
+  const component = fixture.componentInstance;
+  const element = fixture.nativeElement;
+  const btnQuerySelector = fixture.debugElement.nativeElement.querySelector('button');
+
+  return { fixture, component, element, btnQuerySelector };
+}
+
+// Test Suite for Button Component
 describe('Button.Component', () => {
 
   beforeEach(async () => {
@@ -9,35 +20,35 @@ describe('Button.Component', () => {
     }).compileComponents();
   });
 
-    it('should create', () => {
-      const fixture = TestBed.createComponent(ButtonComponent);
-      const btn = fixture.componentInstance;
-      expect(btn).toBeTruthy();
+    // Test for component creation
+    it('Should create', () => {
+      const { component } = createButtonComponent();
+      expect(component).toBeTruthy();
     });
 
-    it(`Button label is displayed`, () => {
-      const fixture = TestBed.createComponent(ButtonComponent);
-      const element = fixture.nativeElement;
+    // Test for button label input
+     it(`Button label is displayed`, () => {
+      const { element } = createButtonComponent();
       element.label = 'Button';
       expect(element.label).toEqual('Button'); 
     });
 
-    it('Button is clicked', () => {
-      const fixture = TestBed.createComponent(ButtonComponent);
-      const btn = fixture.componentInstance;
-      spyOn(btn, 'onClick');
 
-      const button = fixture.debugElement.nativeElement.querySelector('button');
-      button.click();
-      expect(btn.onClick).toHaveBeenCalled();
+    // Test for button click event
+    it('Button is clicked', () => {
+      const { component, btnQuerySelector } = createButtonComponent();
+      spyOn(component, 'onClick');
+
+      btnQuerySelector.click();
+      expect(component.onClick).toHaveBeenCalled();
     });
-     
+
+    // Test for button disabled state
     it('Button is disabled', () => {
-      const fixture = TestBed.createComponent(ButtonComponent);
-      const btn = fixture.componentInstance;
-      btn.disabled = true;
-      fixture.detectChanges();
-      const button = fixture.debugElement.nativeElement.querySelector('button');
-      expect(button.disabled).toBe(true);
+     const {fixture, component, btnQuerySelector } = createButtonComponent();
+      component.disabled = true;
+      fixture.detectChanges();   
+      expect(btnQuerySelector.disabled).toBe(true);
     });
+
 });
