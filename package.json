@@ -1,5 +1,5 @@
 {
-  "name": "moh-common-styles-new",
+  "name": "moh-common-lib-angular",
   "version": "1.0.0",
   "scripts": {
     "ng": "ng",
@@ -9,15 +9,16 @@
     "test": "ng test",
     "lint": "ng lint",
     "prettier": "./node_modules/.bin/prettier --single-quote --write './src/**/*.{ts,js,css,json,scss,html}'",
-    "precommit": "lint-staged"
+    "precommit": "lint-staged",
+    "prepare": "husky"
   },
-  "lint-staged": {
-    "*.{ts,js,css,json}": [
-       "git add", 
-      "./node_modules/.bin/prettier --single-quote --write"
-      
-    ]
-  },
+ "lint-staged": {
+"src/**/*.{ts,js,html,scss}": [
+"prettier --write",
+"ng lint",
+"git add"
+]
+},
   "private": true,
   "dependencies": {
     "@angular/common": "^19.2.0",
@@ -32,7 +33,6 @@
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
   },
-
   "devDependencies": {
     "@angular-devkit/build-angular": "^19.2.11",
     "@angular-eslint/builder": "^19.4.0",
@@ -45,6 +45,7 @@
     "angular-eslint": "19.4.0",
     "bootstrap": "^5.3.6",
     "date-fns": "^4.1.0",
+    "eslint-config-prettier": "^10.1.8",
     "husky": "^9.1.7",
     "jasmine-core": "~5.6.0",
     "karma": "~6.4.0",
@@ -57,7 +58,7 @@
     "lint-staged": "^16.2.7",
     "ngx-bootstrap": "^5.5.0",
     "ngx-mask": "^19.0.7",
-    "prettier": "^3.7.4",
+    "prettier": "3.7.4",
     "typescript": "~5.7.2",
     "typescript-eslint": "8.32.0",
     "uuid": "^11.1.0",
