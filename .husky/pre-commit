@@ -1,2 +1,2 @@
-npx husky add .husky/pre-commit "npx lint-staged"
+npx husky init .husky/pre-commit "npx lint-staged"
 chmod u+x .husky/pre-commit

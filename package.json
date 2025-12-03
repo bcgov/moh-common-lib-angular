@@ -12,13 +12,13 @@
     "precommit": "lint-staged",
     "prepare": "husky"
   },
- "lint-staged": {
-"src/**/*.{ts,js,html,scss}": [
-"prettier --write",
-"ng lint",
-"git add"
-]
-},
+  "lint-staged": {
+    "src/**/*.**.{ts,js,html,scss}": [
+      "prettier --write",
+      "ng lint",
+      "git add"
+    ]
+  },
   "private": true,
   "dependencies": {
     "@angular/common": "^19.2.0",
