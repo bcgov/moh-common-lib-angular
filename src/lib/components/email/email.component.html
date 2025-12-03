@@ -1,0 +1,26 @@
+
+<label for="{{labelforId}}" class="control-label">{{label}}</label>
+<input type="text"
+       class="form-control"
+       id="{{labelforId}}"
+       [value]="email"
+       (change)="onValueChange( $event )"
+       (blur)="onBlur( $event )"
+       [disabled]="disabled"
+       [required]="required"
+       [attr.maxlength]="maxlength"
+       autocomplete="off" />
+<!-- Error messages for component -->
+   <common-error-container
+  [displayError]="(controlDir && !disabled && ((controlDir.dirty || controlDir.touched) && !!controlDir.errors)) ??  false">
+  <div *ngIf="controlDir?.errors?.['required']">
+    {{_defaultErrMsg.required}}
+  </div>
+  <div *ngIf="controlDir?.errors?.['invalidEmail']">
+    {{_defaultErrMsg.invalidEmail}}
+  </div>
+   <div *ngIf="controlDir?.errors?.['invalidChars']">
+    {{_defaultErrMsg.invalidChars}}
+  </div>
+</common-error-container>
+

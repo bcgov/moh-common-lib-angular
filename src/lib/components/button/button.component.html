@@ -1,0 +1,7 @@
+<button #button
+        type="button"
+        class="btn btn-{{buttonType}} {{classNames}}"
+        (click)="onClick($event)"
+        [disabled]="disabled">
+	<span>{{label}}</span>
+</button>

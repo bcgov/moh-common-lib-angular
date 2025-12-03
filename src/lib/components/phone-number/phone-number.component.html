@@ -1,0 +1,50 @@
+
+<label for="phone_{{objectId}}" class="control-label">{{label}}</label>
+<div *ngIf="displayMask; else NoMask">
+  <input class="form-control"
+          type="text"
+          name="phone_{{objectId}}"
+          id="phone_{{objectId}}"
+          [ngModel]="phoneNumber"
+          (ngModelChange)="setPhoneNumber($event)"
+          (blur)="onBlur($event)"
+          [placeholder]="placeholder"
+          [mask]="mask"
+          [prefix] = "allowInternational ? '+1 ' : ''"
+          [required]="required"
+          [disabled]="disabled"/>
+</div>
+
+<!-- Error messages for component   [textMask]="{mask: mask}  -->
+<!-- <common-error-container
+    [displayError]="!disabled && (controlDir?.touched || controlDir?.dirty) && controlDir?.errors">
+  <div *ngIf="controlDir?.errors?.required">
+    {{_defaultErrMsg.required}}
+  </div>
+  <div *ngIf="controlDir?.errors?.incompleteValue">
+    {{_defaultErrMsg.incompleteValue}}
+  </div>
+</common-error-container> -->
+   <common-error-container
+  [displayError]="(controlDir && !disabled && ((controlDir.dirty || controlDir.touched) && !!controlDir.errors)) ??  false">
+  <div *ngIf="controlDir?.errors?.['required']">
+    {{_defaultErrMsg.required}}
+  </div>
+  <div *ngIf="controlDir?.errors?.['incompleteValue']">
+    {{_defaultErrMsg.incompleteValue}}
+  </div>
+</common-error-container>
+
+
+<ng-template #NoMask>
+  <input class="form-control"
+          type="text"
+          name="phone_{{objectId}}"
+          id="phone_{{objectId}}"
+          [value]="phoneNumber"
+          (input)="setPhoneNumber($event)"
+          (blur)="onBlur($event)"
+          [required]="required"
+          [disabled]="disabled" />
+</ng-template>
+

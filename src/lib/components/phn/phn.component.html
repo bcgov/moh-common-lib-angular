@@ -1,0 +1,28 @@
+
+
+<label for="{{labelforId}}" class="control-label"> {{label}} </label>
+<input type="text" 
+       class="form-control"
+       id="{{labelforId}}"
+       [ngModel]="phn"
+       [placeholder]="placeholder"
+       [mask]="mask"
+       [disabled]="disabled"
+       [required]="required"
+       autocomplete="off"
+      />
+
+
+  <!-- Error messages for -->
+   <common-error-container
+  [displayError]="(controlDir && !disabled && ((controlDir.dirty || controlDir.touched) && !!controlDir.errors)) ??  false">
+  <div *ngIf="controlDir?.errors?.['required']">
+    {{_defaultErrMsg.required}}
+  </div>
+  <div *ngIf="controlDir?.errors?.['invalid']">
+    {{_defaultErrMsg.invalid}}
+  </div>
+   <div *ngIf="controlDir?.errors?.['duplicate']">
+    {{_defaultErrMsg.duplicate}}
+  </div>
+</common-error-container>
