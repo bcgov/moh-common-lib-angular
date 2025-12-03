@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "moh-common-styles-NEW": {
+    "moh-common-lib-angular": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {

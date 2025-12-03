@@ -14,16 +14,16 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it(`should have the 'moh-common-styles-NEW' title 1`, () => {
+  it(`should have the 'moh-common-lib-angular' title 1`, () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
-    expect(app.title).toEqual('moh-common-styles-NEW');
+    expect(app.title).toEqual('moh-common-lib-angular');
   });
 
   // it('should render title', () => {
   //   const fixture = TestBed.createComponent(AppComponent);
   //   fixture.detectChanges();
   //   const compiled = fixture.nativeElement as HTMLElement;
-  //   expect(compiled.querySelector('h1')?.textContent).toContain('Hello, moh-common-styles-NEW');
+  //   expect(compiled.querySelector('h1')?.textContent).toContain('Hello, moh-common-lib-angular');
   // });
 });

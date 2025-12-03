@@ -11,6 +11,13 @@
     "prettier": "./node_modules/.bin/prettier --single-quote --write './src/**/*.{ts,js,css,json,scss,html}'",
     "precommit": "lint-staged"
   },
+  "lint-staged": {
+    "*.{ts,js,css,json}": [
+       "git add", 
+      "./node_modules/.bin/prettier --single-quote --write"
+      
+    ]
+  },
   "private": true,
   "dependencies": {
     "@angular/common": "^19.2.0",
@@ -25,12 +32,7 @@
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
   },
-  "lint-staged": {
-    "*.{ts,js,css,json}": [
-      "./node_modules/.bin/prettier --write",
-      "git add"
-    ]
-  },
+
   "devDependencies": {
     "@angular-devkit/build-angular": "^19.2.11",
     "@angular-eslint/builder": "^19.4.0",
