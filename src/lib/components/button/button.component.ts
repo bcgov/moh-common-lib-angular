@@ -45,8 +45,8 @@ export class ButtonComponent {
   @ViewChild('button')
   button!: ElementRef;
 
-    // Emit click event to parent component
-     onClick($event: Event) {
-     this.btnClick.emit($event);  
+  // Emit click event to parent component
+  onClick($event: Event) {
+    this.btnClick.emit($event);
   }
 }
