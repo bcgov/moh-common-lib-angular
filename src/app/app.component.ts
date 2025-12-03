@@ -15,23 +15,22 @@ import { AddressComponent } from '../lib/components/address/address.component';
     AddressComponent,
     // NameComponent,
     // FullNameComponent
-],
-schemas: [NO_ERRORS_SCHEMA],
+  ],
+  schemas: [NO_ERRORS_SCHEMA],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
 export class AppComponent {
- @Input() country = 'CANADA';
- @Input() state = 'ONTARIO';
- @Input() city = 'Vancouver';
- @Input() zip = 'V5K0A1';
- @Input() street = 'Unit 653';
- @Input() address = '653 main street';
- @Input() address2 = 'Unit 123';
- @Input() address3 = 'Unit 234';
+  @Input() country = 'CANADA';
+  @Input() state = 'ONTARIO';
+  @Input() city = 'Vancouver';
+  @Input() zip = 'V5K0A1';
+  @Input() street = 'Unit 653';
+  @Input() address = '653 main street';
+  @Input() address2 = 'Unit 123';
+  @Input() address3 = 'Unit 234';
 
-
-  title = 'moh-common-styles-NEW';
+  title = 'moh-common-lib-angular';
 
   // person: Person = {
   //   firstName: '',
@@ -52,5 +51,4 @@ export class AppComponent {
   //   },
   //   objectId: ''
   // };
- 
 }

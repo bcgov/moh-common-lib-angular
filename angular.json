@@ -61,10 +61,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "moh-common-styles-NEW:build:production"
+              "buildTarget": "moh-common-lib-angular:build:production"
             },
             "development": {
-              "buildTarget": "moh-common-styles-NEW:build:development"
+              "buildTarget": "moh-common-lib-angular:build:development"
             }
           },
           "defaultConfiguration": "development"
