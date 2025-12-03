@@ -44,5 +44,5 @@ export class ButtonComponent  {
        onClick($event: Event) {
         this.btnClick.emit($event);
       
-     } 
+     }  
 }
