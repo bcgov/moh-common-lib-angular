@@ -1,10 +1,11 @@
-
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  HttpHeaders,
+} from '@angular/common/http';
 import { AbstractHttpService } from './abstract-api-service';
 import { throwError } from 'rxjs';
-import moment_ from 'moment';
-const moment = moment_;
 
 enum SeverityLevels {
   INFO = 'info',
@@ -14,7 +15,7 @@ enum SeverityLevels {
 export enum CommonLogEvents {
   navigation = 'navigation',
   error = 'error',
-  submission = 'submission'
+  submission = 'submission',
 }
 
 export interface CommonLogMessage {
@@ -25,7 +26,7 @@ export interface CommonLogMessage {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class CommonLogger extends AbstractHttpService {
   /**
@@ -42,7 +43,7 @@ export class CommonLogger extends AbstractHttpService {
   protected _headers: HttpHeaders = new HttpHeaders({
     request_method: 'POST',
     logsource: window.location.hostname,
-    http_x_forwarded_host: window.location.hostname
+    http_x_forwarded_host: window.location.hostname,
   });
 
   private url: string | null = null;
@@ -51,32 +52,32 @@ export class CommonLogger extends AbstractHttpService {
     super(http);
   }
 
-  set applicationId( id: string ) {
-    this._headers = this._headers.set( 'applicationId', id );
+  set applicationId(id: string) {
+    this._headers = this._headers.set('applicationId', id);
   }
 
   get applicationId(): string | null {
-    return this._headers.get( 'applicationId' );
+    return this._headers.get('applicationId');
   }
 
-  set programName( name: string ) {
-    this._headers = this._headers.set( 'program', name );
+  set programName(name: string) {
+    this._headers = this._headers.set('program', name);
   }
 
-  get programName() : string | null {
-    return this._headers.get( 'name' );
+  get programName(): string | null {
+    return this._headers.get('name');
   }
 
   setURL(newURL: string) {
     this.url = newURL;
   }
 
-  public log( message: any ) {
-    this._log( message as CommonLogMessage );
+  public log(message: any) {
+    this._log(message as CommonLogMessage);
   }
 
-  public logError( errorMessage: any ) {
-    this._logError( errorMessage as CommonLogMessage );
+  public logError(errorMessage: any) {
+    this._logError(errorMessage as CommonLogMessage);
   }
 
   /**
@@ -114,7 +115,7 @@ export class CommonLogger extends AbstractHttpService {
       event: CommonLogEvents.error,
       message: error.message,
       errorName: error.name,
-      statusText: error.statusText
+      statusText: error.statusText,
     });
   }
 
@@ -132,9 +133,9 @@ export class CommonLogger extends AbstractHttpService {
     this.setTags(message.event);
 
     if (this.url === null) {
-        const msg = 'Unable to send logs as URL as not been set via setURL()';
-        console.error(msg);
-        return throwError(msg);
+      const msg = 'Unable to send logs as URL as not been set via setURL()';
+      console.error(msg);
+      return throwError(msg);
     }
 
     // Configure request
@@ -151,7 +152,9 @@ export class CommonLogger extends AbstractHttpService {
       console.error('An error occured: ', error.error.message);
     } else {
       // The backend returned an unsuccessful response code
-      console.error(`Backend returned error code: ${error.status}.  Error body: ${error.error}`);
+      console.error(
+        `Backend returned error code: ${error.status}.  Error body: ${error.error}`
+      );
     }
 
     return throwError(error);
@@ -165,13 +168,12 @@ export class CommonLogger extends AbstractHttpService {
   protected override get httpOptions(): any {
     return {
       headers: this._headers,
-      responseType: 'text'
+      responseType: 'text',
     };
   }
 
-  // TODO: Remove moment dependency
   private setTimestamp() {
-    this._headers = this._headers.set('timestamp', moment().toISOString());
+    this._headers = this._headers.set('timestamp', new Date().toISOString());
   }
 
   private setSeverity(severity: SeverityLevels) {
@@ -182,8 +184,7 @@ export class CommonLogger extends AbstractHttpService {
    * The headers are easier to search in splunk, and we aren't using tags, so
    * repurpose it to event type.
    */
-  private setTags(message: string ) {
+  private setTags(message: string) {
     this._headers = this._headers.set('tags', message);
   }
-
 }
