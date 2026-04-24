@@ -1,6 +1,8 @@
 {
   "name": "moh-common-lib-angular",
   "version": "1.0.0",
+  "main": "src/public-api.ts",
+  "typings": "src/public-api.ts",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
