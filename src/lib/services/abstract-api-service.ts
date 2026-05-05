@@ -5,7 +5,6 @@ import { Observable } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 import { CommonImage } from '../models/images.model';
-import { CommonLogMessage } from './logger.service';
 
 
 /**
@@ -13,6 +12,7 @@ import { CommonLogMessage } from './logger.service';
  */
 export abstract class AbstractHttpService {
 
+  /** Set to true during development to print every request and response to the console. */
   protected logHTTPRequestsToConsole = false;
 
   constructor(protected http: HttpClient) {}
@@ -32,7 +32,13 @@ export abstract class AbstractHttpService {
     return this.setupRequest(observable);
   }
 
-  protected post<T>(url: string, body: { message: CommonLogMessage; }): Observable<T> {
+  /**
+   * Makes a POST request to the specified URL with the given body.
+   * @param url Target URL
+   * @param body Request payload. Typed as `object` so subclasses can pass any
+   * domain-specific shape without being forced into a particular structure.
+   */
+  protected post<T>(url: string, body: object): Observable<T> {
     if (this.logHTTPRequestsToConsole) {
       console.log( 'Post Request: ', body );
     }
@@ -40,6 +46,7 @@ export abstract class AbstractHttpService {
     return this.setupRequest(observable);
   }
 
+  /** Attaches error handling and optional console logging to any HTTP observable. */
   protected setupRequest<T>(observable: Observable<any> ): Observable<T> {
     // All failed requests should trigger the abstract method handleError
     observable = observable.pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));

@@ -8,6 +8,8 @@ import { RouterModule } from '@angular/router';
 import { LoadPageGuardService } from './load-page-guard.service';
 import { AbstractPageGuardService } from './abstract-page-guard.service';
 
+// Minimal stand-in for AbstractPageGuardService; toggling bypass/canNavigate
+// controls which branch of LoadPageGuardService.canActivate() is exercised.
 class MockPageGuardService implements AbstractPageGuardService {
   bypass = false;
   canNavigate = true;

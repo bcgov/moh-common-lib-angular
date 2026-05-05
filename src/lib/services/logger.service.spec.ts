@@ -28,6 +28,7 @@ describe('CommonLogger', () => {
   it('log() should not make an HTTP request when URL has not been set', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
     service.log({ event: CommonLogEvents.navigation });
+    // expectNone with a catch-all predicate asserts that no HTTP request was made.
     httpMock.expectNone(() => true);
     expect(console.error).toHaveBeenCalled();
   });

@@ -65,19 +65,11 @@ export class CommonLogger extends AbstractHttpService {
   }
 
   get programName(): string | null {
-    return this._headers.get('name');
+    return this._headers.get('program');
   }
 
   setURL(newURL: string) {
     this.url = newURL;
-  }
-
-  public log(message: any) {
-    this._log(message as CommonLogMessage);
-  }
-
-  public logError(errorMessage: any) {
-    this._logError(errorMessage as CommonLogMessage);
   }
 
   /**
@@ -93,15 +85,15 @@ export class CommonLogger extends AbstractHttpService {
        dateObj: new Date()
     });
     ```
-   * @param message A JavaScript object, nesting is fine, with `event` property
-   * set.
+   * @param message A JavaScript object, nesting is fine, with `event` property set.
    */
-  protected _log(message: CommonLogMessage) {
+  public log(message: CommonLogMessage) {
     this.setSeverity(SeverityLevels.INFO);
     return this._sendLog(message);
   }
 
-  protected _logError(errorMessage: CommonLogMessage) {
+  /** Log an error-level message to Splunk. See `log()` for usage details. */
+  public logError(errorMessage: CommonLogMessage) {
     this.setSeverity(SeverityLevels.ERROR);
     return this._sendLog(errorMessage);
   }
@@ -111,7 +103,7 @@ export class CommonLogger extends AbstractHttpService {
    * error response code.
    */
   public logHttpError(error: HttpErrorResponse) {
-    return this._logError({
+    return this.logError({
       event: CommonLogEvents.error,
       message: error.message,
       errorName: error.name,

@@ -1,10 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { PageStateService, PageList } from './page-state.service';
 import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
-// import { HttpClientTestingModule } from '@angular/common/http/testing';
-// import { RouterTestingModule } from '@angular/router/testing';
-import { Routes } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
 
 @Component({
   template: `

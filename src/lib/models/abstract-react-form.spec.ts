@@ -2,6 +2,7 @@ import { Router } from '@angular/router';
 import { FormControl, FormGroup } from '@angular/forms';
 import { AbstractReactForm } from './abstract-react-form';
 
+// AbstractReactForm is abstract; a concrete subclass is required to instantiate it.
 class ConcreteReactForm extends AbstractReactForm {
   constructor(router: Router) {
     super(router);
@@ -44,6 +45,7 @@ describe('AbstractReactForm', () => {
     it('should mark all controls in a single FormGroup as touched', () => {
       const ctrl = new FormControl('');
       form.formGroup = new FormGroup({ field: ctrl });
+      // Cast to any to access the protected method in tests.
       (form as any).markAllInputsTouched(form.formGroup);
       expect(ctrl.touched).toBe(true);
     });

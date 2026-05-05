@@ -8,6 +8,8 @@ import { RouterModule } from '@angular/router';
 import { RouteGuardService } from './route-guard.service';
 import { AbstractPgCheckService } from './abstract-pg-check.service';
 
+// Minimal stand-in for AbstractPgCheckService; individual flags control which
+// guard branch is exercised without needing a real PageState or Router dependency.
 class MockPgCheckService implements AbstractPgCheckService {
   bypass = false;
   prerequisiteComplete = true;

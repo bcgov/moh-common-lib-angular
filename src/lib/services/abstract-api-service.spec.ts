@@ -12,6 +12,7 @@ import { Observable, throwError } from 'rxjs';
 import { AbstractHttpService } from './abstract-api-service';
 import { CommonImage } from '../models/images.model';
 
+// AbstractHttpService is abstract; a concrete subclass is required to instantiate it for testing.
 class ConcreteHttpService extends AbstractHttpService {
   protected _headers = new HttpHeaders({ 'Content-Type': 'application/json' });
 
@@ -23,7 +24,7 @@ class ConcreteHttpService extends AbstractHttpService {
     return throwError(() => error);
   }
 
-  // Expose protected methods for testing
+  // Expose protected methods publicly so tests can invoke them directly.
   testGet<T>(url: string) {
     return this.get<T>(url);
   }

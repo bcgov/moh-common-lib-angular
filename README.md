@@ -122,7 +122,24 @@ yalc push
 npm test
 ```
 
-Tests run with [Jest](https://jestjs.io/) via `@angular-builders/jest`.
+Tests run with [Jest](https://jestjs.io/) via `@angular-builders/jest`. No browser required — Jest runs in Node.js.
+
+**Run a single spec file:**
+```bash
+npx jest src/lib/path/to/component.spec.ts
+```
+
+**Run in watch mode (re-runs on file changes):**
+```bash
+npx jest --watch
+```
+
+**Run with coverage report:**
+```bash
+npx jest --coverage
+```
+
+Coverage is collected from `src/lib/**/*.ts`, excluding spec files, modules, models, interfaces, and constants. Output is written to `coverage/`.
 
 ### Lint
 
@@ -143,6 +160,35 @@ Prettier is enforced on commit via Husky + lint-staged.
 ## Compatibility shim
 
 `SharedCoreModule` is exported as a no-op `NgModule` for apps that previously imported the library's NgModule. Consuming apps should migrate to importing individual standalone components directly.
+
+---
+
+## Security
+
+### Dependency vulnerabilities resolved
+
+| Package / Area | Action | Result |
+|---|---|---|
+| `@angular/*` | Upgraded 19.2.10 → 19.2.20; CLI + devkit to 19.2.24 | Closed 50 vulnerabilities (0 remaining in production) |
+| `tar` | Added npm override `^7.0.0` | Closed HIGH-severity vulnerability |
+| `serialize-javascript` | Added npm override `^7.0.0` | Closed HIGH-severity vulnerability |
+| `ngx-bootstrap ^5.5.0` | Removed (dead code — all usage was commented out) | Eliminated vulnerable package |
+| `moment` | Removed from `logger.service.ts` — replaced with `new Date().toISOString()` | Eliminated unnecessary dependency |
+| `karma` and all karma plugins | Removed — replaced with Jest | Eliminated vulnerable test tooling chain |
+| `husky` prepare script | Fixed `husky && husky install` → `husky install` | Corrected for husky v8 |
+
+**Current state:** `npm audit` reports 0 production vulnerabilities. 6 low-severity dev-only vulnerabilities remain via `@angular-builders/jest` → `@tootallnate/once`; these are blocked by the Angular 19 version lock and will clear on an Angular 20 upgrade.
+
+### HTTP / XSRF source audit
+
+All HTTP-facing services were reviewed for URL injection and XSRF exposure:
+
+| File | Result |
+|---|---|
+| `abstract-api-service.ts` | CLEAN — URLs are abstract method parameters, not user-derived |
+| `geocoder.service.ts` | CLEAN — `BASE_URL` is a hardcoded constant |
+| `logger.service.ts` | CLEAN — URL set via `setURL()` at app config time, not from user input |
+| `address-validator.component.ts` | CLEAN — `serviceUrl` is an `@Input()` set by the parent component, not form data |
 
 ---
 
