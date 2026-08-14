@@ -25,4 +25,7 @@
     "strictTemplates": true
   },
 
+  "exclude": [
+    "node_modules"
+  ]
 }

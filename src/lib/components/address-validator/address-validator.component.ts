@@ -1,17 +1,36 @@
-import { Component, OnInit, Input, ChangeDetectorRef, Output, EventEmitter, Optional, Self } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  Input,
+  ChangeDetectorRef,
+  Output,
+  EventEmitter,
+  Optional,
+  Self,
+} from '@angular/core';
 import { Subject, Observable, of, throwError } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap, map, catchError } from 'rxjs/operators';
-import { TypeaheadMatch, TypeaheadModule } from 'ngx-bootstrap/typeahead';
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  switchMap,
+  map,
+  catchError,
+} from 'rxjs/operators';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  HttpParams,
+} from '@angular/common/http';
 import { NgControl, ControlValueAccessor, FormsModule } from '@angular/forms';
 import { Address } from '../../models/address.model';
 import { AbstractFormControl } from '../../models/abstract-form-control';
-import { ErrorMessage, LabelReplacementTag } from '../../models/error-message.interface';
+import {
+  ErrorMessage,
+  LabelReplacementTag,
+} from '../../models/error-message.interface';
 import { deburr } from '../../../helpers/deburr';
 import { CommonModule } from '@angular/common';
 import { ErrorContainerComponent } from '../error-container/error-container.component';
-
-
 
 /**
  * For TemplateForms, pass in an Address and recieve an Address
@@ -59,8 +78,10 @@ export interface AddressResult {
   styleUrls: ['./address-validator.component.scss'],
   imports: [FormsModule, CommonModule, ErrorContainerComponent],
 })
-export class AddressValidatorComponent extends AbstractFormControl implements OnInit, ControlValueAccessor {
-
+export class AddressValidatorComponent
+  extends AbstractFormControl
+  implements OnInit, ControlValueAccessor
+{
   @Input() label: string = 'Address Lookup';
   @Input() address!: string;
   @Input() serviceUrl!: string;
@@ -71,8 +92,10 @@ export class AddressValidatorComponent extends AbstractFormControl implements On
   @Input() maxlength: string = '255';
 
   override _defaultErrMsg: ErrorMessageExtended = {
-    required:  LabelReplacementTag + ' is required.',
-    invalidChar: LabelReplacementTag + ' must contain letters and numbers, and may include special characters such as a hyphen, period, apostrophe, number sign, ampersand, forward slash, and blank characters.'
+    required: LabelReplacementTag + ' is required.',
+    invalidChar:
+      LabelReplacementTag +
+      ' must contain letters and numbers, and may include special characters such as a hyphen, period, apostrophe, number sign, ampersand, forward slash, and blank characters.',
   };
   /** The string in the box the user has typed */
   public search!: string;
@@ -92,24 +115,26 @@ export class AddressValidatorComponent extends AbstractFormControl implements On
   override _onChange = (_: any) => {};
   override _onTouched = (_?: any) => {};
 
-  constructor(@Optional() @Self() public controlDir: NgControl,
-              private cd: ChangeDetectorRef,
-              protected http: HttpClient) {
+  constructor(
+    @Optional() @Self() public controlDir: NgControl,
+    private cd: ChangeDetectorRef,
+    protected http: HttpClient
+  ) {
     super();
-    if ( controlDir ) {
+    if (controlDir) {
       controlDir.valueAccessor = this;
     }
   }
 
   override ngOnInit() {
     super.ngOnInit();
-    
+
     this.typeaheadList$ = this.searchText$.pipe(
       debounceTime(500),
       distinctUntilChanged(),
       // Trigger the network request, get results
-      switchMap(searchPhrase => this.lookup(searchPhrase)),
-      catchError(err => this.onError(err))
+      switchMap((searchPhrase) => this.lookup(searchPhrase)),
+      catchError((err) => this.onError(err))
     );
   }
 
@@ -134,12 +159,13 @@ export class AddressValidatorComponent extends AbstractFormControl implements On
     this.hasNoResults = val;
   }
 
-  onSelect(event: TypeaheadMatch): void {
-
+  onSelect(event: any): void {
     const data: AddressResult = event.item;
 
     // Output string to FormControl. If street is more than the max length shorten
-    const stripped = data.AddressLines ? this.stripStringToMaxLength(deburr(data.AddressLines[0]) ?? '') : null;
+    const stripped = data.AddressLines
+      ? this.stripStringToMaxLength(deburr(data.AddressLines[0]) ?? '')
+      : null;
 
     const addr = new Address();
     addr.unitNumber = deburr(data.SubBuilding) ?? '';
@@ -150,9 +176,18 @@ export class AddressValidatorComponent extends AbstractFormControl implements On
     addr.province = data.Province;
     addr.street = stripped ?? '';
     addr.postal = deburr(data.PostalCode) ?? '';
-    addr.addressLine1 = (data.AddressLines && data.AddressLines[0] ? deburr(data.AddressLines[0]) : null) ?? '';
-    addr.addressLine2 = (data.AddressLines && data.AddressLines[1] ? deburr(data.AddressLines[1]) : null) ?? '';
-    addr.addressLine3 = (data.AddressLines && data.AddressLines[2] ? deburr(data.AddressLines[2]) : null) ?? '';
+    addr.addressLine1 =
+      (data.AddressLines && data.AddressLines[0]
+        ? deburr(data.AddressLines[0])
+        : null) ?? '';
+    addr.addressLine2 =
+      (data.AddressLines && data.AddressLines[1]
+        ? deburr(data.AddressLines[1])
+        : null) ?? '';
+    addr.addressLine3 =
+      (data.AddressLines && data.AddressLines[2]
+        ? deburr(data.AddressLines[2])
+        : null) ?? '';
     // Save and emit Address for (select)
     this.selectedAddress = true;
     this.select.emit(addr);
@@ -169,7 +204,8 @@ export class AddressValidatorComponent extends AbstractFormControl implements On
     // when user is selecting a typeahead option instead of entering new text.
     // Without this filter, we do another HTTP request + force disiplay the UI
     // for now reason
-    if (event.keyCode === 13 || event.keyCode === 9) {  // enter & tab
+    if (event.keyCode === 13 || event.keyCode === 9) {
+      // enter & tab
       return;
     }
     // Clear out selection
@@ -184,8 +220,8 @@ export class AddressValidatorComponent extends AbstractFormControl implements On
     }
   }
 
-  writeValue( value: any ): void {
-    if ( value  !== undefined ) {
+  writeValue(value: any): void {
+    if (value !== undefined) {
       this.search = value;
     }
   }
@@ -196,12 +232,12 @@ export class AddressValidatorComponent extends AbstractFormControl implements On
   }
 
   // Register change function
-  override registerOnChange( fn: any ): void {
+  override registerOnChange(fn: any): void {
     this._onChange = fn;
   }
 
   // Register touched function
-  override registerOnTouched( fn: any ): void {
+  override registerOnTouched(fn: any): void {
     this._onTouched = fn;
   }
 
@@ -211,12 +247,13 @@ export class AddressValidatorComponent extends AbstractFormControl implements On
   }
 
   lookup(address: string): Observable<AddressResult[]> {
-    const params = new HttpParams()
-                    .set('address', address);
+    const params = new HttpParams().set('address', address);
 
-    return this.http.get(this.serviceUrl, {
-      params: params
-    }).pipe(map(this.processResponse));
+    return this.http
+      .get(this.serviceUrl, {
+        params: params,
+      })
+      .pipe(map(this.processResponse));
   }
 
   /**
@@ -227,7 +264,7 @@ export class AddressValidatorComponent extends AbstractFormControl implements On
    *
    * @param obj The response from ADDRESS_URL
    */
-  protected processResponse(obj : any): AddressResult[] {
+  protected processResponse(obj: any): AddressResult[] {
     return obj.Address.map((feature: any) => {
       const props = feature;
       const Locality = props.Locality;
@@ -251,7 +288,7 @@ export class AddressValidatorComponent extends AbstractFormControl implements On
         DeliveryAddressLines,
         Province,
         Country,
-        PostalCode
+        PostalCode,
       };
     });
   }

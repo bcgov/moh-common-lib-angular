@@ -1,11 +1,29 @@
-import { Component, Input, Output, EventEmitter, Optional, Self, OnInit } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  Optional,
+  Self,
+  OnInit,
+} from '@angular/core';
 import { NgControl } from '@angular/forms';
 import { Observable, Subject, of } from 'rxjs';
-import { GeoAddressResult, GeocoderService } from '../../services/geocoder.service';
-import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
-import { TypeaheadMatch } from 'ngx-bootstrap/typeahead';
+import {
+  GeoAddressResult,
+  GeocoderService,
+} from '../../services/geocoder.service';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  switchMap,
+  catchError,
+} from 'rxjs/operators';
 import { AbstractFormControl } from '../../models/abstract-form-control';
-import { ErrorMessage, LabelReplacementTag } from '../../models/error-message.interface';
+import {
+  ErrorMessage,
+  LabelReplacementTag,
+} from '../../models/error-message.interface';
 import { CANADA } from '../country/country.component';
 import { BRITISH_COLUMBIA } from '../province/province.component';
 
@@ -13,8 +31,7 @@ import { BRITISH_COLUMBIA } from '../province/province.component';
   selector: 'common-street',
   templateUrl: './street.component.html',
 })
-export class StreetComponent extends AbstractFormControl implements OnInit  {
-
+export class StreetComponent extends AbstractFormControl implements OnInit {
   @Input() label: string = 'Full street address or rural route';
   @Input() maxlength: string = '250';
   @Input() labelforId: string = 'street_' + this.objectId;
@@ -23,8 +40,8 @@ export class StreetComponent extends AbstractFormControl implements OnInit  {
   @Input() required: boolean = false;
 
   @Input()
-  set value( val: string ) {
-    if ( val ) {
+  set value(val: string) {
+    if (val) {
       this.street = val;
     }
   }
@@ -33,10 +50,11 @@ export class StreetComponent extends AbstractFormControl implements OnInit  {
   }
 
   @Output() valueChange: EventEmitter<string> = new EventEmitter<string>();
- 
+
   @Output() blur: EventEmitter<any> = new EventEmitter<any>();
- 
-  @Output() select: EventEmitter<GeoAddressResult> = new EventEmitter<GeoAddressResult>();
+
+  @Output() select: EventEmitter<GeoAddressResult> =
+    new EventEmitter<GeoAddressResult>();
 
   street: string = '';
 
@@ -52,16 +70,19 @@ export class StreetComponent extends AbstractFormControl implements OnInit  {
   private searchText$ = new Subject<string>();
 
   override _defaultErrMsg: ErrorMessage = {
-    required:  LabelReplacementTag + ' is required.',
-    invalidChar: LabelReplacementTag + ' must contain letters, and numbers and may include special characters such as hyphen, ' +
-                 'period, apostrophe, number sign, ampersand and blank characters.'
+    required: LabelReplacementTag + ' is required.',
+    invalidChar:
+      LabelReplacementTag +
+      ' must contain letters, and numbers and may include special characters such as hyphen, ' +
+      'period, apostrophe, number sign, ampersand and blank characters.',
   };
 
-
-  constructor( @Optional() @Self() public controlDir: NgControl,
-               private geocoderService: GeocoderService ) {
+  constructor(
+    @Optional() @Self() public controlDir: NgControl,
+    private geocoderService: GeocoderService
+  ) {
     super();
-    if ( controlDir ) {
+    if (controlDir) {
       controlDir.valueAccessor = this;
     }
   }
@@ -74,30 +95,30 @@ export class StreetComponent extends AbstractFormControl implements OnInit  {
       debounceTime(500),
       distinctUntilChanged(),
       // Trigger the network request, get results
-      switchMap(searchPhrase => {
+      switchMap((searchPhrase) => {
         return this.geocoderService.lookup(searchPhrase);
       }),
       catchError(() => this.onError())
     );
   }
 
-  onValueChange( value: any ) {
-    if ( this.useGeoCoder ) {
+  onValueChange(value: any) {
+    if (this.useGeoCoder) {
       // set the search string
       this.search = value;
     }
-    this._onChange( value );
-    this.valueChange.emit( value );
+    this._onChange(value);
+    this.valueChange.emit(value);
   }
 
-  onBlur( event: any ) {
-    this._onTouched( event );
-    this.blur.emit( event );
+  onBlur(event: any) {
+    this._onTouched(event);
+    this.blur.emit(event);
   }
 
-  writeValue( value: any ): void {
-    if ( value !== undefined ) {
-        this.street = value;
+  writeValue(value: any): void {
+    if (value !== undefined) {
+      this.street = value;
     }
   }
 
@@ -114,7 +135,7 @@ export class StreetComponent extends AbstractFormControl implements OnInit  {
       return;
     }
 
-   //this.searchText$.next(this.search);
+    //this.searchText$.next(this.search);
   }
 
   onError(): Observable<GeoAddressResult[]> {
@@ -122,14 +143,13 @@ export class StreetComponent extends AbstractFormControl implements OnInit  {
     return of([]);
   }
 
-  onSelect(event: TypeaheadMatch): void {
+  onSelect(event: any): void {
     const data: GeoAddressResult = event.item;
     this.street = data.street;
 
     // Set to defaults in response
     data.country = CANADA;
     data.province = BRITISH_COLUMBIA;
-    this.select.emit( data );
+    this.select.emit(data);
   }
-
 }

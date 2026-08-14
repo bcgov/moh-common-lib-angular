@@ -8,15 +8,15 @@ const mockResponseAddress = {
   localityName: 'city',
   country: 'CAN',
   provinceCode: 'BC',
-}
+};
 const mockPayloadResponse = {
   features: [
     {
       properties: {
-        ...mockResponseAddress
-      }
-    }
-  ]
+        ...mockResponseAddress,
+      },
+    },
+  ],
 };
 const expectedResult: GeoAddressResult[] = [
   {
@@ -25,44 +25,42 @@ const expectedResult: GeoAddressResult[] = [
     street: 'Unit 101 - 123 Streetname Rd.',
     country: 'CAN',
     province: 'BC',
-  }
+  },
 ];
 
 describe('GeocoderService', () => {
-
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [ HttpClientTestingModule ],
-      providers: [ GeocoderService ]
+      imports: [HttpClientTestingModule],
+      providers: [GeocoderService],
     });
   });
 
   it('should be created', () => {
-    const service: GeocoderService = TestBed.get(GeocoderService);
+    const service: GeocoderService = TestBed.inject(GeocoderService);
     expect(service).toBeTruthy();
   });
 
-  it('should replace \'--\' with \'-\' in the address.', (done) => {
-    let httpClientSpy: { get: jasmine.Spy };
-    httpClientSpy = jasmine.createSpyObj('HttpClient', ['get']);
-    let service = new GeocoderService(<any> httpClientSpy);
+  it("should replace '--' with '-' in the address.", (done) => {
+    const httpClientSpy = { get: jest.fn() };
+    let service = new GeocoderService(<any>httpClientSpy);
 
-    httpClientSpy.get.and.returnValue(of(mockPayloadResponse));
+    httpClientSpy.get.mockReturnValue(of(mockPayloadResponse));
 
     service.lookup('Query Text').subscribe((addresses) => {
       expect(addresses).toEqual(expectedResult);
       done();
     });
-    expect(httpClientSpy.get.calls.count()).toBe(1, 'one call');
+    expect(httpClientSpy.get).toHaveBeenCalledTimes(1);
   });
 
-  it('should replace \'--\' with \'-\' in the address in processResponse.', () => {
+  it("should replace '--' with '-' in the address in processResponse.", () => {
     class GeocoderServiceTest extends GeocoderService {
       public processResponseTest() {
-        return this.processResponse(mockPayloadResponse)
+        return this.processResponse(mockPayloadResponse);
       }
     }
-    let serviceTest = new GeocoderServiceTest(<any> {});
-    expect(serviceTest.processResponseTest()).toEqual(expectedResult)
+    let serviceTest = new GeocoderServiceTest(<any>{});
+    expect(serviceTest.processResponseTest()).toEqual(expectedResult);
   });
 });

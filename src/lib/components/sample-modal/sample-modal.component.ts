@@ -1,6 +1,5 @@
 //TODO: Refactor
 import { Component, Input, ViewChild } from '@angular/core';
-import { ModalDirective } from 'ngx-bootstrap/modal';
 import { Base } from '../../models/base';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -18,11 +17,10 @@ export interface SampleImageInterface {
   imports: [CommonModule, FormsModule],
 })
 export class SampleModalComponent extends Base {
-
   @Input() title!: string;
   @Input() images: SampleImageInterface[] = [];
 
-  @ViewChild('samplesModal') public sampleModal!: ModalDirective;
+  @ViewChild('samplesModal') public sampleModal!: any; // TODO: Replace ngx-bootstrap ModalDirective with native or CDK modal
 
   constructor() {
     super();
