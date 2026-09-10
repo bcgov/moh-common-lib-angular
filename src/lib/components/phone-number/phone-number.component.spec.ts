@@ -20,9 +20,8 @@ import {
   OnInit,
   Type,
 } from '@angular/core';
-import {
-  //tickAndDetectChanges /*getDebugLabel*/,
-} from '../../../helpers/test-helpers';
+import {} from //tickAndDetectChanges /*getDebugLabel*/,
+'../../../helpers/test-helpers';
 import { BrowserModule, By } from '@angular/platform-browser';
 
 export function getDebugElement(
@@ -61,7 +60,7 @@ export function createTestingModule<T>(
 }
 
 @Component({
-  template: ``,
+  template: '',
 })
 class PhoneTestComponent {
   @ViewChildren(PhoneNumberComponent) phnComponent:
@@ -73,7 +72,7 @@ class PhoneTestComponent {
 }
 
 @Component({
-  template: ``,
+  template: '',
   imports: [PhoneNumberComponent, FormsModule, ReactiveFormsModule],
 })
 class PhoneReactTestComponent extends PhoneTestComponent implements OnInit {
@@ -128,7 +127,6 @@ describe('Phone-Number.Component', () => {
   }));
 
   it('should display phone number (default allow international numbers)', fakeAsync(() => {
-
     const fixture = TestBed.createComponent(PhoneNumberComponent);
     fixture.detectChanges();
     const inputEl = fixture.nativeElement.querySelector('input');
@@ -141,6 +139,4 @@ describe('Phone-Number.Component', () => {
 
     expect(inputEl.value).toBe('+1 (905) 555-5252');
   }));
-
 });
-

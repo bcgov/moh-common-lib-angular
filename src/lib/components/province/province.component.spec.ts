@@ -51,7 +51,7 @@ function createTestingModule<T>(
 }
 
 @Component({
-  template: ``,
+  template: '',
 })
 class ProvinceTestComponent {
   @ViewChildren(ProvinceComponent)
@@ -70,8 +70,13 @@ class ProvinceTestComponent {
 }
 
 @Component({
-  template: ``,
-  imports: [ProvinceComponent, FormsModule, ReactiveFormsModule, NgSelectComponent],
+  template: '',
+  imports: [
+    ProvinceComponent,
+    FormsModule,
+    ReactiveFormsModule,
+    NgSelectComponent,
+  ],
 })
 class ProvinceReactTestComponent
   extends ProvinceTestComponent
@@ -133,25 +138,23 @@ describe('Province.Component', () => {
           </common-province>
       </form>`
     );
-  
-    const provinceCode = "BC"
+
+    const provinceCode = 'BC';
     const component = fixture.componentInstance;
-     tickAndDetectChanges(fixture);
-     const de = getDebugElement( fixture, 'common-province', 'province1' );
+    tickAndDetectChanges(fixture);
+    const de = getDebugElement(fixture, 'common-province', 'province1');
 
-    expect( de ).toBeTruthy();
-    
-     const province1Control = component.form.get('province1');
-     if (province1Control) {
-       province1Control.setValue(provinceCode);
-       province1Control.setValue(provinceCode);
-     }
-     
-     expect(province1Control?.value).toBe(provinceCode);
+    expect(de).toBeTruthy();
 
-     const provinceList : ProvinceList[] =  de.componentInstance.provinceList
-     expect(provinceList[1].provinceCode).toBe(provinceCode);
+    const province1Control = component.form.get('province1');
+    if (province1Control) {
+      province1Control.setValue(provinceCode);
+      province1Control.setValue(provinceCode);
+    }
+
+    expect(province1Control?.value).toBe(provinceCode);
+
+    const provinceList: ProvinceList[] = de.componentInstance.provinceList;
+    expect(provinceList[1].provinceCode).toBe(provinceCode);
   }));
 });
-
-

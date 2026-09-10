@@ -43,7 +43,7 @@ describe('GeocoderService', () => {
 
   it("should replace '--' with '-' in the address.", (done) => {
     const httpClientSpy = { get: jest.fn() };
-    let service = new GeocoderService(<any>httpClientSpy);
+    const service = new GeocoderService(<any>httpClientSpy);
 
     httpClientSpy.get.mockReturnValue(of(mockPayloadResponse));
 
@@ -60,7 +60,7 @@ describe('GeocoderService', () => {
         return this.processResponse(mockPayloadResponse);
       }
     }
-    let serviceTest = new GeocoderServiceTest(<any>{});
+    const serviceTest = new GeocoderServiceTest(<any>{});
     expect(serviceTest.processResponseTest()).toEqual(expectedResult);
   });
 });

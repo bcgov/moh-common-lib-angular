@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { RouterModule } from '@angular/router';
-import { Injector } from '@angular/core';
 import {
   DefaultPageGuardService,
   BYPASS_GUARDS,

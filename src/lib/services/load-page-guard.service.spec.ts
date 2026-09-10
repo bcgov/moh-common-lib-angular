@@ -1,9 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import {
-  Router,
-  ActivatedRouteSnapshot,
-  RouterStateSnapshot,
-} from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { RouterModule } from '@angular/router';
 import { LoadPageGuardService } from './load-page-guard.service';
 import { AbstractPageGuardService } from './abstract-page-guard.service';

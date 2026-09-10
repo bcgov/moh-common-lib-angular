@@ -1,6 +1,14 @@
-import { Component, Input, Output, EventEmitter, Optional, Self, OnInit, NgModule} from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  Optional,
+  Self,
+  OnInit,
+} from '@angular/core';
 import { Base } from '../../models/base';
-import { ControlValueAccessor, NgControl, FormsModule} from '@angular/forms';
+import { ControlValueAccessor, NgControl, FormsModule } from '@angular/forms';
 import { ErrorMessage } from '../../models/error-message.interface';
 import { CommonModule } from '@angular/common';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -71,7 +79,7 @@ export const COUNTRY_LIST: CountryList[] = [
   { countryCode: 'COD', description: 'Congo, the Democratic Republic of the' },
   { countryCode: 'COK', description: 'Cook Islands' },
   { countryCode: 'CRI', description: 'Costa Rica' },
-  { countryCode: 'CIV', description: 'Côte d\'Ivoire' },
+  { countryCode: 'CIV', description: "Côte d'Ivoire" },
   { countryCode: 'HRV', description: 'Croatia' },
   { countryCode: 'CUB', description: 'Cuba' },
   { countryCode: 'CUW', description: 'Curaçao' },
@@ -107,7 +115,7 @@ export const COUNTRY_LIST: CountryList[] = [
   { countryCode: 'GRD', description: 'Grenada' },
   { countryCode: 'GLP', description: 'Guadeloupe' },
   { countryCode: 'GUM', description: 'Guam' },
-  { countryCode: 'GTM', description: 'Guatemala' }, 
+  { countryCode: 'GTM', description: 'Guatemala' },
   { countryCode: 'GGY', description: 'Guernsey' },
   { countryCode: 'GIN', description: 'Guinea' },
   { countryCode: 'GNB', description: 'Guinea-Bissau' },
@@ -134,11 +142,11 @@ export const COUNTRY_LIST: CountryList[] = [
   { countryCode: 'KAZ', description: 'Kazakhstan' },
   { countryCode: 'KEN', description: 'Kenya' },
   { countryCode: 'KIR', description: 'Kiribati' },
-  { countryCode: 'PRK', description: 'Korea, Democratic People\'s Republic of' },
+  { countryCode: 'PRK', description: "Korea, Democratic People's Republic of" },
   { countryCode: 'KOR', description: 'Korea, Republic of' },
   { countryCode: 'KWT', description: 'Kuwait' },
   { countryCode: 'KGZ', description: 'Kyrgyzstan' },
-  { countryCode: 'LAO', description: 'Lao People\'s Democratic Republic' },
+  { countryCode: 'LAO', description: "Lao People's Democratic Republic" },
   { countryCode: 'LVA', description: 'Latvia' },
   { countryCode: 'LBN', description: 'Lebanon' },
   { countryCode: 'LSO', description: 'Lesotho' },
@@ -148,7 +156,10 @@ export const COUNTRY_LIST: CountryList[] = [
   { countryCode: 'LTU', description: 'Lithuania' },
   { countryCode: 'LUX', description: 'Luxembourg' },
   { countryCode: 'MAC', description: 'Macao' },
-  { countryCode: 'MKD', description: 'Macedonia, the former Yugoslav Republic of' },
+  {
+    countryCode: 'MKD',
+    description: 'Macedonia, the former Yugoslav Republic of',
+  },
   { countryCode: 'MDG', description: 'Madagascar' },
   { countryCode: 'MWI', description: 'Malawi' },
   { countryCode: 'MYS', description: 'Malaysia' },
@@ -202,7 +213,10 @@ export const COUNTRY_LIST: CountryList[] = [
   { countryCode: 'RUS', description: 'Russian Federation' },
   { countryCode: 'RWA', description: 'Rwanda' },
   { countryCode: 'BLM', description: 'Saint Barthélemy' },
-  { countryCode: 'SHN', description: 'Saint Helena, Ascension and Tristan da Cunha' },
+  {
+    countryCode: 'SHN',
+    description: 'Saint Helena, Ascension and Tristan da Cunha',
+  },
   { countryCode: 'KNA', description: 'Saint Kitts and Nevis' },
   { countryCode: 'LCA', description: 'Saint Lucia' },
   { countryCode: 'MAF', description: 'Saint Martin (French part)' },
@@ -223,7 +237,10 @@ export const COUNTRY_LIST: CountryList[] = [
   { countryCode: 'SLB', description: 'Solomon Islands' },
   { countryCode: 'SOM', description: 'Somalia' },
   { countryCode: 'ZAF', description: 'South Africa' },
-  { countryCode: 'SGS', description: 'South Georgia and the South Sandwich Islands' },
+  {
+    countryCode: 'SGS',
+    description: 'South Georgia and the South Sandwich Islands',
+  },
   { countryCode: 'SSD', description: 'South Sudan' },
   { countryCode: 'ESP', description: 'Spain' },
   { countryCode: 'LKA', description: 'Sri Lanka' },
@@ -265,24 +282,25 @@ export const COUNTRY_LIST: CountryList[] = [
   { countryCode: 'ESH', description: 'Western Sahara' },
   { countryCode: 'YEM', description: 'Yemen' },
   { countryCode: 'ZMB', description: 'Zambia' },
-  { countryCode: 'ZWE', description: 'Zimbabwe' }
+  { countryCode: 'ZWE', description: 'Zimbabwe' },
 ];
 
-export function getCountryDescription( countryCode: string ) {
-  const countryObj = COUNTRY_LIST.find( val => countryCode === val.countryCode );
+export function getCountryDescription(countryCode: string) {
+  const countryObj = COUNTRY_LIST.find(
+    (val) => countryCode === val.countryCode
+  );
   return countryObj ? countryObj.description : countryCode;
 }
 
 @Component({
   selector: 'common-country',
   templateUrl: './country.component.html',
-  imports: [CommonModule, 
-            FormsModule,
-            NgSelectModule, 
-            ErrorContainerComponent],
+  imports: [CommonModule, FormsModule, NgSelectModule, ErrorContainerComponent],
 })
-export class CountryComponent extends Base implements OnInit, ControlValueAccessor {
-
+export class CountryComponent
+  extends Base
+  implements OnInit, ControlValueAccessor
+{
   @Input() label = 'Jurisdiction';
   @Input() countryList: CountryList[] = COUNTRY_LIST;
   @Input() labelforId: string = 'country_' + this.objectId;
@@ -294,8 +312,8 @@ export class CountryComponent extends Base implements OnInit, ControlValueAccess
   errorMessage!: ErrorMessage;
   @Input() placeholder = 'Please select a jurisdiction';
   @Input()
-  set value( val: string ) {
-    if ( val ) {
+  set value(val: string) {
+    if (val) {
       this.country = val;
     }
   }
@@ -310,15 +328,16 @@ export class CountryComponent extends Base implements OnInit, ControlValueAccess
 
   defaultErrMsg: ErrorMessage = {
     required: 'is required.',
-    invalidChar: 'must contain letters and may include special characters such as hyphens, periods, apostrophes and blank characters.',
+    invalidChar:
+      'must contain letters and may include special characters such as hyphens, periods, apostrophes and blank characters.',
   };
 
   _onChange = (_: any) => {};
   _onTouched = (_: any) => {};
 
-  constructor( @Optional() @Self() public controlDir: NgControl ) {
+  constructor(@Optional() @Self() public controlDir: NgControl) {
     super();
-    if ( controlDir ) {
+    if (controlDir) {
       controlDir.valueAccessor = this;
     }
   }
@@ -327,8 +346,7 @@ export class CountryComponent extends Base implements OnInit, ControlValueAccess
     this.setErrorMsg();
   }
 
-  onValueChange( value: any ) {
-    
+  onValueChange(value: any) {
     if (value !== this.country) {
       this._onChange(value);
       this.valueChange.emit(value);
@@ -336,24 +354,24 @@ export class CountryComponent extends Base implements OnInit, ControlValueAccess
     }
   }
 
-  onBlurEvent( event: any ) {
-    this._onTouched( event );
-    this.blurEvent.emit( event );
+  onBlurEvent(event: any) {
+    this._onTouched(event);
+    this.blurEvent.emit(event);
   }
 
-  writeValue( value: any ): void {
-    if ( value !== undefined ) {
+  writeValue(value: any): void {
+    if (value !== undefined) {
       this.country = value;
     }
   }
 
   // Register change function
-  registerOnChange( fn: any ): void {
+  registerOnChange(fn: any): void {
     this._onChange = fn;
   }
 
   // Register touched function
-  registerOnTouched( fn: any ): void {
+  registerOnTouched(fn: any): void {
     this._onTouched = fn;
   }
 
@@ -362,8 +380,10 @@ export class CountryComponent extends Base implements OnInit, ControlValueAccess
   }
 
   private setErrorMsg() {
-    if ( this.errorMessage ) {
-      Object.keys(this.errorMessage).map( x => this.defaultErrMsg[x] = this.errorMessage[x] );
+    if (this.errorMessage) {
+      Object.keys(this.errorMessage).map(
+        (x) => (this.defaultErrMsg[x] = this.errorMessage[x])
+      );
     }
   }
 }
