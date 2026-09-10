@@ -39,6 +39,14 @@ const nameCriteria = /^[a-zA-Z][a-zA-Z\-.' ]*$/;
  */
 const initialCriteria = /^[a-zA-Z]$/;
 
+/**
+ * Required validation comes from Angular's own RequiredValidator, which matches
+ * the `required` attribute on the host element. It works in both template driven
+ * and reactive forms, so ngModel is not needed for it. The `required` input below
+ * only forwards the native attribute to the inner input, and only when it is bound
+ * as a property: `[required]="true"` sets the attribute, while a bare `required`
+ * attribute passes an empty string and leaves the inner input without it.
+ */
 @Component({
   selector: 'common-name',
   templateUrl: './name.component.html',

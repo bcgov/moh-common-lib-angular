@@ -10,6 +10,7 @@ import {
   FormGroup,
   FormsModule,
   ReactiveFormsModule,
+  ValidationErrors,
   Validators,
 } from '@angular/forms';
 
@@ -22,6 +23,7 @@ import {
   OnInit,
   Type,
 } from '@angular/core';
+import { FormControl } from '@angular/forms';
 import {
   tickAndDetectChanges,
   getDebugLabel,
@@ -51,6 +53,14 @@ export function createTestingModule<T>(
   return TestBed.createComponent(
     cmp
   ) as ComponentFixture<EmailReactTestComponent>;
+}
+
+@Component({
+  template: '',
+  imports: [EmailComponent, FormsModule],
+})
+class EmailTemplateTestComponent {
+  email1: string = '';
 }
 
 @Component({
@@ -181,4 +191,79 @@ describe('Email.Component', () => {
       ).toBeTruthy();
     });
   }));
+
+  /**
+   * validateSelf is private and is registered as a bound validator by
+   * AbstractFormControl.registerValidation. Calling it through index access keeps
+   * the component as `this`, which is how the form sees it at runtime.
+   */
+  const validate = (email: string): ValidationErrors | null => {
+    const component = TestBed.createComponent(EmailComponent).componentInstance;
+    component.value = email;
+    return component['validateSelf']();
+  };
+
+  describe('validation of the address format', () => {
+    it('should accept an address with a multi part domain', () => {
+      expect(validate('first.last@mail.gov.bc.ca')).toBeNull();
+    });
+
+    it('should reject an address holding more than one @', () => {
+      expect(validate('name@domain@example.com')).toEqual({
+        invalidEmail: true,
+      });
+    });
+
+    it('should reject consecutive dots in the domain', () => {
+      expect(validate('name@domain..com')).toEqual({ invalidEmail: true });
+    });
+
+    it('should reject a domain with no dot', () => {
+      expect(validate('234is@jest')).toEqual({ invalidEmail: true });
+    });
+
+    it('should reject a trailing dot', () => {
+      expect(validate('name@domain.com.')).toEqual({ invalidEmail: true });
+    });
+
+    it('should flag non-printable characters in an otherwise valid address', () => {
+      expect(validate('tästlklsd@ksdlkd.com')).toEqual({
+        invalidChars: true,
+      });
+    });
+
+    it('should accept an empty value, since required is validated separately', () => {
+      expect(validate('')).toBeNull();
+    });
+  });
+
+  describe('required validation on the host element', () => {
+    it('should apply in a reactive form without ngModel', fakeAsync(() => {
+      const fixture = createTestingModule(
+        EmailReactTestComponent,
+        `<form [formGroup]="form">
+            <common-email name='email1' formControlName='email1' required></common-email>
+           </form>`
+      );
+
+      tickAndDetectChanges(fixture);
+      const control = fixture.componentInstance.form.get(
+        'email1'
+      ) as FormControl;
+      expect(control.hasError('required')).toBeTruthy();
+    }));
+
+    it('should apply in a template driven form', fakeAsync(() => {
+      const fixture = createTestingModule(
+        EmailTemplateTestComponent as unknown as Type<EmailReactTestComponent>,
+        `<form>
+            <common-email name='email1' [(ngModel)]='email1' required></common-email>
+           </form>`
+      );
+
+      tickAndDetectChanges(fixture);
+      const de = getDebugElement(fixture, 'common-email', 'email1');
+      expect(de.componentInstance.controlDir.hasError('required')).toBeTruthy();
+    }));
+  });
 });
