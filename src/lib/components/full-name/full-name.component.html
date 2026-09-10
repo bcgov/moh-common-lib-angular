@@ -2,28 +2,29 @@
   <common-name
     label="First Name"
     [disabled]="disabled"
-    [(value)]="person.firstName"
-    objectID="first_name"
-  ></common-name>
-  <!-- (blurEvent)="onBlur($event)" -->
+    [value]="person.firstName"
+    (valueChange)="setName('firstName', $event)"
+    (blur)="onBlur()"
+    objectID="first_name"></common-name>
 </div>
 
 <div class="form-group col-sm-6 p-sm-0">
   <common-name
     label="Middle Name"
     [disabled]="disabled"
-    [(value)]="person.middleName"
-    objectID="middle_name"
-  ></common-name>
+    [value]="person.middleName"
+    (valueChange)="setName('middleName', $event)"
+    (blur)="onBlur()"
+    objectID="middle_name"></common-name>
 </div>
 
 <div class="form-group col-sm-6 p-sm-0">
   <common-name
     label="Last Name"
-    [required] = "true"
+    [required]="required"
     [disabled]="disabled"
-    [(value)]="person.lastName"
-    objectID="last_name"
-  ></common-name>
+    [value]="person.lastName"
+    (valueChange)="setName('lastName', $event)"
+    (blur)="onBlur()"
+    objectID="last_name"></common-name>
 </div>
-
