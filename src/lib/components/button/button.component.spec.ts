@@ -26,7 +26,7 @@ describe('Button.Component', () => {
   });
 
   // Test for button label input
-  it(`Button label is displayed`, () => {
+  it('Button label is displayed', () => {
     const { element } = createButtonComponent();
     element.label = 'Button';
     expect(element.label).toEqual('Button');

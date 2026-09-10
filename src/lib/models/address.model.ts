@@ -3,18 +3,18 @@
  */
 
 export class Address {
-
-  static PostalCodeBCRegEx = '^[Vv]\\d[ABCEGHJ-NPRSTV-Zabceghj-nprstv-z][ ]?\\d[ABCEGHJ-NPRSTV-Zabceghj-nprstv-z]\\d$';
+  static PostalCodeBCRegEx =
+    '^[Vv]\\d[ABCEGHJ-NPRSTV-Zabceghj-nprstv-z][ ]?\\d[ABCEGHJ-NPRSTV-Zabceghj-nprstv-z]\\d$';
 
   // Definite assignment assertion (!) to tell TypeScript that these properties will be initialized later
   public addressLine1!: string;
   /** Used to store optional extra address fields. Can be used with addressLine1 OR street. */
   public addressLine2!: string;
   /** Used to store optional extra address fields. Can be used with addressLine1 OR street. */
-  public addressLine3!: string
-  public unitNumber!: string
-  public streetNumber!: string
-  public streetName!: string
+  public addressLine3!: string;
+  public unitNumber!: string;
+  public streetNumber!: string;
+  public streetName!: string;
   public postal!: string;
   public country!: string;
   public province!: string;
@@ -22,13 +22,12 @@ export class Address {
   public hasValue!: boolean; // TODO: Why do we need this? - Remove - breaking change
   public isValid!: boolean; // TODO: Why do we need this? - Remove - breaking change
 
-
   // For backward compatibilty with applications that use street.
   get street() {
     return this.addressLine1;
   }
 
-  set street( val: string ) {
+  set street(val: string) {
     this.addressLine1 = val;
   }
 
@@ -47,14 +46,18 @@ export class Address {
    */
   isComplete(): boolean {
     // All fields have data - not empty
-    return !!(this.addressLine1 && this.city && this.country &&
-             this.province && this.postal);
+    return !!(
+      this.addressLine1 &&
+      this.city &&
+      this.country &&
+      this.province &&
+      this.postal
+    );
   }
 
   get isBCOnly(): boolean {
     let isValid = false;
-    if (this.postal &&
-      this.postal.length > 0) {
+    if (this.postal && this.postal.length > 0) {
       const regEx = new RegExp(Address.PostalCodeBCRegEx);
       isValid = regEx.test(this.postal);
     }
@@ -73,7 +76,3 @@ export class Address {
     this.province = object.province;
   }
 }
-
-
-
-

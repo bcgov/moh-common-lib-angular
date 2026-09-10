@@ -12,18 +12,27 @@
     "lint": "ng lint",
     "prettier": "./node_modules/.bin/prettier --single-quote --write './src/**/*.{ts,js,css,json,scss,html}'",
     "precommit": "lint-staged",
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "lint-staged": {
-    "src/**/*.**.{ts,js,html,scss}": [
+    "src/**/*.{ts,html}": [
       "prettier --write",
-      "git add"
+      "eslint"
+    ],
+    "src/**/*.{js,scss}": [
+      "prettier --write"
     ]
   },
   "private": true,
+  "engines": {
+    "node": ">=22.11.0",
+    "npm": ">=10.9.0"
+  },
   "overrides": {
     "tar": "^7.0.0",
-    "serialize-javascript": "^7.0.0"
+    "serialize-javascript": "^7.0.0",
+    "jest": "$jest",
+    "jest-environment-jsdom": "$jest-environment-jsdom"
   },
   "dependencies": {
     "@angular/common": "^19.2.20",
@@ -44,16 +53,17 @@
     "@angular-eslint/builder": "^19.4.0",
     "@angular/cli": "^19.2.24",
     "@angular/compiler-cli": "^19.2.20",
+    "@eslint/js": "^9.39.5",
     "@types/date-fns": "^2.5.3",
-    "@types/jest": "^29.5.14",
+    "@types/jest": "^30.0.0",
     "@types/zxcvbn": "^4.4.5",
     "angular-eslint": "19.4.0",
     "bootstrap": "^5.3.6",
     "date-fns": "^4.1.0",
-    "eslint-config-prettier": "^10.1.8",
-    "husky": "^8.0.0",
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
+    "eslint": "^9.39.5",
+    "husky": "^9.1.7",
+    "jest": "^30.5.1",
+    "jest-environment-jsdom": "^30.5.1",
     "jest-preset-angular": "^16.1.4",
     "lint-staged": "^16.2.7",
     "ngx-mask": "^19.0.7",

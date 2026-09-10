@@ -27,7 +27,7 @@ describe('Checkbox.Component', () => {
   });
 
   // Test for checkbox label input
-  it(`Checkbox label is displayed`, () => {
+  it('Checkbox label is displayed', () => {
     const { element } = createCheckboxComponent();
     element.label = 'Checkbox';
     expect(element.label).toEqual('Checkbox');

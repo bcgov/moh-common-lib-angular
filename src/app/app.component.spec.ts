@@ -14,7 +14,7 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it(`should have the 'moh-common-lib-angular' title 1`, () => {
+  it("should have the 'moh-common-lib-angular' title 1", () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
     expect(app.title).toEqual('moh-common-lib-angular');

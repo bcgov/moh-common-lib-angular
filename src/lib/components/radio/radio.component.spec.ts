@@ -13,12 +13,7 @@ import {
 } from '@angular/forms';
 import { IRadioItems, RadioComponent } from './radio.component';
 import { provideNgxMask } from 'ngx-mask';
-import {
-  Component,
-  DebugElement,
-  OnInit,
-  Type,
-} from '@angular/core';
+import { Component, DebugElement, OnInit, Type } from '@angular/core';
 import {
   tickAndDetectChanges,
   getDebugLegend,
@@ -99,7 +94,7 @@ function createTestingModule<T>(
 }
 
 @Component({
-  template: ``,
+  template: '',
 })
 class RadioTestComponent {
   radio1!: boolean;
@@ -131,7 +126,7 @@ class RadioTestComponent {
 }
 
 @Component({
-  template: ``,
+  template: '',
   imports: [RadioComponent, FormsModule, ReactiveFormsModule],
 })
 class RadioReactTestComponent extends RadioTestComponent implements OnInit {
@@ -292,13 +287,24 @@ describe('Radio.Component', () => {
     );
 
     // radioBtn1 ==> boolean / true
-    expectCheckedValue(fixture, getDebugElement(fixture, 'common-radio', 'radioBtn1'), true);
+    expectCheckedValue(
+      fixture,
+      getDebugElement(fixture, 'common-radio', 'radioBtn1'),
+      true
+    );
 
     // radioBtn2 ==> number / 1
-    expectCheckedValue(fixture, getDebugElement(fixture, 'common-radio', 'radioBtn2'), 1);
+    expectCheckedValue(
+      fixture,
+      getDebugElement(fixture, 'common-radio', 'radioBtn2'),
+      1
+    );
 
     // radioBtn3 ==> string / blue
-    expectCheckedValue(fixture, getDebugElement(fixture, 'common-radio', 'radioBtn3'), 'blue');
-   
+    expectCheckedValue(
+      fixture,
+      getDebugElement(fixture, 'common-radio', 'radioBtn3'),
+      'blue'
+    );
   }));
 });
