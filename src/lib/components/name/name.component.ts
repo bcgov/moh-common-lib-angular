@@ -28,7 +28,24 @@ interface ErrorMessageExtended extends ErrorMessage {
 }
 
 /**
- * TODO DOCUMENT NEED TO USE NGMODEL FOR REQUIRED TO WORK. Also test with reactive forms to see if still nec
+ * Valid characters for a name: must begin with a letter, followed by letters,
+ * hyphens, periods, apostrophes or blanks.
+ */
+const nameCriteria = /^[a-zA-Z][a-zA-Z\-.' ]*$/;
+
+/**
+ * Valid characters for initials, used when maxlength is 1: exactly one letter.
+ * Both ends are anchored so the expression cannot backtrack over the input.
+ */
+const initialCriteria = /^[a-zA-Z]$/;
+
+/**
+ * Required validation comes from Angular's own RequiredValidator, which matches
+ * the `required` attribute on the host element. It works in both template driven
+ * and reactive forms, so ngModel is not needed for it. The `required` input below
+ * only forwards the native attribute to the inner input, and only when it is bound
+ * as a property: `[required]="true"` sets the attribute, while a bare `required`
+ * attribute passes an empty string and leaves the inner input without it.
  */
 @Component({
   selector: 'common-name',
@@ -110,13 +127,11 @@ export class NameComponent
     const maxlen = Number.parseInt(this.maxlength, 10);
     if (this.nameStr) {
       if (maxlen > 1) {
-        // Valid characters for name
-        const criteria = RegExp("^[a-zA-Z][a-zA-Z\\-.' ]*$");
-        return criteria.test(this.nameStr) ? null : { invalid: true };
+        return nameCriteria.test(this.nameStr) ? null : { invalid: true };
       } else {
-        // Only letters for initials
-        const letters = RegExp('[a-zA-Z]*$');
-        return letters.test(this.nameStr) ? null : { invalidChar: true };
+        return initialCriteria.test(this.nameStr)
+          ? null
+          : { invalidChar: true };
       }
     }
     return null;
