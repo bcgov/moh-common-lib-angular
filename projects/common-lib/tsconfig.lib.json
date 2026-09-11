@@ -1,0 +1,28 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../out-tsc/lib",
+    "declaration": true,
+    "declarationMap": true,
+    "inlineSources": true,
+    "types": []
+  },
+  "angularCompilerOptions": {
+    "compilationMode": "partial"
+  },
+  /* ng-packagr compiles the import graph reachable from the entryFile in
+     ng-package.json and overrides files/include, so these two arrays do not
+     drive the library build. They are kept correct anyway, so that running tsc
+     directly against this config, or any tooling that does honour them, sees
+     the same surface the package ships. Paths are resolved relative to THIS
+     file, which is why they need the ../../ prefix. */
+  "exclude": [
+    "../../src/**/*.spec.ts",
+    "../../src/helpers/test-helpers.ts"
+  ],
+  "include": [
+    "../../src/public-api.ts",
+    "../../src/lib/**/*.ts",
+    "../../src/helpers/**/*.ts"
+  ]
+}
