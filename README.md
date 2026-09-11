@@ -345,30 +345,42 @@ importing `variables.scss`, until the styling pipeline is reconnected.
 Recorded so they are not rediscovered as surprises.
 
 - **Four runtime dependencies are declared in the root `devDependencies`:** `ngx-mask`,
-  `date-fns`, `uuid`, and `zxcvbn`. All four are imported by shipped `src/lib/` code.
-  `uuid` backs `Base`, which nearly every component extends. This is now cosmetic for
-  consumers, because all four are declared as `peerDependencies` in
-  `projects/common-lib/package.json` and npm installs them, but the root manifest still
-  misfiles them.
-- **`npm run lint` reports 415 problems: 11 errors and 404 warnings.** ESLint had never
-  actually run in this repo before the Node 22 work added the missing `eslint`
-  dependency, so all of these are pre-existing findings, not regressions. None of them
-  is auto-fixable.
+  `date-fns`, `uuid`, and `zxcvbn`. `uuid` backs `Base`, which nearly every component
+  extends. For the first three this is cosmetic for consumers, because they are declared
+  as `peerDependencies` in `projects/common-lib/package.json` and npm installs them; the
+  root manifest simply misfiles them.
 
-  Four rules are set to `warn` rather than `error` on purpose, so that the pre-commit
+  `zxcvbn` is different: its only importer is `PasswordComponent`, which the barrel does
+  not export, so it is not in the shipped bundle and is **not** a peer dependency. Adding
+  it to the peer set would make every consumer install a package no shipped code uses.
+  Exporting `PasswordComponent` later means adding `zxcvbn` back as a peer in the same
+  change. The peer set is verifiable: every `from '<package>'` in
+  `dist/moh-common-lib-angular/fesm2022/*.mjs` should have a matching peer entry, and
+  nothing else should.
+- **`npm run lint` reports 411 problems: 0 errors and 411 warnings.** Verified on the
+  2.0.0 release commit. ESLint had never actually run in this repo before the Node 22
+  work added the missing `eslint` dependency, so all of these are pre-existing findings,
+  not regressions. None of them is auto-fixable.
+
+  | Rule | Count |
+  |---|---|
+  | `@typescript-eslint/member-ordering` | 148 |
+  | `@typescript-eslint/no-explicit-any` | 128 |
+  | `no-underscore-dangle` | 112 |
+  | `@typescript-eslint/no-unused-vars` | 14 |
+  | `@angular-eslint/no-output-native` | 9 |
+
+  These rules are set to `warn` rather than `error` on purpose, so that the pre-commit
   hook can block genuinely new problems without rejecting every commit that touches an
-  already-affected file. Three are high-volume style debt: `member-ordering` (150),
-  `no-explicit-any` (128), and `no-underscore-dangle` (112, the `ControlValueAccessor`
-  idiom). The fourth, `no-output-native` (9), flags public `blur` and `select` outputs
-  on eight components; renaming those breaks every consuming app's template bindings,
-  so it needs an API decision rather than a drive-by fix. Promote each back to `error`
-  in `eslint.config.js` as it is cleared.
+  already-affected file. The first three are high-volume style debt, `no-underscore-dangle`
+  being the `ControlValueAccessor` idiom. `no-output-native` flags public `blur` and
+  `select` outputs on eight components; renaming those breaks every consuming app's
+  template bindings, so it needs an API decision rather than a drive-by fix. Promote each
+  back to `error` in `eslint.config.js` as it is cleared.
 
-  That leaves 2 errors, which do block a commit: `templateAccessibility` findings on a
-  click handler in `password.component.html` that has no keyboard equivalent. That
-  config was not in the old `.eslintrc.json` and was added deliberately with the flat
-  config. It is a sound default for a component library, and it caught a real
-  accessibility gap, so it stays blocking until the handler is fixed.
+  The 2 blocking `templateAccessibility` errors recorded here previously are gone. They
+  covered a click handler in `password.component.html` with no keyboard equivalent, fixed
+  by replacing the `span` with a real `button` in the validation-hardening work.
 - **`npm audit`: 8 high-severity advisories in production dependencies**
   (`@angular/*`, `@ng-select/ng-select`), 33 total including dev. Clearing the Angular
   ones requires an Angular 20 upgrade.

@@ -31,9 +31,13 @@ build will warn you.
   package in `dist/moh-common-lib-angular`; `npm run pack:lib` produces the tarball.
   Consumers get compiled output with `.d.ts` files instead of raw TypeScript compiled by
   their own build.
-- **Declared `peerDependencies`.** `ngx-mask`, `date-fns`, `uuid`, and `zxcvbn` are
-  imported by shipped code but were only ever listed in the root `devDependencies`, so
-  every consumer had to discover them. npm now installs them.
+- **Declared `peerDependencies`.** `ngx-mask`, `date-fns`, and `uuid` are imported by
+  shipped code but were only ever listed in the root `devDependencies`, so every consumer
+  had to discover them. npm now installs them. The full peer set matches the external
+  imports in the shipped bundle exactly: `@angular/common`, `@angular/core`,
+  `@angular/forms`, `@angular/router`, `@ng-select/ng-select`, `date-fns`, `ngx-mask`,
+  `rxjs`, and `uuid`. `zxcvbn` is deliberately not among them, because its only importer
+  is the unexported `PasswordComponent` and it is therefore absent from the bundle.
 - **Apache 2.0 `LICENSE`**, included in the published package.
 - **Release tooling in `build_utils/`.** `release-set-version.sh` writes the version to all
   four places it lives, `release-notes.sh` drafts the changelog from the commit range, and
