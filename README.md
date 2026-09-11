@@ -168,16 +168,23 @@ Layout and presentation:
 
 ### Components present but NOT exported
 
+**Not exported means not shipped.** ng-packagr compiles only the import graph reachable
+from `src/public-api.ts`, so anything the barrel does not reach is absent from the
+published package entirely, not merely hidden behind a deep import path. These exist in
+this repo and are usable if you build against the sources, but a consumer installing the
+package cannot import them by any path.
+
 | Component | Why |
 |---|---|
-| `PasswordComponent` (`common-password`) | Pulls in `zxcvbn`, which not every consuming app carries. Import by deep path if needed. |
+| `PasswordComponent` (`common-password`) | Pulls in `zxcvbn`, which not every consuming app carries. To ship it, export it from `public-api.ts` and add `zxcvbn` to the library `peerDependencies`. |
 | `ConfirmTemplateComponent` (`common-confirm-template`) | Never added to the barrel. |
 | `ConsentModalComponent` | Entire class body is commented out. The template file is empty. Dead code. |
 
 ### Validator directives
 
-Not exported from `public-api.ts`; import by deep path. Each also exports a bare
-`ValidatorFn` for reactive forms.
+Not exported from `public-api.ts`, and nothing that is exported imports them, so they
+are **absent from the published package** for the reason above. Each also exports a bare
+`ValidatorFn` for reactive forms. Export them from the barrel to ship them.
 
 | Directive | Selector | Error key |
 |---|---|---|

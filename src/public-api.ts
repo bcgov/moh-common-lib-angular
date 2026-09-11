@@ -53,7 +53,10 @@ export { ErrorContainerComponent } from './lib/components/error-container/error-
 export { FullNameComponent } from './lib/components/full-name/full-name.component';
 export { HeaderComponent } from './lib/components/header/header.component';
 export { NameComponent } from './lib/components/name/name.component';
-// PasswordComponent uses zxcvbn (not a fpcare dependency) — import directly if needed
+// PasswordComponent uses zxcvbn, which not every consuming app carries. Leaving it
+// unexported keeps it out of the published package entirely, since ng-packagr only
+// compiles what this barrel reaches. To ship it, export it here and add zxcvbn to the
+// peerDependencies in projects/common-lib/package.json.
 // export { PasswordComponent } from './lib/components/password/password.component';
 export { PhnComponent } from './lib/components/phn/phn.component';
 export { PhoneNumberComponent } from './lib/components/phone-number/phone-number.component';
