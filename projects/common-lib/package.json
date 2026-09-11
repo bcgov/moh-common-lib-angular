@@ -1,6 +1,6 @@
 {
   "name": "moh-common-lib-angular",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Shared Angular component library for BC Ministry of Health applications.",
   "keywords": [
     "bcgov",
@@ -22,8 +22,7 @@
     "date-fns": "^4.1.0",
     "ngx-mask": "^19.0.7",
     "rxjs": "^7.8.0",
-    "uuid": "^11.1.0",
-    "zxcvbn": "^4.4.2"
+    "uuid": "^11.1.0"
   },
   "dependencies": {
     "tslib": "^2.3.0"
