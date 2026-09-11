@@ -73,9 +73,24 @@ fi
 
 # 8. Registry must not already carry this version. Publishing is irreversible,
 #    so this is checked even when the release is tag-only.
-if REMOTE_VERSION="$(npm view "${PKG_NAME}@${VERSION}" version 2>/dev/null)" \
-   && [ -n "$REMOTE_VERSION" ]; then
-  fail "${PKG_NAME}@${VERSION} is already published to the registry"
+#
+#    npm view exits non-zero both when the version does not exist and when the
+#    registry cannot be reached. Collapsing those two into "safe to proceed"
+#    would make the only irreversible check fail open on a network blip, so the
+#    two are told apart by the E404 code npm puts on stderr. Anything else is a
+#    check that did not run, and an unrun check blocks.
+NPM_VIEW_STDERR="$(mktemp)"
+trap 'rm -f "$NPM_VIEW_STDERR"' EXIT
+if REMOTE_VERSION="$(npm view "${PKG_NAME}@${VERSION}" version 2>"$NPM_VIEW_STDERR")"; then
+  if [ -n "$REMOTE_VERSION" ]; then
+    fail "${PKG_NAME}@${VERSION} is already published to the registry"
+  fi
+  fail "npm view returned success but no version; cannot confirm ${VERSION} is unpublished"
+elif grep -q 'code E404' "$NPM_VIEW_STDERR"; then
+  : # 404 is the answer we want: neither the package nor the version is there.
+else
+  printf '%s\n' "$(sed -n '1,3p' "$NPM_VIEW_STDERR")" >&2
+  fail "cannot reach the registry to check whether ${VERSION} is published; see above"
 fi
 ok "${VERSION} is not on the registry"
 
