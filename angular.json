@@ -17,7 +17,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist",
+            "outputPath": "dist/showcase",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -85,6 +85,21 @@
               "src/**/*.ts",
               "src/**/*.html"
             ]
+          }
+        }
+      }
+    },
+    "moh-common-lib-angular-lib": {
+      "projectType": "library",
+      "root": "projects/common-lib",
+      "sourceRoot": "src",
+      "prefix": "common",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/common-lib/ng-package.json",
+            "tsConfig": "projects/common-lib/tsconfig.lib.json"
           }
         }
       }

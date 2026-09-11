@@ -4,8 +4,10 @@ Shared Angular component library for BC Ministry of Health applications. Provide
 reusable standalone components, services, models, and helpers consumed by apps such
 as `fpcare`.
 
-Distributed locally via [yalc](https://github.com/wclr/yalc) during development. This
-package is `private: true` and is not published to npm.
+Packaged with ng-packagr into Angular Package Format output. The workspace root stays
+`private: true`; the thing that gets published is the built package in
+`dist/moh-common-lib-angular`. Not yet published to any registry. See Packaging and
+release below.
 
 ---
 
@@ -31,19 +33,27 @@ Run `nvm use` in the repo root to pick up the pinned Node version.
 
 ### This repo has two roles
 
-1. **A library.** `package.json` points `main` and `typings` at `src/public-api.ts`.
-   Consuming apps get raw TypeScript, compiled by the consumer's own build.
+1. **A library.** `src/lib/` and `src/helpers/`, packaged by ng-packagr through the
+   library project in `projects/common-lib/`. Consumers get compiled Angular Package
+   Format output, not raw TypeScript.
 2. **A showcase app.** `src/app/` is a runnable Angular application
    (`ng serve`) that renders library components for manual inspection.
 
-There is no ng-packagr setup and no Angular Package Format output. `src/public-api.ts`
-is a hand-maintained barrel file, and it is the single source of truth for what is
-public. A component that is not exported there is not part of the library surface, even
-if the file exists.
+`src/public-api.ts` is a hand-maintained barrel file, and it is the single source of
+truth for what is public. A component that is not exported there is not part of the
+library surface, even if the file exists.
+
+The library project directory holds only configuration. The sources stay in `src/`, and
+`projects/common-lib/ng-package.json` reaches back to them with a relative `entryFile`.
 
 ### Layout
 
 ```
+projects/
+  common-lib/          Library packaging config only, no source.
+    package.json       The PUBLISHED manifest: name, version, peerDependencies.
+    ng-package.json    ng-packagr config. entryFile points at ../../src/public-api.ts.
+    tsconfig.lib.json  Library compile. Partial Ivy mode. Excludes src/app and specs.
 src/
   public-api.ts        Export barrel. The public surface. Edit this to publish anything.
   main.ts, index.html  Showcase app entry point.
@@ -228,7 +238,9 @@ prefer a global CLI, pin it: `npm install -g @angular/cli@19`.
 ```bash
 npm ci             # clean install from the lockfile
 npm start          # ng serve, runs the showcase app
-npm run build      # ng build, output to dist/
+npm run build      # ng build, showcase app, output to dist/showcase/
+npm run build:lib  # ng-packagr, library output to dist/moh-common-lib-angular/
+npm run pack:lib   # build:lib, then npm pack, producing the publishable tarball
 npm test           # ng test, Jest via @angular-builders/jest
 npm run lint       # ng lint, ESLint flat config
 npm run prettier   # format src/
@@ -269,13 +281,42 @@ interfaces, and constants. `src/helpers/` and `src/app/` are excluded entirely.
 
 Current state: 38 suites, 146 tests, all passing.
 
-### Local publishing (yalc)
+### Packaging and release
 
 ```bash
-yalc publish                      # in this repo
-yalc add moh-common-lib-angular   # in the consuming app
-yalc push                         # push later changes to linked apps
+npm run build:lib    # ng-packagr, to dist/moh-common-lib-angular/
+npm run pack:lib     # the above, then npm pack, giving a .tgz to hand to a consumer
 ```
+
+`projects/common-lib/package.json` carries the published name, version, and
+peerDependencies. Bump the version there, not in the root manifest, before each release.
+Publishing runs from `dist/moh-common-lib-angular`, never from the repo root; the root is
+`private: true` and will refuse.
+
+The library compiles in **partial** Ivy mode (`compilationMode` in `tsconfig.lib.json`).
+Full mode makes ng-packagr write a `prepublishOnly` guard that aborts any publish, so do
+not remove that setting. `npm run build:lib` also copies `README.md` and `LICENSE` into
+`dist`, which ng-packagr cannot do itself because both sit outside its project root.
+
+The showcase app writes to `dist/showcase` rather than `dist/` so that the two builds do
+not delete each other's output.
+
+### Local publishing (yalc)
+
+Serve the built package, not the sources.
+
+```bash
+npm run build:lib
+cd dist/moh-common-lib-angular && yalc publish
+
+yalc add moh-common-lib-angular   # in the consuming app
+
+npm run build:lib                 # after each library change
+cd dist/moh-common-lib-angular && yalc push
+```
+
+Prefer yalc over `npm link`. `npm link` symlinks, which gives Angular two copies of
+`@angular/core` and produces `NG0203` injection errors. yalc copies.
 
 ### Styling
 
@@ -296,10 +337,12 @@ importing `variables.scss`, until the styling pipeline is reconnected.
 
 Recorded so they are not rediscovered as surprises.
 
-- **Four runtime dependencies are declared in `devDependencies`:** `ngx-mask`,
+- **Four runtime dependencies are declared in the root `devDependencies`:** `ngx-mask`,
   `date-fns`, `uuid`, and `zxcvbn`. All four are imported by shipped `src/lib/` code.
-  `uuid` backs `Base`, which nearly every component extends. Consuming apps must
-  install these themselves.
+  `uuid` backs `Base`, which nearly every component extends. This is now cosmetic for
+  consumers, because all four are declared as `peerDependencies` in
+  `projects/common-lib/package.json` and npm installs them, but the root manifest still
+  misfiles them.
 - **`npm run lint` reports 415 problems: 11 errors and 404 warnings.** ESLint had never
   actually run in this repo before the Node 22 work added the missing `eslint`
   dependency, so all of these are pre-existing findings, not regressions. None of them
@@ -334,9 +377,10 @@ Recorded so they are not rediscovered as surprises.
   combination; it clears on an `@angular-builders/jest` major that supports Jest 30.
   Note this is separate from the root `jest-preset-angular@16.2.0` that
   `setup-jest.ts` imports. The two-version split predates the Node 22 work.
-- **The repo is built as an application, not a library.** Consumers get raw TypeScript
-  through a hand-maintained barrel. Proper ng-packagr packaging is the intended
-  eventual fix, per the note at the top of `src/public-api.ts`.
+- **The library is not published to any registry yet.** The packaging works and the
+  artifact has been verified against a fresh Angular 19 application, but no registry
+  account has been set up. Until then, consumers take the tarball from `npm run
+  pack:lib` or link it with yalc.
 
 ---
 

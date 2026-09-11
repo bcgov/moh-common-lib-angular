@@ -1,7 +1,7 @@
 /**
- * Public API for moh-common-lib-angular
- * Used by consuming apps (e.g. fpcare) via yalc for local development testing.
- * NOTE: This is a temporary barrel file pending proper ng-packagr library setup.
+ * Public API for moh-common-lib-angular.
+ * This is the ng-packagr entry point, referenced by projects/common-lib/ng-package.json.
+ * Anything not exported here is not part of the published library surface.
  */
 
 // Models
@@ -16,7 +16,12 @@ export { AbstractReactForm } from './lib/models/abstract-react-form';
 export { Container } from './lib/models/container';
 export type { WizardProgressItem } from './lib/models/container';
 export type { ErrorMessage } from './lib/models/error-message.interface';
-export { CommonImage, CommonImageError, CommonImageProcessingError, CommonImageScaleFactorsImpl } from './lib/models/images.model';
+export {
+  CommonImage,
+  CommonImageError,
+  CommonImageProcessingError,
+  CommonImageScaleFactorsImpl,
+} from './lib/models/images.model';
 export { LETTER, NUMBER, SPACE } from './lib/models/mask.constants';
 
 // Services

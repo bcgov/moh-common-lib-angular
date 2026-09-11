@@ -1,0 +1,32 @@
+{
+  "name": "moh-common-lib-angular",
+  "version": "1.0.0",
+  "description": "Shared Angular component library for BC Ministry of Health applications.",
+  "keywords": [
+    "bcgov",
+    "moh",
+    "british columbia",
+    "angular"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bcgov/moh-common-lib-angular"
+  },
+  "peerDependencies": {
+    "@angular/common": "^19.2.0",
+    "@angular/core": "^19.2.0",
+    "@angular/forms": "^19.2.0",
+    "@angular/router": "^19.2.0",
+    "@ng-select/ng-select": "^14.7.0",
+    "date-fns": "^4.1.0",
+    "ngx-mask": "^19.0.7",
+    "rxjs": "^7.8.0",
+    "uuid": "^11.1.0",
+    "zxcvbn": "^4.4.2"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "sideEffects": false
+}
