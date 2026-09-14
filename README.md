@@ -339,10 +339,12 @@ npm run build:lib    # ng-packagr, to dist/moh-common-lib-angular/
 npm run pack:lib     # the above, then npm pack, giving a .tgz to hand to a consumer
 ```
 
-`projects/common-lib/package.json` carries the published name, version, and
-peerDependencies. Bump the version there, not in the root manifest, before each release.
-Publishing runs from `dist/moh-common-lib-angular`, never from the repo root; the root is
-`private: true` and will refuse.
+[projects/common-lib/package.json](projects/common-lib/package.json) carries the published
+name, version, and peerDependencies. Set release versions with `npm run release:set-version
+-- X.Y.Z`, not by editing only the library manifest. The existing script updates and
+checks all four locations: [package.json](package.json), [package-lock.json](package-lock.json)
+at both its top level and `packages[""].version`, and the library manifest. It does not
+commit or tag. Publish the built tarball, never the workspace root (`private: true`).
 
 The library compiles in **partial** Ivy mode (`compilationMode` in `tsconfig.lib.json`).
 Full mode makes ng-packagr write a `prepublishOnly` guard that aborts any publish, so do
@@ -351,6 +353,181 @@ not remove that setting. `npm run build:lib` also copies `README.md` and `LICENS
 
 The showcase app writes to `dist/showcase` rather than `dist/` so that the two builds do
 not delete each other's output.
+
+#### Automated validation and releases
+
+- [PR validation](.github/workflows/validate.yml) targets PRs into `main`, including forks,
+  and runs `npm ci`, non-watching CI tests, lint, and `npm run pack:lib`. It has only
+  `contents: read`, no publishing secrets, and no `pull_request_target` trigger.
+- [Release](.github/workflows/release.yml) runs on pushes to `main` in
+  `bcgov/moh-common-lib-angular`. It compares the library version at the push's `before`
+  commit with the accepted push commit. An unchanged version skips all release work;
+  merging these workflows while both versions remain `2.0.0` does **not** publish.
+  A missing/zero baseline fails closed. There is no tag or manual-dispatch trigger.
+- A release must have a strict stable `X.Y.Z` version (no leading zeroes, prerelease, or
+  build suffix), matching versions in all four locations, a new tag, and a completed
+  exact `## X.Y.Z (YYYY-MM-DD)` section in [CHANGELOG.md](CHANGELOG.md). A `v` prefix in
+  the heading is also accepted. Notes are that section, not generated commit summaries.
+  The existing `release:preflight` runs before dependency installation against a clean
+  checkout with full history and tags. Its Git fetch uses a step-scoped, read-only token
+  header in process memory; checkout never persists credentials.
+- The read-only preparation job repeats install, tests, lint, and pack at the immutable
+  accepted commit, then uploads the tarball and notes. The separate `npm` environment
+  job verifies their SHA-256 checksums and the tarball's identity, checks remote state
+  again, and publishes **that tarball without rebuilding it**. Only this job has
+  `id-token: write` and `contents: write`. It checks out no code, installs no project
+  dependencies, and suppresses npm lifecycle scripts. No build job receives OIDC.
+- npm publication uses the public registry, OIDC provenance, public access, and the
+  stable `latest` dist-tag. Only after npm succeeds does the job create a new `vX.Y.Z`
+  Git ref at the tested commit and a matching GitHub Release with the reviewed notes.
+  It never moves or deletes an existing tag, including `v2.0.0`.
+- Both workflows use the latest Node 22 patch (must remain >=22.14.0) and explicitly
+  install npm 11.5.1 for trusted publishing. Repository engine ranges and dependency
+  versions are unchanged. Official actions are pinned to verified immutable SHAs; no
+  dependency/artifact build caches are restored. Lint errors block, while the existing
+  warnings remain warnings.
+
+#### Required human setup and first publication
+
+These are follow-through instructions, **not authorization to commit, push, tag, publish,
+or change GitHub/npm settings**. The npm account is `istevens_npm`; the package has not
+yet been published. Trusted publishing must be configured on an existing npm package,
+so the first publication is a separately approved, authenticated human operation.
+
+1. In GitHub Settings, protect `main` with a branch rule/ruleset: require PRs, reviewed
+   approvals (including version and changelog), dismiss stale approvals, require the
+   `Install, test, lint, pack` check from `PR validation`, and require branches to be
+   up to date. Block direct pushes, force pushes, deletion, and administrative bypass.
+   This workflow trusts pushes to `main`; YAML alone cannot enforce PR-only merges.
+   Do not enable merge queues without adding and validating `merge_group` support.
+   Require trusted review for workflow changes. Protect release tags against update
+   and deletion while permitting the repository Actions token to create new tags.
+2. Enable GitHub Actions and allow the four SHA-pinned official actions used here:
+   `actions/checkout`, `actions/setup-node`, `actions/upload-artifact`, and
+   `actions/download-artifact`. Organization policy must permit the release job's
+   explicit `contents: write` and `id-token: write`; the default can remain read-only.
+   Create a GitHub environment named `npm`, restrict deployment branches to `main`,
+   add required release reviewers, and prevent self-review/bypass where available.
+   The workflow always names this environment; protection settings require human setup.
+3. Merge the workflow PR through review when separately approved. With unchanged
+   `2.0.0`, the release job skips. Do not create, move, or delete `v2.0.0` to trigger it.
+4. Obtain explicit approval for the initial `moh-common-lib-angular@2.0.0` publication.
+   In a separate clean checkout of the existing tag, verify that both the local and
+   remote tag resolve to `cb06ab47043d8f63d57a5a23b3953066df951fa8`. Stop on a mismatch.
+   After approval, these commands prepare and inspect the bootstrap tarball:
+
+   ```bash
+   cd /home/istevens/repos/moh-common-lib-angular
+   git --no-pager ls-remote origin refs/tags/v2.0.0 'refs/tags/v2.0.0^{}'
+   git --no-pager worktree add --detach ../moh-common-lib-angular-bootstrap v2.0.0
+   cd /home/istevens/repos/moh-common-lib-angular-bootstrap
+   git --no-pager rev-parse HEAD
+   git --no-pager status --porcelain
+   nvm install 22
+   nvm use 22
+   npm install --global npm@11.5.1 --ignore-scripts --registry=https://registry.npmjs.org
+   export NPM_CONFIG_REGISTRY=https://registry.npmjs.org
+   export HUSKY=0
+   npm ci
+  npm test -- --ci --watch=false --run-in-band
+   npm run lint
+   npm run pack:lib
+   tar -xOf dist/moh-common-lib-angular-2.0.0.tgz package/package.json
+   sha256sum dist/moh-common-lib-angular-2.0.0.tgz
+   git --no-pager status --porcelain
+   npm view moh-common-lib-angular@2.0.0 version --registry=https://registry.npmjs.org
+   ```
+
+   Inspect the packed manifest and confirm `2.0.0` in all four source locations and
+   the packed manifest, public package identity, repository URL, and the existing
+   reviewed changelog. Both status commands must print nothing. The final registry
+   query must fail specifically with `E404`; success, auth errors, and network errors
+   all mean stop. The normal preflight deliberately rejects an existing tag, so it
+   cannot approve this bootstrap; do not weaken it or recreate the tag.
+
+   With the artifact reviewed and publication approval in hand, authenticate interactively
+   as `istevens_npm` (including npm's browser/2FA prompts), verify the identity, and
+   publish the exact inspected tarball. Do not put credentials in repository files,
+   scripts, command arguments, or GitHub secrets:
+
+   ```bash
+   cd /home/istevens/repos/moh-common-lib-angular-bootstrap
+   npm login --auth-type=web --registry=https://registry.npmjs.org
+   npm whoami --registry=https://registry.npmjs.org
+   npm publish ./dist/moh-common-lib-angular-2.0.0.tgz --access public --tag latest --ignore-scripts --registry=https://registry.npmjs.org
+   npm view moh-common-lib-angular@2.0.0 version dist.integrity --registry=https://registry.npmjs.org
+   ```
+
+   `npm whoami` must say `istevens_npm`; stop otherwise. Local bootstrap does not use
+   Actions OIDC or claim Actions provenance. After successful publication, inspect the
+   existing GitHub Release for `v2.0.0`, or create one through the GitHub UI using the
+   **existing tag** and its exact changelog section, only with release approval.
+5. Sign in to npmjs.com as `istevens_npm`. Open package `moh-common-lib-angular`,
+   Settings, Trusted publishing, Add trusted publisher, GitHub Actions. Enter these
+   case-sensitive values:
+
+   | Setting | Value |
+   |---|---|
+   | Organization or user | `bcgov` (not the npm account) |
+   | Repository | `moh-common-lib-angular` |
+   | Workflow filename | `release.yml` (filename only) |
+   | Environment name | `npm` |
+   | Allowed actions | Explicitly allow direct `npm publish`, not stage-only |
+
+   No `NPM_TOKEN` or `NODE_AUTH_TOKEN` secret is needed. After verifying trusted
+   publishing, select npm Publishing access: **Require two-factor authentication and
+   disallow tokens**. Keep human 2FA recovery available. npm does not validate these
+   trust settings when saved; only a future approved release can verify OIDC end to end.
+
+#### Future release PRs
+
+Choose the next stable version based on consumer impact, then use the existing tooling
+on the release PR branch. For example, only if review determines a patch is appropriate:
+
+```bash
+cd /home/istevens/repos/moh-common-lib-angular
+npm run release:set-version -- 2.0.1
+npm run release:notes -- 2.0.1 v2.0.0
+```
+
+The notes command prints a draft; insert it into [CHANGELOG.md](CHANGELOG.md), replace
+every TODO, remove generator comments, and review the summary and consumer actions.
+Review all four version locations in the PR. Commit/push only with separate approval.
+Do not pre-create the tag or manually publish: the accepted `main` push performs the
+release after validation and environment approval. Ordinary PRs leave the version alone.
+
+#### Serialization and manual recovery
+
+Release concurrency never cancels an active run, including a publish awaiting approval.
+GitHub concurrency retains **one pending run**, replaces older pending runs, and does not
+guarantee ordering. An ordinary unchanged-version push can replace a pending release
+push. Merge no additional PRs while a release is queued/running; confirm each release
+completes before merging the next. A displaced release is not automatically replayed:
+use its original Actions run's **Re-run all jobs** if available, after checking remote
+state and coordinating all releases. Otherwise stop for an approved recovery plan; an
+empty push will not trigger publication of an unchanged version.
+
+Reruns fail closed if the target npm version, tag, or GitHub Release already exists,
+even if it looks correct. They also block registry/network ambiguity and prevent an
+older version from replacing a newer stable `latest`. There is no automatic republish,
+tag repair, rollback, or "already exists, therefore success" shortcut.
+
+- Before npm publication: fix the cause, confirm no version/tag/release exists, and
+  rerun. Failed-job reruns reuse the uploaded artifact; all-job reruns validate and pack
+  the same event commit again. Expired/missing artifacts block publishing (retention is
+  30 days). Do not substitute a locally rebuilt artifact in a failed-job rerun.
+- If npm may have succeeded: stop and inspect the original run's artifact, checksums,
+  accepted commit, registry `dist.integrity`, and npm provenance. Compute the retained
+  tarball's SHA-512 SRI, for example with `node -e 'const fs=require("node:fs"),
+  crypto=require("node:crypto"); console.log("sha512-"+crypto.createHash("sha512").update(fs.readFileSync(process.argv[1])).digest("base64"))'
+  /absolute/path/to/package.tgz`, and compare it with `npm view
+  moh-common-lib-angular@X.Y.Z dist.integrity --registry=https://registry.npmjs.org`.
+  Verify any existing tag resolves to the original tested commit and compare any Release
+  notes to the retained notes. Any mismatch or missing evidence blocks recovery.
+- Only after those checks and explicit approval may a maintainer create a **missing**
+  tag at that exact commit and/or a **missing** GitHub Release from the exact reviewed
+  notes. Never republish the version or move/delete an existing tag. If evidence cannot
+  be verified, hand off for a new reviewed version rather than guessing or unpublishing.
 
 ### Local publishing (yalc)
 
@@ -464,9 +641,10 @@ Recorded so they are not rediscovered as surprises.
   Note this is separate from the root `jest-preset-angular@16.2.0` that
   `setup-jest.ts` imports. The two-version split predates the Node 22 work.
 - **The library is not published to any registry yet.** The packaging works and the
-  artifact has been verified against a fresh Angular 19 application, but no registry
-  account has been set up. Until then, consumers take the tarball from `npm run
-  pack:lib` or link it with yalc.
+  artifact has been verified against a fresh Angular 19 application. The npm account is
+  `istevens_npm`; initial publication and trusted-publisher configuration still require
+  the human setup above. Until then, consumers take the tarball from `npm run pack:lib`
+  or link it with yalc.
 
 ---
 

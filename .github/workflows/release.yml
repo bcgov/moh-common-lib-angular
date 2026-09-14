@@ -1,0 +1,221 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+# GitHub keeps only one pending run. Do not merge another release while one waits.
+concurrency:
+  group: npm-release-main
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: 'true'
+  HUSKY: '0'
+  NPM_CONFIG_REGISTRY: https://registry.npmjs.org
+
+jobs:
+  prepare:
+    if: github.repository == 'bcgov/moh-common-lib-angular'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.version.outputs.changed }}
+      version: ${{ steps.version.outputs.version }}
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
+      tar-sha256: ${{ steps.pack.outputs.tar-sha256 }}
+      notes-sha256: ${{ steps.pack.outputs.notes-sha256 }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          registry-url: https://registry.npmjs.org
+      - name: Compare library versions at the push endpoints
+        id: version
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const { execFileSync } = require('node:child_process');
+          const before = process.env.BEFORE;
+          if (!/^[0-9a-f]{40}$/.test(before) || /^0+$/.test(before)) {
+            throw new Error('Missing push baseline; manual investigation required.');
+          }
+          const previous = JSON.parse(execFileSync('git', [
+            '--no-pager', 'show', `${before}:projects/common-lib/package.json`
+          ], { encoding: 'utf8' })).version;
+          const version = JSON.parse(fs.readFileSync('projects/common-lib/package.json')).version;
+          const changed = previous !== version;
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `changed=${changed}\n`);
+          if (!changed) {
+            console.log(`Library version remains ${version}; no release.`);
+            process.exit(0);
+          }
+          if (!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(version)) {
+            throw new Error('Releases require strict stable X.Y.Z without leading zeroes.');
+          }
+          const root = JSON.parse(fs.readFileSync('package.json'));
+          const lock = JSON.parse(fs.readFileSync('package-lock.json'));
+          if ([root.version, lock.version, lock.packages[''].version].some(v => v !== version)) {
+            throw new Error('All four version locations must match; use release:set-version.');
+          }
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `version=${version}\n`);
+          console.log(`Release requested: ${previous} -> ${version}`);
+          NODE
+      - name: Select OIDC-compatible npm
+        if: steps.version.outputs.changed == 'true'
+        run: npm install --global npm@11.5.1 --ignore-scripts --registry=https://registry.npmjs.org
+      - name: Run existing release preflight with ephemeral read-only Git auth
+        if: steps.version.outputs.changed == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          READ_TOKEN: ${{ github.token }}
+        run: |
+          auth="$(printf 'x-access-token:%s' "$READ_TOKEN" | base64 -w0)"
+          echo "::add-mask::$auth"
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $auth"
+          export GIT_TERMINAL_PROMPT=0 GIT_PAGER=cat
+          npm run release:preflight -- "$VERSION"
+      - name: Extract the exact reviewed changelog section
+        if: steps.version.outputs.changed == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const version = process.env.VERSION;
+          const lines = fs.readFileSync('CHANGELOG.md', 'utf8').split('\n');
+          const heading = new RegExp(`^## v?${version.replace(/\./g, '\\.')} (\\(\\d{4}-\\d{2}-\\d{2}\\))$`);
+          const matches = lines.flatMap((line, i) => heading.test(line) ? [i] : []);
+          if (matches.length !== 1) throw new Error('Expected one exact dated changelog heading.');
+          const start = matches[0];
+          const next = lines.findIndex((line, i) => i > start && /^## /.test(line));
+          const section = lines.slice(start, next < 0 ? undefined : next).join('\n').trim() + '\n';
+          const body = section.split('\n').slice(1).join('\n');
+          if (/TODO|<!--/.test(body) || !/^### Consumer action required$/m.test(body) ||
+              body.split(/^### /m)[0].trim().length < 20) {
+            throw new Error('Exact changelog section is unfinished.');
+          }
+          fs.mkdirSync(`${process.env.RUNNER_TEMP}/release`, { recursive: true });
+          fs.writeFileSync(`${process.env.RUNNER_TEMP}/release/notes.md`, section);
+          NODE
+      - name: Install, test, lint, and pack the accepted commit without publishing permissions
+        if: steps.version.outputs.changed == 'true'
+        id: pack
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          npm ci
+          npm test -- --ci --watch=false --run-in-band
+          npm run lint
+          npm run pack:lib
+          test "$(git --no-pager rev-parse HEAD)" = "$GITHUB_SHA"
+          test -z "$(git --no-pager status --porcelain)"
+          cp "dist/moh-common-lib-angular-$VERSION.tgz" "$RUNNER_TEMP/release/package.tgz"
+          echo "tar-sha256=$(sha256sum "$RUNNER_TEMP/release/package.tgz" | cut -d ' ' -f1)" >> "$GITHUB_OUTPUT"
+          echo "notes-sha256=$(sha256sum "$RUNNER_TEMP/release/notes.md" | cut -d ' ' -f1)" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: steps.version.outputs.changed == 'true'
+        id: upload
+        with:
+          name: release-${{ github.sha }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/release/
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    needs: prepare
+    if: needs.prepare.outputs.changed == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: npm
+    permissions:
+      contents: write
+      id-token: write
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+      TAR_SHA256: ${{ needs.prepare.outputs.tar-sha256 }}
+      NOTES_SHA256: ${{ needs.prepare.outputs.notes-sha256 }}
+    steps:
+      # No checkout, dependency install, lifecycle scripts, build, or cache here.
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          registry-url: https://registry.npmjs.org
+      - name: Select OIDC-compatible npm without lifecycle scripts
+        run: npm install --global npm@11.5.1 --ignore-scripts --registry=https://registry.npmjs.org
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ needs.prepare.outputs.artifact-id }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/release
+      - name: Verify handoff and fail closed on any existing release state
+        working-directory: ${{ runner.temp }}/release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          printf '%s  package.tgz\n%s  notes.md\n' "$TAR_SHA256" "$NOTES_SHA256" | sha256sum --check --strict
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          const { execFileSync } = require('node:child_process');
+          async function check() {
+            const version = process.env.VERSION;
+            const stable = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
+            assert.match(version, stable);
+            const pkg = JSON.parse(execFileSync('tar', ['-xOf', 'package.tgz', 'package/package.json'], { encoding: 'utf8' }));
+            assert.equal(pkg.name, 'moh-common-lib-angular');
+            assert.equal(pkg.version, version);
+            assert.notEqual(pkg.private, true);
+            assert.equal(pkg.repository.url, 'https://github.com/bcgov/moh-common-lib-angular');
+            assert.equal(pkg.publishConfig, undefined, 'Unexpected publishConfig requires review.');
+            for (const path of [`git/ref/tags/v${version}`, `releases/tags/v${version}`]) {
+              const response = await fetch(`${process.env.GITHUB_API_URL}/repos/${process.env.GITHUB_REPOSITORY}/${path}`, {
+                headers: { Authorization: `Bearer ${process.env.GH_TOKEN}`, Accept: 'application/vnd.github+json' }
+              });
+              assert.equal(response.status, 404, `Existing or unreadable ${path}; manual recovery required.`);
+            }
+            const response = await fetch('https://registry.npmjs.org/moh-common-lib-angular');
+            assert.equal(response.status, 200, 'Registry unavailable or package not bootstrapped; stop.');
+            const metadata = await response.json();
+            assert.ok(metadata.versions && typeof metadata.versions === 'object', 'Invalid registry metadata.');
+            assert.ok(!Object.hasOwn(metadata.versions, version), 'Version already published; manual recovery required.');
+            const newer = (a, b) => {
+              const left = a.split('.').map(BigInt), right = b.split('.').map(BigInt);
+              const i = left.findIndex((n, i) => n !== right[i]);
+              return i >= 0 && left[i] > right[i];
+            };
+            for (const existing of Object.keys(metadata.versions).filter(v => stable.test(v))) {
+              assert.ok(newer(version, existing), `Refusing to replace latest with older version ${version}.`);
+            }
+            console.log(`Verified ${pkg.name}@${version}; no existing version, tag, or release.`);
+          }
+          check().catch(error => { console.error(error); process.exitCode = 1; });
+          NODE
+      - name: Publish the tested tarball using npm trusted publishing
+        working-directory: ${{ runner.temp }}/release
+        run: npm publish ./package.tgz --access public --tag latest --provenance --ignore-scripts --registry=https://registry.npmjs.org
+      - name: Create a new tag at the tested commit, then its GitHub Release
+        working-directory: ${{ runner.temp }}/release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" \
+            -f "ref=refs/tags/v$VERSION" -f "sha=$GITHUB_SHA"
+          gh release create "v$VERSION" --repo "$GITHUB_REPOSITORY" --verify-tag \
+            --title "v$VERSION" --notes-file notes.md --latest
