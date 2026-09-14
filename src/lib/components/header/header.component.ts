@@ -1,17 +1,24 @@
-
-
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, Input } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 
 /**
+ * The blue header at the top of every application, carrying the skip-to-content
+ * link screen reader users tab through.
+ *
  * HeaderComponent is the stylized blue header at the top of every single
  * application.  It has a built-in "Skip to Content" tab-accessible section
  * that's best practice for screen readers.  **You must create an element with
  * `id='content'` for this to work!**  Best practice is to put this "content"
  * element as a wrapper aroud your `<router-outlet>`
  *
+ * @example
+ *   <common-header serviceName="FPCare" urlBaseName="fpcare"></common-header>
+ *
+ *   The skip link targets an element you must provide yourself, usually
+ *   wrapping the router outlet:
+ *   <main id="content"><router-outlet></router-outlet></main>
  */
 @Component({
   selector: 'common-header',
@@ -20,7 +27,6 @@ import { filter } from 'rxjs/operators';
   imports: [CommonModule],
 })
 export class HeaderComponent implements OnInit {
-
   @Input() serviceName: string = '';
   @Input() urlBaseName: string = '';
   @Input() logoSrc: string = 'assets/gov3_bc_logo.png';
@@ -30,14 +36,12 @@ export class HeaderComponent implements OnInit {
   skipLinkPath: string = '';
   private SKIP_CONTENT_HASH = '#content';
 
-  constructor(private router: Router ) {
-  }
+  constructor(private router: Router) {}
 
   ngOnInit() {
-
-    this.router.events.pipe(
-      filter(ev => ev instanceof NavigationEnd),
-    ).subscribe(this.updateSkipContentLink.bind(this));
+    this.router.events
+      .pipe(filter((ev) => ev instanceof NavigationEnd))
+      .subscribe(this.updateSkipContentLink.bind(this));
 
     this.updateSkipContentLink();
   }

@@ -1,0 +1,58 @@
+<div class="thumbnail-container">
+  <img
+    [src]="imageObject.fileContent"
+    [alt]="imageObject.name"
+    tabindex="0"
+    role="button"
+    [ngClass]="{
+      'image-thumbnail': scaledWidth <= 300,
+      'image-thumbnail-width-priority': scaledWidth > 300,
+    }"
+    (click)="showFullSizeView()"
+    (keydown)="handleKeyDown($event)" />
+  <div class="action-strip" *ngIf="!reviewMode">
+    <a
+      href="javascript:void(0)"
+      (click)="delete($event)"
+      class="text-danger"
+      tabindex="0">
+      Remove
+    </a>
+  </div>
+</div>
+
+<!-- Plain markup in place of ngx-bootstrap's bsModal, which this library does
+     not depend on. -->
+<div
+  class="modal fade"
+  [class.show]="isFullSizeViewOpen"
+  [style.display]="isFullSizeViewOpen ? 'block' : 'none'"
+  [attr.aria-hidden]="isFullSizeViewOpen ? null : 'true'"
+  [attr.aria-modal]="isFullSizeViewOpen ? 'true' : null"
+  tabindex="-1"
+  role="dialog">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">{{ imageObject.name }}</h4>
+        <button
+          type="button"
+          class="close"
+          (click)="hideFullSizeView()"
+          aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-12">
+            <img
+              [src]="imageObject.fileContent"
+              alt="{{ imageObject.name }}"
+              class="center-block img-fluid" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

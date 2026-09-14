@@ -15,6 +15,7 @@ import { IRadioItems, RadioComponent } from './radio.component';
 import { provideNgxMask } from 'ngx-mask';
 import { Component, DebugElement, OnInit, Type } from '@angular/core';
 import {
+  createTestingModule,
   tickAndDetectChanges,
   getDebugLegend,
 } from '../../../helpers/test-helpers';
@@ -68,29 +69,6 @@ function expectCheckedValue<T>(
   tickAndDetectChanges(fixture);
 
   expect(getCheckedValue(de)).toBe(String(value));
-}
-
-function createTestingModule<T>(
-  cmp: Type<T>,
-  template: string
-): ComponentFixture<RadioReactTestComponent> {
-  const importComp: any = [BrowserModule, FormsModule, ReactiveFormsModule];
-
-  TestBed.configureTestingModule({
-    declarations: [],
-    imports: [importComp],
-    providers: [{ provide: ComponentFixtureAutoDetect, useValue: true }],
-  }).overrideComponent(cmp, {
-    set: {
-      template: template,
-    },
-  });
-
-  TestBed.compileComponents();
-
-  return TestBed.createComponent(
-    cmp
-  ) as ComponentFixture<RadioReactTestComponent>;
 }
 
 @Component({

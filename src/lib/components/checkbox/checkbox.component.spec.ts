@@ -28,9 +28,23 @@ describe('Checkbox.Component', () => {
 
   // Test for checkbox label input
   it('Checkbox label is displayed', () => {
-    const { element } = createCheckboxComponent();
-    element.label = 'Checkbox';
-    expect(element.label).toEqual('Checkbox');
+    const { component, fixture } = createCheckboxComponent();
+    component.label = 'Checkbox';
+    fixture.detectChanges();
+    const label: HTMLLabelElement =
+      fixture.nativeElement.querySelector('label');
+    expect(label.textContent?.trim()).toEqual('Checkbox');
+  });
+
+  it('Checkbox label points at the input it labels', () => {
+    const { fixture } = createCheckboxComponent();
+    fixture.detectChanges();
+    const label: HTMLLabelElement =
+      fixture.nativeElement.querySelector('label');
+    const input: HTMLInputElement = fixture.nativeElement.querySelector(
+      'input[type="checkbox"]'
+    );
+    expect(label.getAttribute('for')).toBe(input.id);
   });
 
   // Test for checkbox checked state

@@ -5,6 +5,7 @@ import {
   TestBed,
   fakeAsync,
 } from '@angular/core/testing';
+import { createTestingModule } from '../../../helpers/test-helpers';
 import {
   FormBuilder,
   FormGroup,
@@ -34,29 +35,6 @@ export function getDebugElement(
     : componentHtml;
   //console.log( 'getDebugElement: ', _selector );
   return fixture.debugElement.query(By.css(_selector));
-}
-
-export function createTestingModule<T>(
-  cmp: Type<T>,
-  template: string
-): ComponentFixture<PhoneReactTestComponent> {
-  const importComp: any = [BrowserModule, FormsModule, ReactiveFormsModule];
-
-  TestBed.configureTestingModule({
-    declarations: [],
-    imports: [importComp],
-    providers: [{ provide: ComponentFixtureAutoDetect, useValue: true }],
-  }).overrideComponent(cmp, {
-    set: {
-      template: template,
-    },
-  });
-
-  TestBed.compileComponents();
-
-  return TestBed.createComponent(
-    cmp
-  ) as ComponentFixture<PhoneReactTestComponent>;
 }
 
 @Component({

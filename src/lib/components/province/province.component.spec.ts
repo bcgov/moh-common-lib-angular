@@ -19,6 +19,7 @@ import {
   Type,
 } from '@angular/core';
 import {
+  createTestingModule,
   tickAndDetectChanges,
   getDebugLabel,
   getDebugElement,
@@ -28,27 +29,6 @@ import { ProvinceComponent, ProvinceList } from './province.component';
 import { ErrorContainerComponent } from '../error-container/error-container.component';
 import { CANADA } from '../country/country.component';
 import { NgSelectComponent } from '@ng-select/ng-select';
-
-function createTestingModule<T>(
-  cmp: Type<T>,
-  template: string
-): ComponentFixture<T> {
-  const importComp: any = [BrowserModule, FormsModule, ReactiveFormsModule];
-
-  TestBed.configureTestingModule({
-    declarations: [],
-    imports: [importComp],
-    providers: [{ provide: ComponentFixtureAutoDetect, useValue: true }],
-  }).overrideComponent(cmp, {
-    set: {
-      template: template,
-    },
-  });
-
-  TestBed.compileComponents();
-
-  return TestBed.createComponent(cmp) as ComponentFixture<T>;
-}
 
 @Component({
   template: '',
@@ -152,9 +132,32 @@ describe('Province.Component', () => {
       province1Control.setValue(provinceCode);
     }
 
-    expect(province1Control?.value).toBe(provinceCode);
+    tickAndDetectChanges(fixture);
 
-    const provinceList: ProvinceList[] = de.componentInstance.provinceList;
-    expect(provinceList[1].provinceCode).toBe(provinceCode);
+    // Assert the value reached the COMPONENT through writeValue, not that the
+    // control we just set still holds what we set. The previous version
+    // compared the host's own fixture array to itself and passed even with
+    // writeValue gutted.
+    expect(de.componentInstance.province).toBe(provinceCode);
+  }));
+
+  it('should not write an undefined value over the current province', fakeAsync(() => {
+    const fixture = createTestingModule(
+      ProvinceReactTestComponent,
+      `<form [formGroup]="form">
+          <common-province
+             name='province1'
+             formControlName='province1'
+             [provinceList]="provinceList">
+          </common-province>
+      </form>`
+    );
+    tickAndDetectChanges(fixture);
+    const de = getDebugElement(fixture, 'common-province', 'province1');
+
+    de.componentInstance.writeValue('BC');
+    de.componentInstance.writeValue(undefined);
+
+    expect(de.componentInstance.province).toBe('BC');
   }));
 });

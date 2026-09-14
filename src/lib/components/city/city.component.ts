@@ -12,6 +12,7 @@ import { AbstractFormControl } from '../../models/abstract-form-control';
 import {
   ErrorMessage,
   LabelReplacementTag,
+  RequiredMsg,
 } from '../../models/error-message.interface';
 import { CommonModule } from '@angular/common';
 import { ErrorContainerComponent } from '../error-container/error-container.component';
@@ -22,6 +23,17 @@ interface ErrorMessageExtended extends ErrorMessage {
   [key: string]: string;
 }
 
+/**
+ * A city name field.
+ *
+ * It does not validate its own characters. Attach commonValidateCity, and
+ * import ValidateCityDirective, or its invalidChar message never fires.
+ *
+ * @example
+ *   <common-city name="city" [(ngModel)]="address.city" [required]="true"
+ *                commonValidateCity>
+ *   </common-city>
+ */
 @Component({
   selector: 'common-city',
   templateUrl: './city.component.html',
@@ -53,7 +65,7 @@ export class CityComponent
   city: string = '';
 
   override _defaultErrMsg: ErrorMessageExtended = {
-    required: LabelReplacementTag + ' is required.',
+    required: RequiredMsg,
     invalidChar:
       LabelReplacementTag +
       ' must contain letters and may include numbers and special characters ' +
@@ -83,7 +95,7 @@ export class CityComponent
     }
     if (value) {
       this.city = value;
-      this._onChange(true);
+      this._onChange(value);
       this.valueChange.emit(value);
     }
   }

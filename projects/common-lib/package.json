@@ -22,10 +22,16 @@
     "date-fns": "^4.1.0",
     "ngx-mask": "^19.0.7",
     "rxjs": "^7.8.0",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "pdfjs-dist": "^4.10.38"
   },
   "dependencies": {
     "tslib": "^2.3.0"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "peerDependenciesMeta": {
+    "pdfjs-dist": {
+      "optional": true
+    }
+  }
 }

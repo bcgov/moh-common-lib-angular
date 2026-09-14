@@ -9,24 +9,14 @@ import {
 } from '@angular/core';
 
 /**
- * Button Component is a button which can be used across the application to have
- * same button style.
- *
- * You're free to create custom (bootstrap) buttons as your application
- * requires. The main advantages to this component are:
- *
- *  - consistency
- *  - simplicity (less markup)
- *  - making future changes easier, such as automatically updating any changes
- * to button colour stylings.
- *
+ * The shared button style, so every button across the applications matches and
+ * a styling change lands in one place.
  *
  * @example
  *        <common-button label='Remove Spouse'
  *            [buttonType]="buttonClass"
  *            (btnClick)='removeSpouse()'>
  *        </common-button>
- * @export
  */
 @Component({
   selector: 'common-button',

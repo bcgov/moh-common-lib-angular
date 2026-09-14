@@ -23,10 +23,24 @@ import { AbstractFormControl } from '../../models/abstract-form-control';
 import {
   ErrorMessage,
   LabelReplacementTag,
+  RequiredMsg,
 } from '../../models/error-message.interface';
 import { CANADA } from '../country/country.component';
 import { BRITISH_COLUMBIA } from '../province/province.component';
 
+/**
+ * A street address field. With useGeoCoder set it offers typeahead suggestions
+ * from the BC geocoder.
+ *
+ * @example
+ *   <common-street name="street" [(ngModel)]="address.street" [required]="true">
+ *   </common-street>
+ *
+ *   With geocoder suggestions, which arrive through (select):
+ *   <common-street name="street" [(ngModel)]="address.street"
+ *                  [useGeoCoder]="true" (select)="onGeoAddress($event)">
+ *   </common-street>
+ */
 @Component({
   selector: 'common-street',
   templateUrl: './street.component.html',
@@ -70,7 +84,7 @@ export class StreetComponent extends AbstractFormControl implements OnInit {
   private searchText$ = new Subject<string>();
 
   override _defaultErrMsg: ErrorMessage = {
-    required: LabelReplacementTag + ' is required.',
+    required: RequiredMsg,
     invalidChar:
       LabelReplacementTag +
       ' must contain letters, and numbers and may include special characters such as hyphen, ' +

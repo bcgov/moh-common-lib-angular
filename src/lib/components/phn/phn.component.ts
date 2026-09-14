@@ -1,52 +1,83 @@
-
-import { Component, EventEmitter, Input, Output, Optional, Self, OnInit, /*input*/} from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  Optional,
+  Self,
+  OnInit,
+} from '@angular/core';
 //import { NUMBER, SPACE } from '../../models/mask.constants';
-import { ControlValueAccessor, NgControl, ValidationErrors, FormsModule } from '@angular/forms';
-import { ErrorMessage, LabelReplacementTag } from '../../models/error-message.interface';
+import {
+  ControlValueAccessor,
+  NgControl,
+  ValidationErrors,
+  FormsModule,
+} from '@angular/forms';
+import {
+  ErrorMessage,
+  LabelReplacementTag,
+  RequiredMsg,
+  InvalidMsg,
+  DuplicateMsg,
+} from '../../models/error-message.interface';
 import { AbstractFormControl } from '../../models/abstract-form-control';
-import { CommonModule } from '@angular/common'; 
+import { CommonModule } from '@angular/common';
 import { ErrorContainerComponent } from '../error-container/error-container.component';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 
 interface ErrorMessageExtended extends ErrorMessage {
   invalid: string;
-  duplicate: string
+  duplicate: string;
   [key: string]: string;
 }
 
+/**
+ * A BC Personal Health Number field, masked and validated against the mod 11
+ * checksum. Set isBCPhn to false to accept numbers from outside BC.
+ *
+ * @example
+ *   <common-phn name="phn" [(ngModel)]="person.phn" [required]="true">
+ *   </common-phn>
+ *
+ *   To accept a number from outside BC:
+ *   <common-phn name="phn" [(ngModel)]="person.phn" [isBCPhn]="false">
+ *   </common-phn>
+ */
 @Component({
   selector: 'common-phn',
   templateUrl: './phn.component.html',
-  standalone: true,
   // styleUrls: ['./phn.component.scss'],
   imports: [
-    CommonModule, 
-    FormsModule, 
+    CommonModule,
+    FormsModule,
     ErrorContainerComponent,
     NgxMaskDirective,
   ],
   providers: [provideNgxMask()],
 })
-export class PhnComponent extends AbstractFormControl implements OnInit, ControlValueAccessor {
-
+export class PhnComponent
+  extends AbstractFormControl
+  implements OnInit, ControlValueAccessor
+{
   @Input() label = 'Personal Health Number (PHN)';
   @Input() placeholder = '1111 111 111';
   @Input() labelforId = 'phn_' + this.objectId;
   @Input() required = false;
   @Input() mask = '0000 000 000';
-  
-    // Self-Validation inputs
+
+  // Self-Validation inputs
   @Input() isBCPhn = true;
 
   override _defaultErrMsg: ErrorMessageExtended = {
-    required: `${LabelReplacementTag} is required.`,
-    invalid: `${LabelReplacementTag} is invalid.`,
-    duplicate: `${LabelReplacementTag} was already used for another family member.`,
+    required: RequiredMsg,
+    invalid: InvalidMsg,
+    duplicate: DuplicateMsg,
   };
 
   @Input()
-  set value( val: string ) {
-    if ( val) {
+  set value(val: string) {
+    if (val) {
       this.phn = val;
     }
   }
@@ -61,55 +92,52 @@ export class PhnComponent extends AbstractFormControl implements OnInit, Control
 
   //mask: any;
 
-  constructor( @Optional() @Self() public controlDir: NgControl ) {
+  constructor(@Optional() @Self() public controlDir: NgControl) {
     super();
-    if ( controlDir ) {
+    if (controlDir) {
       controlDir.valueAccessor = this;
     }
-
   }
 
   override ngOnInit() {
     super.ngOnInit();
 
-    this.registerValidation( this.controlDir, this.validateSelf );
+    this.registerValidation(this.controlDir, this.validateSelf);
   }
 
-   onValueChange( event: Event ) {
+  onValueChange(event: Event) {
     const target = event.target as HTMLSelectElement;
     const value = target.value;
 
-    if ( value !== this.phn ) { // IE fix when focus does not display required error
+    if (value !== this.phn) {
+      // IE fix when focus does not display required error
       this.phn = value;
-      this._onChange( true );
-      this.valueChange.emit( value );
+      this._onChange(value);
+      this.valueChange.emit(value);
     }
   }
 
-  onBlur( event: any ) {
-    this._onTouched( event );
-    this.blur.emit( event );
+  onBlur(event: any) {
+    this._onTouched(event);
+    this.blur.emit(event);
   }
 
-  writeValue( value: any ): void {
-    if ( value !== undefined ) {
+  writeValue(value: any): void {
+    if (value !== undefined) {
       this.phn = value;
     }
   }
 
   private validateSelf(): ValidationErrors | null {
-
     const validatePhnResult = this.validatePhn();
-    if ( validatePhnResult ) {
+    if (validatePhnResult) {
       return validatePhnResult;
     }
     return null;
-   }
+  }
 
   private validatePhn(): ValidationErrors | null {
-
-    if ( this.phn && this.phn.trim().length > 0 ) {
-
+    if (this.phn && this.phn.trim().length > 0) {
       // Init weights and other stuff
       const weights: number[] = [-1, 2, 4, 8, 5, 10, 9, 7, 3, -1];
       let sumOfRemainders = 0;
@@ -117,24 +145,24 @@ export class PhnComponent extends AbstractFormControl implements OnInit, Control
       // Clean up string
       const value = this.phn.trim();
       this.phn = value
-                  .replace( /^0+/, '' ) // remove leading zeros
-                  .replace(/_/g, '') // remove underlines
-                  .replace(/\s/g, ''); // spaces
+        .replace(/^0+/, '') // remove leading zeros
+        .replace(/_/g, '') // remove underlines
+        .replace(/\s/g, ''); // spaces
 
       // Test for length
       if (this.phn.length !== 10) {
-        return { 'invalid': true };
+        return { invalid: true };
       }
       // Look for a number that starts with 9 if BC only
       if (this.isBCPhn && this.phn[0] !== '9') {
-        return { 'invalid': true };
-      } else if (!this.isBCPhn && this.phn[0] === '9') { // Number cannot have 9
-        return { 'invalid': true };
+        return { invalid: true };
+      } else if (!this.isBCPhn && this.phn[0] === '9') {
+        // Number cannot have 9
+        return { invalid: true };
       }
 
       // Walk through each character
       for (let i = 0; i < this.phn.length; i++) {
-
         // pull out char
         const char = this.phn.charAt(i);
 
@@ -142,7 +170,7 @@ export class PhnComponent extends AbstractFormControl implements OnInit, Control
         const num = Number(char);
 
         if (Number.isNaN(num)) {
-          return { 'invalid': true };
+          return { invalid: true };
         }
 
         // Only use the multiplier if weight is greater than zero
@@ -164,17 +192,15 @@ export class PhnComponent extends AbstractFormControl implements OnInit, Control
 
       // if the result is 10 or 11, it is an invalid PHN
       if (checkDigit === 10 || checkDigit === 11) {
-        return { 'invalid': true };
+        return { invalid: true };
       }
 
       // Compare against 10th digitfinalDigit
       const finalDigit = Number(this.phn.substring(9, 10));
       if (checkDigit !== finalDigit) {
-        return { 'invalid': true };
+        return { invalid: true };
       }
     }
     return null;
   }
-
-
 }

@@ -1,0 +1,27 @@
+@use '../../styles/tokens' as vars;
+
+.breadcrumb {
+  display: flex;
+  justify-content: space-between;
+  background-color: transparent;
+
+  // Bootstrap lg breakpoint.
+  @media (min-width: vars.$breakpoint-lg) {
+    flex-wrap: nowrap;
+  }
+}
+
+.horizontal-scroll {
+  overflow-x: scroll;
+  overflow-y: hidden;
+}
+
+// Chrome and Safari (webkit) scrollbar styling - not IE or FF.
+.horizontal-scroll::-webkit-scrollbar {
+  background: transparent;
+  height: 5px;
+}
+.horizontal-scroll::-webkit-scrollbar-thumb {
+  background: vars.$color-secondary-nav;
+  border-radius: 10px;
+}

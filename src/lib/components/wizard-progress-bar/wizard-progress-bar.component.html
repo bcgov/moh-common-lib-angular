@@ -1,0 +1,24 @@
+<!-- Plain markup in place of ngx-bootstrap's <progressbar>, which this library
+     does not depend on. Same role and aria values it emitted. -->
+<div
+  class="progress"
+  role="progressbar"
+  aria-label="Form progress"
+  [attr.aria-valuenow]="calculateProgressPercentage()"
+  aria-valuemin="0"
+  aria-valuemax="100">
+  <div
+    class="progress-bar"
+    [style.width.%]="calculateProgressPercentage()"></div>
+</div>
+
+<div class="step-container">
+  <a
+    #steps
+    *ngFor="let step of progressSteps; let i = index"
+    [routerLink]="step.route">
+    <div class="step" [ngClass]="{ active: i === activeIndex }">
+      <span class="step-text">{{ step.title }}</span>
+    </div>
+  </a>
+</div>

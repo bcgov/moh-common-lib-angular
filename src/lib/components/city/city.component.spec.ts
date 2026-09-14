@@ -20,35 +20,13 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import {
+  createTestingModule,
   tickAndDetectChanges,
   getDebugElement,
   getDebugLabel,
   setInput,
 } from '../../../helpers/test-helpers';
 import { BrowserModule } from '@angular/platform-browser';
-
-function createTestingModule<T>(
-  cmp: Type<T>,
-  template: string
-): ComponentFixture<CityReactTestComponent> {
-  const importComp: any = [BrowserModule, FormsModule, ReactiveFormsModule];
-
-  TestBed.configureTestingModule({
-    declarations: [],
-    imports: [importComp],
-    providers: [{ provide: ComponentFixtureAutoDetect, useValue: true }],
-  }).overrideComponent(cmp, {
-    set: {
-      template: template,
-    },
-  });
-
-  TestBed.compileComponents();
-
-  return TestBed.createComponent(
-    cmp
-  ) as ComponentFixture<CityReactTestComponent>;
-}
 
 @Component({
   template: '',

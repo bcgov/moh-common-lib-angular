@@ -1,4 +1,13 @@
-import { Component, OnInit, Input, Output, EventEmitter, HostListener, OnChanges, forwardRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  Input,
+  Output,
+  EventEmitter,
+  HostListener,
+  OnChanges,
+  forwardRef,
+} from '@angular/core';
 import { Base } from '../../models/base';
 import { ControlContainer, FormsModule, NgForm } from '@angular/forms';
 import zxcvbn_ from 'zxcvbn';
@@ -7,7 +16,6 @@ import { CommonModule } from '@angular/common';
 // Awkward necessary workaround due to bug in build tools
 // https://github.com/jvandemo/generator-angular2-library/issues/221#issuecomment-355945207
 const zxcvbn = zxcvbn_;
-
 
 /**
  * TODO:  Convert to custom form control - remove ngForm
@@ -27,13 +35,11 @@ export interface PasswordErrorMsg {
   criteria?: string;
 }
 /**
- * PasswordComponent is a text input for a user's password. It includes:
+ * A password field with a visibility toggle and a strength meter.
+ * Not exported: it needs zxcvbn, which not every consuming app carries.
  *
- * - A password strength bar
- * - Minimum length validations
- *
- * Note - if your application has requirements to check things like username is not
- * present in password, we recommend doing this in the (passwordChange) callback.
+ * For rules this component does not cover, such as checking the username is not
+ * part of the password, do the check in the (passwordChange) callback.
  *
  * @example
  *       <common-password componentLabel="{{newPwdLabel}}"
@@ -43,7 +49,6 @@ export interface PasswordErrorMsg {
  *                      [password]="data.password"
  *                      (passwordChange)="setNewPassword($event)"></common-password>
  *
- * @export
  */
 @Component({
   selector: 'common-password',
@@ -53,22 +58,22 @@ export interface PasswordErrorMsg {
   /* Re-use the same ngForm that it's parent is using. The component will show
    * up in its parents `this.form`, and will auto-update `this.form.valid`
    */
-  viewProviders: [ { provide: ControlContainer, useExisting: forwardRef(() => NgForm ) } ]
+  viewProviders: [
+    { provide: ControlContainer, useExisting: forwardRef(() => NgForm) },
+  ],
 })
 export class PasswordComponent extends Base implements OnInit, OnChanges {
-
   // Inputs for the component
   @Input() label: string = 'Password';
   @Input() isRequired: boolean = true;
   @Input() isDisabled: boolean = false;
   @Input() password: string = '';
   @Input() pwdCriteria: string | RegExp = '';
-  @Input() minLen: string  = '8';
-  @Input() maxLen: string  = '32';
+  @Input() minLen: string = '8';
+  @Input() maxLen: string = '32';
   @Input() errorMessages: PasswordErrorMsg | undefined;
   @Input() showPasswordStrength: boolean = false;
   @Input() objectID: string = 'password_' + this.objectId;
-
 
   // Output from the component
   @Output() passwordChange: EventEmitter<string> = new EventEmitter<string>();
@@ -87,43 +92,40 @@ export class PasswordComponent extends Base implements OnInit, OnChanges {
   private minLenMsgSeg2: string = ' characters in length.';
   private criteriaMsg: string = ' contains invalid characters.';
 
-
   constructor() {
     super();
   }
 
   ngOnInit() {
-
     // Set default messages
-    this.errMsg =    {
+    this.errMsg = {
       required: this.label + this.requiredMsgSeg,
-      minLength: this.label + this.minLenMsgSeg1 + this.minLen + this.minLenMsgSeg2,
-      criteria: this.label + this.criteriaMsg
+      minLength:
+        this.label + this.minLenMsgSeg1 + this.minLen + this.minLenMsgSeg2,
+      criteria: this.label + this.criteriaMsg,
     };
 
     // Replace default message if provided
-    if ( this.errorMessages ) {
-
-      if ( this.errorMessages.required ) {
+    if (this.errorMessages) {
+      if (this.errorMessages.required) {
         this.errMsg.required = this.errorMessages.required;
       }
 
-      if ( this.errorMessages.minLength ) {
+      if (this.errorMessages.minLength) {
         this.errMsg.minLength = this.errorMessages.minLength;
       }
 
-      if ( this.errorMessages.criteria ) {
+      if (this.errorMessages.criteria) {
         this.errMsg.criteria = this.errorMessages.criteria;
       }
     }
   }
 
-  ngOnChanges(changes: { password: any; }) {
+  ngOnChanges(changes: { password: any }) {
     if (changes.password && this.password) {
-
       // Check strength of password
-      this.pswdStrength = this.getPasswordStrength( this.password );
-      this.strengthPercentage = ((this.pswdStrength + 1) / 5 ) * 100;
+      this.pswdStrength = this.getPasswordStrength(this.password);
+      this.strengthPercentage = ((this.pswdStrength + 1) / 5) * 100;
     }
   }
 
@@ -131,18 +133,18 @@ export class PasswordComponent extends Base implements OnInit, OnChanges {
    * Passes the value entered back to the calling component
    * @param password value the was entered by
    */
-  setPassword( password: string ) {
-    this.passwordChange.emit( password );
+  setPassword(password: string) {
+    this.passwordChange.emit(password);
   }
 
   onInputBlur(event: Event) {
-    this.blurEvent.emit( event );
+    this.blurEvent.emit(event);
   }
 
   // Prevent user from pasting data into the text box
-  @HostListener( 'document:paste', ['$event'] )
-  onPaste( event: Event ) {
-      return false;
+  @HostListener('document:paste', ['$event'])
+  onPaste(event: Event) {
+    return false;
   }
 
   /**
@@ -156,9 +158,9 @@ export class PasswordComponent extends Base implements OnInit, OnChanges {
    *
    *  https://github.com/dropbox/zxcvbn
    */
-  private getPasswordStrength( password: string ): number {
+  private getPasswordStrength(password: string): number {
     // Password strength feedback
-    const pswdFeedback = zxcvbn( password );
+    const pswdFeedback = zxcvbn(password);
     return pswdFeedback.score;
   }
 }

@@ -1,14 +1,27 @@
-
 // TODO: Code refactor
-import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef, Optional, Self } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  Input,
+  Output,
+  EventEmitter,
+  ViewChild,
+  ElementRef,
+  Optional,
+  Self,
+} from '@angular/core';
 import { ControlValueAccessor, NgControl, FormsModule } from '@angular/forms';
 import { AbstractFormControl } from '../../models/abstract-form-control';
-import { ErrorMessage, LabelReplacementTag } from '../../models/error-message.interface';
+import {
+  ErrorMessage,
+  LabelReplacementTag,
+  RequiredMsg,
+} from '../../models/error-message.interface';
 import { CommonModule } from '@angular/common';
 import { ErrorContainerComponent } from '../error-container/error-container.component';
 
 /**
- * Checkbox component is a input checkbox
+ * A labelled checkbox bound to a boolean, reporting its own required error.
  *
  * @example
  *       <common-checkbox #addressChangeChkBx
@@ -19,9 +32,7 @@ import { ErrorContainerComponent } from '../error-container/error-container.comp
  *          [required]="isrequired">
  *       </common-checkbox>
  *
- * @export
  */
-
 
 @Component({
   selector: 'common-checkbox',
@@ -29,7 +40,10 @@ import { ErrorContainerComponent } from '../error-container/error-container.comp
   styleUrls: ['./checkbox.component.scss'],
   imports: [CommonModule, FormsModule, ErrorContainerComponent],
 })
-export class CheckboxComponent extends AbstractFormControl implements OnInit, ControlValueAccessor {
+export class CheckboxComponent
+  extends AbstractFormControl
+  implements OnInit, ControlValueAccessor
+{
   defaultErrorMessage = '';
 
   /**
@@ -37,17 +51,17 @@ export class CheckboxComponent extends AbstractFormControl implements OnInit, Co
    */
   @Input() data = false;
   @Input() label = 'Default Checkbox';
-  @Input() required = false;  // TOBE removed duing MSP stablization - then update MSP to use form control version
+  @Input() required = false; // TOBE removed duing MSP stablization - then update MSP to use form control version
   @Output() dataChange: EventEmitter<boolean> = new EventEmitter<boolean>();
   @ViewChild('checkbox') checkbox: ElementRef | undefined;
 
   override _defaultErrMsg: ErrorMessage = {
-    required: `${LabelReplacementTag} is required.`,
+    required: RequiredMsg,
   };
 
-  constructor( @Optional() @Self() public controlDir: NgControl ) {
+  constructor(@Optional() @Self() public controlDir: NgControl) {
     super();
-    if ( controlDir ) {
+    if (controlDir) {
       controlDir.valueAccessor = this;
     }
   }
@@ -68,7 +82,7 @@ export class CheckboxComponent extends AbstractFormControl implements OnInit, Co
   }
 
   writeValue(value: never): void {
-    if ( value !== undefined || value === null ) {
+    if (value !== undefined) {
       this.data = value;
     }
   }

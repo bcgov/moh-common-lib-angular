@@ -27,9 +27,21 @@ describe('Button.Component', () => {
 
   // Test for button label input
   it('Button label is displayed', () => {
-    const { element } = createButtonComponent();
-    element.label = 'Button';
-    expect(element.label).toEqual('Button');
+    const { component, fixture } = createButtonComponent();
+    component.label = 'Button';
+    fixture.detectChanges();
+    const button: HTMLButtonElement =
+      fixture.nativeElement.querySelector('button');
+    expect(button.textContent?.trim()).toEqual('Button');
+  });
+
+  it('Button style follows buttonType', () => {
+    const { component, fixture } = createButtonComponent();
+    component.buttonType = 'secondary';
+    fixture.detectChanges();
+    const button: HTMLButtonElement =
+      fixture.nativeElement.querySelector('button');
+    expect(button.classList).toContain('btn-secondary');
   });
 
   // Test for button click event

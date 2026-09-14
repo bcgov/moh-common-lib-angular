@@ -1,0 +1,29 @@
+@use '../../styles/tokens' as vars;
+
+common-page-section {
+  display: block;
+}
+
+// for use as titles in asides / info boxes
+h5,
+.h5 {
+  font-size: vars.$h5-font-size;
+  font-weight: bold;
+  margin-bottom: 0;
+
+  p + & {
+    margin-top: 1.5rem;
+  }
+}
+
+aside,
+div[aside] {
+  background: vars.$gray;
+  padding: 1em;
+  border-radius: 5px;
+
+  // Bootstrap md breakpoint. Align with the top of the title (for desktop).
+  @media (min-width: vars.$breakpoint-md) {
+    margin-top: 1rem;
+  }
+}
