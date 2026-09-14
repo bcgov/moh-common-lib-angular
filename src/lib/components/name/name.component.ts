@@ -17,6 +17,7 @@ import { AbstractFormControl } from '../../models/abstract-form-control';
 import {
   LabelReplacementTag,
   ErrorMessage,
+  RequiredMsg,
 } from '../../models/error-message.interface';
 import { CommonModule } from '@angular/common';
 import { ErrorContainerComponent } from '../error-container/error-container.component';
@@ -40,12 +41,16 @@ const nameCriteria = /^[a-zA-Z][a-zA-Z\-.' ]*$/;
 const initialCriteria = /^[a-zA-Z]$/;
 
 /**
- * Required validation comes from Angular's own RequiredValidator, which matches
- * the `required` attribute on the host element. It works in both template driven
- * and reactive forms, so ngModel is not needed for it. The `required` input below
- * only forwards the native attribute to the inner input, and only when it is bound
- * as a property: `[required]="true"` sets the attribute, while a bare `required`
- * attribute passes an empty string and leaves the inner input without it.
+ * A single name field: first, middle or last.
+ * For all three at once, see FullNameComponent.
+ *
+ * @example
+ *   <common-name name="firstName" [(ngModel)]="person.firstName" [required]="true">
+ *   </common-name>
+ *
+ *   Set maxlength to 1 for an initial, which validates as a single letter:
+ *   <common-name name="middleInitial" [(ngModel)]="person.initial" maxlength="1">
+ *   </common-name>
  */
 @Component({
   selector: 'common-name',
@@ -79,7 +84,7 @@ export class NameComponent
   public nameStr = '';
 
   override _defaultErrMsg: ErrorMessageExtended = {
-    required: `${LabelReplacementTag} is required.`,
+    required: RequiredMsg,
     invalid:
       LabelReplacementTag +
       ' must begin with a letter and cannot include special ' +
@@ -104,7 +109,7 @@ export class NameComponent
     const target = event.target as HTMLSelectElement;
     const value = target.value;
     this.nameStr = value;
-    this._onChange(true);
+    this._onChange(value);
     this.valueChange.emit(value);
   }
 

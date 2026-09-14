@@ -1,7 +1,19 @@
 // TODO: Code refactor
-import { Component, EventEmitter, Input, Output, Optional, Self, OnInit } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  Optional,
+  Self,
+  OnInit,
+} from '@angular/core';
 import { AbstractFormControl } from '../../models/abstract-form-control';
-import { LabelReplacementTag, ErrorMessage } from '../../models/error-message.interface';
+import {
+  LabelReplacementTag,
+  ErrorMessage,
+  RequiredMsg,
+} from '../../models/error-message.interface';
 import { FormsModule, NgControl } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ErrorContainerComponent } from '../error-container/error-container.component';
@@ -14,7 +26,7 @@ import { ErrorContainerComponent } from '../error-container/error-container.comp
  * it shows in horizontal or inline display, display='inline-block' You can
  * have many radio's and the number is based on the Radio label Value. For 3
  * radio buttons, radioLabels value is of type IRadioItems[].
-*
+ *
  * @example
  *
  *  Reactive Form
@@ -41,6 +53,9 @@ export interface IRadioItems {
   value: any;
   // TODO: Make value generic <T>
 }
+/**
+ * A group of radio buttons laid out inline or as table rows.
+ */
 @Component({
   selector: 'common-radio',
   templateUrl: './radio.component.html',
@@ -48,35 +63,34 @@ export interface IRadioItems {
   imports: [CommonModule, FormsModule, ErrorContainerComponent],
 })
 export class RadioComponent extends AbstractFormControl implements OnInit {
-
   _value: any = '';
   override _defaultErrMsg: ErrorMessage = {
-    required: `${LabelReplacementTag} is required.`
+    required: RequiredMsg,
   };
 
   @Input() radioLabels: IRadioItems[] = [
-    {label: 'No', value: false},
-    {label: 'Yes', value: true}
+    { label: 'No', value: false },
+    { label: 'Yes', value: true },
   ];
   @Input() required: boolean = false;
 
   @Input() label: string = '';
   @Input()
-  set value( val: any ) {
+  set value(val: any) {
     this._value = val;
   }
   get value() {
     return this._value;
   }
 
-  @Input() display: 'table-row-group' | 'inline-block'  = 'inline-block';
+  @Input() display: 'table-row-group' | 'inline-block' = 'inline-block';
   @Input() instructionText: string = '';
 
   @Output() valueChange: EventEmitter<any> = new EventEmitter<any>();
 
-  constructor( @Optional() @Self() public controlDir: NgControl ) {
+  constructor(@Optional() @Self() public controlDir: NgControl) {
     super();
-    if ( controlDir ) {
+    if (controlDir) {
       controlDir.valueAccessor = this;
     }
   }

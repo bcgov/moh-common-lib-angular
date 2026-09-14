@@ -27,6 +27,7 @@ import { AbstractFormControl } from '../../models/abstract-form-control';
 import {
   ErrorMessage,
   LabelReplacementTag,
+  RequiredMsg,
 } from '../../models/error-message.interface';
 import { deburr } from '../../../helpers/deburr';
 import { CommonModule } from '@angular/common';
@@ -72,6 +73,16 @@ export interface AddressResult {
   PostalCode: string;
 }
 
+/**
+ * Typeahead lookup against the BC address geocoder.
+ * Emits the chosen address, and optionally writes it into the bound field.
+ *
+ * @example
+ *   <common-address-validator [serviceUrl]="geocoderUrl"
+ *                             [populateAddressOnSelect]="true"
+ *                             (select)="onAddressSelected($event)">
+ *   </common-address-validator>
+ */
 @Component({
   selector: 'common-address-validator',
   templateUrl: './address-validator.component.html',
@@ -92,7 +103,7 @@ export class AddressValidatorComponent
   @Input() maxlength: string = '255';
 
   override _defaultErrMsg: ErrorMessageExtended = {
-    required: LabelReplacementTag + ' is required.',
+    required: RequiredMsg,
     invalidChar:
       LabelReplacementTag +
       ' must contain letters and numbers, and may include special characters such as a hyphen, period, apostrophe, number sign, ampersand, forward slash, and blank characters.',

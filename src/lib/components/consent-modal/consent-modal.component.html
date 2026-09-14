@@ -1,0 +1,53 @@
+<!-- Plain markup in place of ngx-bootstrap's bsModal, which this library does
+     not depend on. -->
+<div
+  class="modal fade"
+  [class.show]="isOpen"
+  [style.display]="isOpen ? 'block' : 'none'"
+  [attr.aria-hidden]="isOpen ? null : 'true'"
+  [attr.aria-modal]="isOpen ? 'true' : null"
+  [attr.aria-labelledby]="'consentModalTitle_' + objectId"
+  tabindex="-1"
+  role="dialog">
+  <div class="modal-dialog">
+    <div #modalContents class="modal-content">
+      <div class="modal-header modal-header-primary">
+        <h2 [id]="'consentModalTitle_' + objectId">
+          {{ isUnderMaintenance ? 'Maintenance notice' : title }}
+        </h2>
+      </div>
+
+      <div class="modal-body">
+        <div *ngIf="isUnderMaintenance">
+          <h4>{{ maintenanceMessage }}</h4>
+        </div>
+
+        <div *ngIf="!isUnderMaintenance">
+          <ng-content></ng-content>
+
+          <div class="form-check form-check-inline">
+            <input
+              class="input-lg form-check-input"
+              [id]="'agree_' + objectId"
+              type="checkbox"
+              [ngModelOptions]="{ standalone: true }"
+              [(ngModel)]="agreeCheck" />
+            <label class="form-check-label" [attr.for]="'agree_' + objectId">
+              <strong>{{ agreeLabel }}</strong>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" *ngIf="!isUnderMaintenance">
+        <button
+          class="btn btn-block btn-primary"
+          type="button"
+          [disabled]="isContinueDisabled()"
+          (click)="continue()">
+          {{ continueButton }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

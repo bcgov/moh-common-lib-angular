@@ -1,0 +1,39 @@
+//------------------------------------------------------------------------------
+// MoH design tokens.
+//
+// These are the custom (non-Bootstrap) variables shared by the library's
+// components. They live here rather than in variables.scss so a component can
+// @use them without also pulling in Bootstrap's Sass, which variables.scss
+// loads in order to override it.
+//
+// Only tokens with a call site belong here. Extract another from
+// variables.scss when a component actually needs it, so every value in this
+// file is one a stylesheet would break without.
+//
+// Reference:
+// http://www2.gov.bc.ca/gov/content/governments/services-for-government/policies-procedures/web-content-development-guides/developers-guide/css-elements
+//------------------------------------------------------------------------------
+
+$font-size-base: 1rem;
+$h5-font-size: $font-size-base * 1;
+
+$container-gutter-size: 5rem;
+
+$body-color: #494949;
+$color-danger: #a94442;
+$color-primary: #036;
+$color-secondary-nav: #5475a7;
+$link-color: #1a5a96;
+
+// Bootstrap greys, for components that styled against them directly.
+$gray-300: #dee2e6;
+$gray-400: #ced4da;
+$gray-500: #adb5bd;
+$white: #fcfcfc; // Just shy of true white.
+$gray: #f2f2f2;
+
+// Bootstrap grid breakpoints, for plain media queries. Components use these
+// rather than Bootstrap's media-breakpoint-up mixin, which is only available to
+// stylesheets that load Bootstrap's Sass.
+$breakpoint-md: 768px;
+$breakpoint-lg: 992px;

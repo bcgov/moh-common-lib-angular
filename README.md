@@ -4,7 +4,8 @@ Shared Angular component library for BC Ministry of Health applications. Provide
 reusable standalone components, services, models, and helpers consumed by apps such
 as `fpcare`.
 
-Packaged with ng-packagr into Angular Package Format output. The workspace root stays
+Packaged with ng-packagr into Angular Package Format output, with a secondary entry
+point at `moh-common-lib-angular/captcha`. The workspace root stays
 `private: true`; the thing that gets published is the built package in
 `dist/moh-common-lib-angular`. Not yet published to any registry. See Packaging and
 release below.
@@ -65,7 +66,8 @@ src/
     components/        One directory per component.
     models/            Data models and the abstract form base classes.
     services/          HTTP, logging, navigation guards, page state.
-    styles/            variables.scss (design tokens), common-mixins.scss
+    styles/            _tokens.scss (design tokens in use), variables.scss and
+                       common-mixins.scss (both currently unused, see Styling)
 ```
 
 ### Component conventions
@@ -108,9 +110,11 @@ Most library components follow the same shape. Match it when adding a new one.
    array. Avoid `NO_ERRORS_SCHEMA`; it hides real template errors, and the places it
    is used in this repo are legacy, not a pattern to copy.
 4. Render validation errors through `common-error-container`.
-5. Add `<name>.component.spec.ts`. Every component in `src/lib/components/` has one
-   except the dead `consent-modal`. `src/helpers/test-helpers.ts` has the shared
-   fixture builders (`createTestingModule`, `setInput`, `getDebugInlineError`).
+5. Add `<name>.component.spec.ts`. Every component in `src/lib/components/` has one.
+   `src/helpers/test-helpers.ts` has the shared fixture builders
+   (`createTestingModule`, `setInput`, `getDebugInlineError`). Assert against rendered
+   DOM, not against a property you just set on the fixture, and drive form controls
+   through a real event rather than by calling the handler.
 6. **Export it from `src/public-api.ts`.** Skipping this is the usual reason a
    consuming app cannot see a new component.
 7. Add it to the catalogue table below and, if useful, to the showcase in
@@ -120,7 +124,7 @@ Most library components follow the same shape. Match it when adding a new one.
 
 ## Catalogue
 
-### Components (19 exported)
+### Components (29 exported)
 
 Address and location:
 
@@ -157,6 +161,8 @@ Generic inputs:
 | `RadioComponent` | `common-radio` | Radio group driven by an `IRadioItems[]` list |
 | `ButtonComponent` | `common-button` | Bootstrap-styled button, re-emits click as `btnClick` |
 
+| `PostalCodeComponent` | `common-postal-code` | Masked Canadian postal code, optional BC-only check |
+
 Layout and presentation:
 
 | Component | Selector | Purpose |
@@ -164,7 +170,21 @@ Layout and presentation:
 | `ErrorContainerComponent` | `common-error-container` | Inline error primitive used by every form control |
 | `HeaderComponent` | `common-header` | BC Gov header with logo and skip-to-content link |
 | `AccordionCommonComponent` | `common-accordion` | Collapsible section wrapper |
+| `PageFrameworkComponent` | `common-page-framework` | Page layout with main column and optional aside |
+| `PageSectionComponent` | `common-page-section` | Section layout within a page |
+| `CoreBreadcrumbComponent` | `common-core-breadcrumb` | Breadcrumb bar with left, center and right slots |
+| `FormActionBarComponent` | `common-form-action-bar` | Sticky submit bar. Place it after `common-page-framework`, not inside |
+| `WizardProgressBarComponent` | `common-wizard-progress-bar` | Multi-page progress bar, active step derived from the route |
+| `ConfirmTemplateComponent` | `common-confirm-template` | Confirmation panel, icon driven by `ApiStatusCodes` |
 | `SampleModalComponent` | `common-sample-modal` | Modal displaying labelled sample images |
+| `ConsentModalComponent` | `common-consent-modal` | Information collection notice gated on an agree checkbox |
+
+Upload:
+
+| Component | Selector | Purpose |
+|---|---|---|
+| `FileUploaderComponent` | `common-file-uploader` | Drag-and-drop image and PDF upload. PDFs rasterise one image per page |
+| `ThumbnailComponent` | `common-thumbnail` | Uploaded image with click-to-enlarge and remove |
 
 ### Components present but NOT exported
 
@@ -176,22 +196,43 @@ package cannot import them by any path.
 
 | Component | Why |
 |---|---|
-| `PasswordComponent` (`common-password`) | Pulls in `zxcvbn`, which not every consuming app carries. To ship it, export it from `public-api.ts` and add `zxcvbn` to the library `peerDependencies`. |
-| `ConfirmTemplateComponent` (`common-confirm-template`) | Never added to the barrel. |
-| `ConsentModalComponent` | Entire class body is commented out. The template file is empty. Dead code. |
+| `PasswordComponent` (`common-password`) | Pulls in `zxcvbn`, which not every consuming app carries. To ship it, export it from `public-api.ts` and add `zxcvbn` as an optional peer dependency, the same way `pdfjs-dist` is handled for `FileUploaderComponent`. |
 
 ### Validator directives
 
-Not exported from `public-api.ts`, and nothing that is exported imports them, so they
-are **absent from the published package** for the reason above. Each also exports a bare
-`ValidatorFn` for reactive forms. Export them from the barrel to ship them.
+All seven are exported, each paired with a bare `ValidatorFn` for reactive forms.
 
-| Directive | Selector | Error key |
+The selectors are **attribute** selectors, which matters under standalone: an
+unmatched attribute raises no compile error, so a consumer who forgets to add the
+directive class to their `imports` gets a control that silently validates nothing.
+Import the class, not just the attribute.
+
+| Directive | Selector | Validator function | Error key |
+|---|---|---|---|
+| `ValidateCityDirective` | `[commonValidateCity]` | `commonValidateCity` | `invalidChar` |
+| `ValidateStreetDirective` | `[commonValidateStreet]` | `commonValidateStreet` | `invalidChar` |
+| `ValidateRegionDirective` | `[commonValidateRegion]` | `commonValidateRegion` | `invalidChar` |
+| `ValidatePostalcodeDirective` | `[commonValidatePostalcode]` | `commonValidatePostalcode(hasMask, bcOnly)` | `pattern`, `invalidChar`, `invalidBCPostal` |
+| `ValidateBcPostalDirective` | `[commonValidateBcPostal]` | `commonValidateBcPostal` | `invalidBCPostal` (deprecated, use `commonValidatePostalcode`) |
+| `ValidateNameDirective` | `[commonValidateName]` | `commonValidateName` | `invalidChar` (deprecated) |
+| `DuplicateCheckDirective` | `[commonDuplicateCheck]` | `commonDuplicateCheck(dupList)` | `duplicate` |
+
+### Secondary entry point: captcha
+
+`moh-common-lib-angular/captcha` is packaged separately, so an app that never renders
+a captcha does not pay for it. Configured by `projects/common-lib/captcha/ng-package.json`
+with sources in `src/captcha/`.
+
+| Export | Kind | Notes |
 |---|---|---|
-| `ValidateCityDirective` | `[commonValidateCity]` | `invalidChar` |
-| `ValidateStreetDirective` | `[commonValidateStreet]` | `invalidChar` |
-| `ValidateNameDirective` | `[commonValidateName]` | `invalidChar` (deprecated) |
-| `DuplicateCheckDirective` | `[commonDuplicateCheck]` | `duplicate` |
+| `CaptchaComponent` | component | `common-captcha`. Image or audio challenge, emits a JWT through `onValidToken` |
+| `CaptchaModule` | NgModule | Compatibility module for apps that import an NgModule. Imports and exports the standalone component and provides `CaptchaDataService` |
+| `CaptchaDataService` | service | Fetch, verify and audio calls against the captcha API |
+| `CAPTCHA_STATE` | enum | The seven states the component moves through |
+
+```ts
+import { CaptchaModule } from 'moh-common-lib-angular/captcha';
+```
 
 ### Services
 
@@ -283,10 +324,13 @@ npx jest --watch                                        # watch mode
 npx jest --coverage                                     # coverage to coverage/
 ```
 
-Coverage is collected from `src/lib/**/*.ts`, excluding specs, modules, models,
-interfaces, and constants. `src/helpers/` and `src/app/` are excluded entirely.
+Coverage is collected from `src/lib/**/*.ts` and `src/captcha/**/*.ts`, excluding
+specs, modules, models, interfaces, and constants. `src/helpers/` and `src/app/` are
+excluded entirely. Overall coverage is around 73% of statements; the branch figure is
+lower, and `src/lib/components/file-uploader/` is the weakest because its canvas and
+FileReader paths cannot execute under jsdom.
 
-Current state: 38 suites, 146 tests, all passing.
+Current state: 54 suites, 433 tests, all passing.
 
 ### Packaging and release
 
@@ -327,13 +371,16 @@ Prefer yalc over `npm link`. `npm link` symlinks, which gives Angular two copies
 
 ### Styling
 
-Design tokens live in `src/lib/styles/variables.scss` (colour palette, typography,
-Bootstrap variable overrides). Shared mixins live in `src/lib/styles/common-mixins.scss`.
+Design tokens live in `src/lib/styles/_tokens.scss` and are consumed with
+`@use '../../styles/tokens' as vars;`. That file holds only tokens with a call site;
+extract another from `variables.scss` when a component needs it.
 
-Caveat, and it matters when adding a component: **neither file is currently wired into
-anything.** Every `@use`/`@import` of `variables.scss` in component stylesheets is
-commented out, and `angular.json` has no `styles` array, so `src/styles.scss` is not
-part of the build either. Component templates use Bootstrap 5 utility classes and Font
+`src/lib/styles/variables.scss` is the older token file and **cannot be loaded**:
+Bootstrap 5's `_variables.scss` calls `_assert-ascending`, which is namespaced rather
+than global under `@use`, so any component importing it fails with `Undefined mixin`.
+Nothing imports it, which is why this went unnoticed. `common-mixins.scss` is valid but
+unused. Neither is wired into the build, and `angular.json` has no `styles` array, so
+`src/styles.scss` is not part of it either. Component templates use Bootstrap 5 utility classes and Font
 Awesome icon classes that this repo does not bundle. The consuming application supplies
 them. A new component should assume the same and rely on Bootstrap classes rather than
 importing `variables.scss`, until the styling pipeline is reconnected.
@@ -357,18 +404,25 @@ Recorded so they are not rediscovered as surprises.
   change. The peer set is verifiable: every `from '<package>'` in
   `dist/moh-common-lib-angular/fesm2022/*.mjs` should have a matching peer entry, and
   nothing else should.
-- **`npm run lint` reports 411 problems: 0 errors and 411 warnings.** Verified on the
-  2.0.0 release commit. ESLint had never actually run in this repo before the Node 22
-  work added the missing `eslint` dependency, so all of these are pre-existing findings,
-  not regressions. None of them is auto-fixable.
+
+  `pdfjs-dist` is declared as an **optional** peer dependency, used only by
+  `FileUploaderComponent` for PDF uploads. `PdfService` loads it through a dynamic
+  `import()` with a `.catch()` attached. The `.catch()` is what keeps it optional: a
+  bundler resolves a bare dynamic-import specifier at build time, so without it an app
+  that never uploads a PDF still fails to build. Do not remove it.
+- **`npm run lint` reports 538 problems: 0 errors and 538 warnings.** ESLint had never
+  actually run in this repo before the Node 22 work added the missing `eslint`
+  dependency, so the bulk of these are long-standing findings rather than regressions.
+  None is auto-fixable. The count grew from 411 at the 2.0.0 release as ported
+  components and their specs landed; the rule mix did not change.
 
   | Rule | Count |
   |---|---|
-  | `@typescript-eslint/member-ordering` | 148 |
-  | `@typescript-eslint/no-explicit-any` | 128 |
-  | `no-underscore-dangle` | 112 |
-  | `@typescript-eslint/no-unused-vars` | 14 |
-  | `@angular-eslint/no-output-native` | 9 |
+  | `@typescript-eslint/no-explicit-any` | 189 |
+  | `@typescript-eslint/member-ordering` | 172 |
+  | `no-underscore-dangle` | 119 |
+  | `@typescript-eslint/no-unused-vars` | 48 |
+  | `@angular-eslint/no-output-native` | 10 |
 
   These rules are set to `warn` rather than `error` on purpose, so that the pre-commit
   hook can block genuinely new problems without rejecting every commit that touches an
@@ -384,15 +438,28 @@ Recorded so they are not rediscovered as surprises.
 - **`npm audit`: 8 high-severity advisories in production dependencies**
   (`@angular/*`, `@ng-select/ng-select`), 33 total including dev. Clearing the Angular
   ones requires an Angular 20 upgrade.
-- **`AccordionCommonComponent` and `SampleModalComponent` still reference removed
-  ngx-bootstrap markup.** `AccordionCommonComponent` emits `<accordion>`, an unknown
-  element, and compiles only because of its `NO_ERRORS_SCHEMA`. `SampleModalComponent`
-  carries a `bsModal` attribute on a plain `<div>`, which Angular does not validate, so
-  it needs no schema. Neither behaves correctly without a modal library.
+- **`AccordionCommonComponent` still references removed ngx-bootstrap markup.** It emits
+  `<accordion>`, an unknown element, and compiles only because of its
+  `NO_ERRORS_SCHEMA`, so the panel never collapses and `[isOpen]` is inert. Either
+  implement the toggle in plain markup, the way `thumbnail`, `sample-modal` and
+  `consent-modal` were, or withdraw it from the barrel. `SampleModalComponent` was on
+  this list for the same reason and is fixed: it now drives a plain-markup dialog from
+  an `isOpen` flag.
+- **Four components are broken on `main` and are not fixed here.** `common-phn` is
+  missing both its `(ngModelChange)` and `(blur)` bindings, so it never reports a value
+  and never shows an error. `common-province` throws on dropdown select, because
+  `ng-select` emits a value where the handler reads `event.target.value`.
+  `common-street` renders a label with its input commented out. `common-address-validator`
+  never calls the geocoder, its typeahead bindings having been commented out with the
+  ngx-bootstrap removal. All four are rendered by consuming apps.
+- **`[errorMessage]` is documented on every form control and tested on none.**
+  `CountryComponent` also handles it differently from its siblings: it prepends the
+  label in its template instead of substituting `{label}`, so an override written the
+  documented way renders a literal `{label}` on that component only.
 - **The Jest transform is driven by a preset that does not declare support for the
   installed Jest.** `@angular-builders/jest@19.0.1` pins `jest-preset-angular@14.5.4`
   exactly, and that copy peer-requires `jest ^29` while the repo runs Jest 30. An
-  `overrides` entry forces the resolution. All 146 tests pass, but nothing guards this
+  `overrides` entry forces the resolution. All 433 tests pass, but nothing guards this
   combination; it clears on an `@angular-builders/jest` major that supports Jest 30.
   Note this is separate from the root `jest-preset-angular@16.2.0` that
   `setup-jest.ts` imports. The two-version split predates the Node 22 work.

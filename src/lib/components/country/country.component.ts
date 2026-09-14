@@ -9,7 +9,10 @@ import {
 } from '@angular/core';
 import { Base } from '../../models/base';
 import { ControlValueAccessor, NgControl, FormsModule } from '@angular/forms';
-import { ErrorMessage } from '../../models/error-message.interface';
+import {
+  ErrorMessage,
+  RegionCharsMsg,
+} from '../../models/error-message.interface';
 import { CommonModule } from '@angular/common';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ErrorContainerComponent } from '../error-container/error-container.component';
@@ -292,6 +295,18 @@ export function getCountryDescription(countryCode: string) {
   return countryObj ? countryObj.description : countryCode;
 }
 
+/**
+ * A country picker, rendered as a dropdown list or a free text field.
+ *
+ * @example
+ *   <common-country name="country" [(ngModel)]="address.country"></common-country>
+ *
+ *   Set useDropDownList to false for a free text field, which is what you want
+ *   once the jurisdiction is outside the known list:
+ *   <common-country name="country" [(ngModel)]="address.country"
+ *                   [useDropDownList]="false">
+ *   </common-country>
+ */
 @Component({
   selector: 'common-country',
   templateUrl: './country.component.html',
@@ -328,8 +343,7 @@ export class CountryComponent
 
   defaultErrMsg: ErrorMessage = {
     required: 'is required.',
-    invalidChar:
-      'must contain letters and may include special characters such as hyphens, periods, apostrophes and blank characters.',
+    invalidChar: RegionCharsMsg,
   };
 
   _onChange = (_: any) => {};

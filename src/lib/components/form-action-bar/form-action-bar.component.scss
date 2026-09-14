@@ -1,0 +1,52 @@
+@use 'sass:math';
+@use '../../styles/tokens' as vars;
+
+.form-action-bar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1em;
+  background-color: hsla(210, 30%, 85%, 1);
+  transition: background-color 0.3s;
+
+  &.disabled {
+    background-color: hsla(210, 10%, 85%, 1);
+  }
+
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  // Positioning values match .container-fluid in app.component.scss
+  left: vars.$container-gutter-size;
+  right: vars.$container-gutter-size;
+
+  // Below the lg breakpoint. Matches Bootstrap 4's media-breakpoint-down(md),
+  // which the original of this component was written against.
+  @media (max-width: #{vars.$breakpoint-lg - 0.02px}) {
+    left: math.div(vars.$container-gutter-size, 2);
+    right: math.div(vars.$container-gutter-size, 2);
+  }
+
+  // Counteract mobile .container-fluid styling, so the bar stays full width.
+  // Below the md breakpoint, matching Bootstrap 4's media-breakpoint-down(sm).
+  @media (max-width: #{vars.$breakpoint-md - 0.02px}) {
+    width: calc(100% + 30px);
+    margin-left: -15px;
+  }
+}
+
+.submit {
+  min-width: 240px;
+
+  @media (max-width: #{vars.$breakpoint-md - 0.02px}) {
+    min-width: 100%;
+  }
+}
+
+.btn {
+  white-space: normal !important;
+  word-wrap: break-word;
+}
+
+.btn-secondary.disabled {
+  color: #000;
+}

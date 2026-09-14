@@ -25,35 +25,13 @@ import {
 } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import {
+  createTestingModule,
   tickAndDetectChanges,
   getDebugLabel,
   setInput,
   getDebugElement,
 } from '../../../helpers/test-helpers';
 import { BrowserModule } from '@angular/platform-browser';
-
-export function createTestingModule<T>(
-  cmp: Type<T>,
-  template: string
-): ComponentFixture<EmailReactTestComponent> {
-  const importComp: any = [BrowserModule, FormsModule, ReactiveFormsModule];
-
-  TestBed.configureTestingModule({
-    declarations: [],
-    imports: [importComp],
-    providers: [{ provide: ComponentFixtureAutoDetect, useValue: true }],
-  }).overrideComponent(cmp, {
-    set: {
-      template: template,
-    },
-  });
-
-  TestBed.compileComponents();
-
-  return TestBed.createComponent(
-    cmp
-  ) as ComponentFixture<EmailReactTestComponent>;
-}
 
 @Component({
   template: '',

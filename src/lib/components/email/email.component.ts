@@ -12,6 +12,7 @@ import { AbstractFormControl } from '../../models/abstract-form-control';
 import {
   ErrorMessage,
   LabelReplacementTag,
+  RequiredMsg,
 } from '../../models/error-message.interface';
 import { CommonModule } from '@angular/common';
 import { ErrorContainerComponent } from '../error-container/error-container.component';
@@ -36,12 +37,21 @@ const formatCriteria = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
 const asciiPrintable = /^[ -~]+$/;
 
 /**
+ * An email address field.
+ *
  * Required validation comes from Angular's own RequiredValidator, which matches
  * the `required` attribute on the host element. It works in both template driven
  * and reactive forms, so ngModel is not needed for it. The `required` input below
  * only forwards the native attribute to the inner input, and only when it is bound
  * as a property: `[required]="true"` sets the attribute, while a bare `required`
  * attribute passes an empty string and leaves the inner input without it.
+ *
+ * @example
+ *   <common-email name="email" [(ngModel)]="person.email" [required]="true">
+ *   </common-email>
+ *
+ *   Bind [required], do not write a bare required attribute: the bare form
+ *   passes an empty string and the inner input never receives it.
  */
 @Component({
   selector: 'common-email',
@@ -71,7 +81,7 @@ export class EmailComponent extends AbstractFormControl implements OnInit {
   email: string = '';
 
   override _defaultErrMsg: ErrorMessageExtended = {
-    required: `${LabelReplacementTag} is required.`,
+    required: RequiredMsg,
     invalidEmail: `${LabelReplacementTag} must be properly formatted (e.g. name@domain.com)`,
     invalidChars: `${LabelReplacementTag} must contain letters, numbers and/or symbols(e.g. #, @, !).`,
   };
@@ -93,7 +103,7 @@ export class EmailComponent extends AbstractFormControl implements OnInit {
     const target = event.target as HTMLSelectElement;
     const value = target.value;
     this.email = value;
-    this._onChange(true);
+    this._onChange(value);
     this.valueChange.emit(value);
   }
 

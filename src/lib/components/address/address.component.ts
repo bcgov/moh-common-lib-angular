@@ -7,7 +7,6 @@ import {
   forwardRef,
   OnInit,
   ViewChild,
-  NO_ERRORS_SCHEMA,
 } from '@angular/core';
 import {
   ControlContainer,
@@ -29,8 +28,17 @@ import {
   PROVINCE_LIST,
 } from '../province/province.component';
 import { CityComponent } from '../city/city.component';
-import { CommonModule } from '@angular/common';
+import { AddressValidatorComponent } from '../address-validator/address-validator.component';
+import { CountryComponent } from '../country/country.component';
+import { PostalCodeComponent } from '../postal-code/postal-code.component';
+import { ProvinceComponent } from '../province/province.component';
+import { StreetComponent } from '../street/street.component';
+import { ValidatePostalcodeDirective } from '../postal-code/validate-postalcode.directive';
+import { ValidateRegionDirective } from '../validate-region/validate-region.directive';
+import { ValidateCityDirective } from '../city/validate-city.directive';
+import { ValidateStreetDirective } from '../street/validate-street.directive';
 
+import { CommonModule } from '@angular/common';
 
 export interface AddrLabelList {
   address1?: string;
@@ -60,8 +68,15 @@ export interface ReadOnlyFields {
 }
 
 /**
+ * A complete address block: street, city, province, country and postal code,
+ * acting as a single form control.
  *
- * Note - This component REQUIRES that `HttpClientModule` is registered in your NgModule.
+ * @example
+ *   <common-address [(address)]="person.address"
+ *                   [isRequired]="true"
+ *                   [bcOnly]="true"
+ *                   [addressServiceUrl]="geocoderUrl">
+ *   </common-address>
  */
 @Component({
   selector: 'common-address',
@@ -69,8 +84,20 @@ export interface ReadOnlyFields {
   /* Re-use the same ngForm that it's parent is using. The component will show
    * up in its parents `this.form`, and will auto-update `this.form.valid`
    */
-  imports: [CommonModule, FormsModule, CityComponent],
-  schemas: [NO_ERRORS_SCHEMA],
+  imports: [
+    CommonModule,
+    FormsModule,
+    AddressValidatorComponent,
+    CityComponent,
+    CountryComponent,
+    PostalCodeComponent,
+    ProvinceComponent,
+    StreetComponent,
+    ValidateCityDirective,
+    ValidatePostalcodeDirective,
+    ValidateRegionDirective,
+    ValidateStreetDirective,
+  ],
   viewProviders: [
     { provide: ControlContainer, useExisting: forwardRef(() => NgForm) },
   ],
@@ -342,15 +369,6 @@ export class AddressComponent
     return provObj ? provObj.provinceCode : '';
   }
 
-  private findProvinceDescription(prov: string): string | null {
-    const provObj = !this.provinceList
-      ? null
-      : this.provinceList.find(
-          (val) => val.provinceCode === prov || val.description === prov
-        );
-    return provObj ? provObj.description : null;
-  }
-
   /**
    * Set country to default
    * Search uses country code or country name to find item is list.
@@ -531,7 +549,6 @@ export class AddressComponent
       }
     }
 
-
     for (let i = 0; i < lines.length; i++) {
       if (!lines[i]) {
         break;
@@ -563,7 +580,7 @@ export class AddressComponent
     }
 
     for (let i = 0; i < newLines.length; i++) {
-       const addressLineName = 'addressLine' + (i + 1);
+      const addressLineName = 'addressLine' + (i + 1);
       (address as any)[addressLineName] = newLines[i];
     }
     // console.log('After truncatation: ', address);

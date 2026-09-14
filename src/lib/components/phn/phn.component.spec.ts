@@ -21,34 +21,12 @@ import {
   Type,
 } from '@angular/core';
 import {
+  createTestingModule,
   tickAndDetectChanges,
   getDebugLabel,
   getDebugElement,
 } from '../../../helpers/test-helpers';
 import { BrowserModule } from '@angular/platform-browser';
-
-function createTestingModule<T>(
-  cmp: Type<T>,
-  template: string
-): ComponentFixture<PhnReactTestComponent> {
-  const importComp: any = [BrowserModule, FormsModule, ReactiveFormsModule];
-
-  TestBed.configureTestingModule({
-    declarations: [],
-    imports: [importComp],
-    providers: [{ provide: ComponentFixtureAutoDetect, useValue: true }],
-  }).overrideComponent(cmp, {
-    set: {
-      template: template,
-    },
-  });
-
-  TestBed.compileComponents();
-
-  return TestBed.createComponent(
-    cmp
-  ) as ComponentFixture<PhnReactTestComponent>;
-}
 
 @Component({
   template: '',

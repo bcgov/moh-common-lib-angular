@@ -1,0 +1,82 @@
+@use 'sass:color';
+@use 'sass:math';
+@use '../../styles/tokens' as vars;
+
+:host {
+  flex: 1;
+  padding: 1em 2em;
+
+  // Styling to handle .horizontal-overflow (in core-breadcrumb.component.scss)
+  min-height: 2em;
+  min-width: 650px;
+}
+
+.step-container {
+  display: flex;
+  // IE10 doesn't support space-evenly, so use space-between
+  justify-content: space-around;
+}
+
+// Stands in for ngx-bootstrap's <progressbar> element, which carried these two
+// rules itself. The inner bar is what the width is animated on.
+.progress {
+  display: flex;
+  overflow: hidden;
+  background-color: vars.$gray-500;
+  height: 0.5rem;
+}
+
+.progress-bar {
+  background-color: vars.$color-primary;
+  height: 100%;
+  transition: width 0.6s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-bar {
+    transition: none;
+  }
+}
+
+.step {
+  $markerSize: 1em;
+  position: relative;
+  transform: translateX(math.div(-$markerSize, 2));
+  margin-top: 0.25rem;
+
+  &:before {
+    content: ' ';
+    position: absolute;
+    width: $markerSize;
+    height: $markerSize;
+    border-radius: 100%;
+    background: white;
+    border: 3px solid vars.$color-primary;
+
+    // Center above
+    right: 0;
+    left: 0;
+    margin: 0 auto;
+    bottom: 100%;
+  }
+
+  &:not(.active) .step-text {
+    opacity: 0.8;
+  }
+  &:not(.active):before {
+    background: vars.$gray-400;
+  }
+
+  // Take the text out of the CSS layout with position absolute so that the
+  // width of the text does not mess up the math of the positioning of the
+  // elements.
+  .step-text {
+    position: absolute;
+    transform: translateX(-33%);
+    white-space: nowrap;
+    font-size: small;
+
+    // a11y - necessary to get AA colour contrast against the $gray-500 background.
+    color: color.adjust(vars.$link-color, $lightness: -5%);
+  }
+}

@@ -1,13 +1,12 @@
 import { Component, Input, NO_ERRORS_SCHEMA } from '@angular/core';
 /**
- * AccordionComponent is a
+ * A collapsible panel with a heading that toggles its projected content.
  *
  * @example
  *       	<common-accordion
  *          title="'Documents'"
  *          [isOpen]="false">
-  *       </common-accordion>
- * @export
+ *       </common-accordion>
  */
 
 @Component({
@@ -16,14 +15,11 @@ import { Component, Input, NO_ERRORS_SCHEMA } from '@angular/core';
   styleUrls: ['./accordion.component.scss'],
   schemas: [NO_ERRORS_SCHEMA],
 })
-export class AccordionCommonComponent  {
-
+export class AccordionCommonComponent {
   @Input() title: string = '';
   @Input() isOpen: boolean = false;
 
-  public expandText: string =  '(click to expand)';
+  public expandText: string = '(click to expand)';
 
-  constructor() { }
-
-
+  constructor() {}
 }

@@ -1,0 +1,51 @@
+<label for="{{ labelforId }}" class="control-label">{{ label }}</label>
+<div *ngIf="displayMask; else NoMask">
+  <input
+    class="form-control"
+    spellcheck="false"
+    id="{{ labelforId }}"
+    [ngModel]="postalCode"
+    (ngModelChange)="onValueChange($event)"
+    (blur)="onBlurEvent($event)"
+    [mask]="mask"
+    [dropSpecialCharacters]="false"
+    [required]="required"
+    [disabled]="disabled"
+    autocomplete="off" />
+</div>
+
+<!-- Error messages for input -->
+<common-error-container
+  [displayError]="
+    (controlDir &&
+      !disabled &&
+      (controlDir.touched || controlDir.dirty) && !!controlDir.errors) ??
+    false
+  ">
+  <div *ngIf="controlDir?.errors?.['required']">
+    {{ _defaultErrMsg.required }}
+  </div>
+  <div *ngIf="controlDir?.errors?.['pattern']">
+    {{ _defaultErrMsg.pattern }}
+  </div>
+  <div *ngIf="controlDir?.errors?.['invalidBCPostal']">
+    {{ _defaultErrMsg.invalidBCPostal }}
+  </div>
+  <div *ngIf="controlDir?.errors?.['invalidChar']">
+    {{ _defaultErrMsg.invalidChar }}
+  </div>
+</common-error-container>
+
+<ng-template #NoMask>
+  <input
+    class="form-control"
+    spellcheck="false"
+    type="text"
+    id="{{ labelforId }}"
+    [ngModel]="postalCode"
+    (ngModelChange)="onValueChange($event)"
+    (blur)="onBlurEvent($event)"
+    [disabled]="disabled"
+    [attr.maxlength]="maxlen"
+    autocomplete="off" />
+</ng-template>

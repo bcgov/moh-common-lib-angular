@@ -26,6 +26,9 @@ export interface FullNameErrorMsg {
 }
 
 /**
+ * First, middle and last name in one control, holding a Person.
+ * For a single field, see NameComponent.
+ *
  * FullNameComponent includes a first, middle, and last name field.  If you only
  * need an individual field, @see NameComponent.
  *
@@ -40,7 +43,6 @@ export interface FullNameErrorMsg {
  *          <common-full-name [(person)]='person'></common-full-name>
  *          <common-full-name formControlName='person' [required]='false'></common-full-name>
  *
- * @export
  */
 @Component({
   selector: 'common-full-name',
