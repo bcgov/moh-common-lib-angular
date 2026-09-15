@@ -236,7 +236,17 @@ jobs:
           NODE
       - name: Publish the tested tarball using npm trusted publishing
         working-directory: ${{ runner.temp }}/release
-        run: npm publish ./package.tgz --access public --tag latest --provenance --ignore-scripts --registry=https://registry.npmjs.org
+        run: |
+          # actions/setup-node writes a placeholder NODE_AUTH_TOKEN (and a matching
+          # _authToken line) whenever registry-url is set, so that npm does not warn
+          # about a missing token. If OIDC trusted publishing were ever misconfigured
+          # (wrong workflow filename or environment on npmjs.com), that placeholder
+          # would otherwise let npm attempt to publish with it and fail with a
+          # confusing registry 401 instead of the clear "not logged in" error npm
+          # gives with no credentials at all. Trusted publishing itself does not
+          # read NODE_AUTH_TOKEN, so clearing it here is safe either way.
+          unset NODE_AUTH_TOKEN
+          npm publish ./package.tgz --access public --tag latest --provenance --ignore-scripts --registry=https://registry.npmjs.org
       - name: Create a new tag at the tested commit, then its GitHub Release
         working-directory: ${{ runner.temp }}/release
         env:
