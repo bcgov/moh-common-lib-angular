@@ -10,6 +10,7 @@ import {
   FormGroup,
   FormsModule,
   ReactiveFormsModule,
+  Validators,
 } from '@angular/forms';
 import {
   Component,
@@ -24,7 +25,7 @@ import {
   getDebugLabel,
   getDebugElement,
 } from '../../../helpers/test-helpers';
-import { BrowserModule } from '@angular/platform-browser';
+import { BrowserModule, By } from '@angular/platform-browser';
 import { ProvinceComponent, ProvinceList } from './province.component';
 import { ErrorContainerComponent } from '../error-container/error-container.component';
 import { CANADA } from '../country/country.component';
@@ -74,6 +75,43 @@ class ProvinceReactTestComponent
       province2: [this.province2],
     });
   }
+}
+
+@Component({
+  template: '',
+  imports: [ProvinceComponent, FormsModule],
+})
+class ProvinceNgModelTestComponent extends ProvinceTestComponent {}
+
+/**
+ * Drives ng-select through its real UI: opens the dropdown and clicks the
+ * rendered .ng-option whose label matches, the same path a user takes. This
+ * exercises the component's real (ngModelChange)="onValueChange($event)"
+ * binding instead of calling onValueChange() directly.
+ */
+function selectProvinceOptionThroughUi(
+  fixture: ComponentFixture<any>,
+  provinceDe: any,
+  optionLabel: string
+): void {
+  const ngSelectDe = provinceDe.query(By.directive(NgSelectComponent));
+  const ngSelectCmp = ngSelectDe.componentInstance as NgSelectComponent;
+  ngSelectCmp.open();
+  tickAndDetectChanges(fixture);
+
+  const optionEls: HTMLElement[] = Array.from(
+    fixture.nativeElement.querySelectorAll('.ng-option')
+  );
+  const optionEl = optionEls.find(
+    (el) => el.textContent?.trim() === optionLabel
+  );
+  if (!optionEl) {
+    throw new Error(
+      `ng-option "${optionLabel}" not found in rendered dropdown`
+    );
+  }
+  optionEl.click();
+  tickAndDetectChanges(fixture);
 }
 
 describe('Province.Component', () => {
@@ -159,5 +197,84 @@ describe('Province.Component', () => {
     de.componentInstance.writeValue(undefined);
 
     expect(de.componentInstance.province).toBe('BC');
+  }));
+
+  // ng-select's (ngModelChange) passes onValueChange() the selected
+  // provinceCode string, not a DOM Event. Selecting through the real dropdown
+  // must update the model, leave the required form valid, and log no error.
+  it('should select a province through the ng-select UI and satisfy a template-driven required ngModel', fakeAsync(() => {
+    const fixture = createTestingModule(
+      ProvinceNgModelTestComponent,
+      `<form>
+          <common-province
+             name='province1'
+             [(ngModel)]="province1"
+             required
+             [provinceList]="provinceList">
+          </common-province>
+      </form>`
+    );
+
+    tickAndDetectChanges(fixture);
+    const de = getDebugElement(fixture, 'common-province', 'province1');
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+    selectProvinceOptionThroughUi(fixture, de, 'British Columbia');
+
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
+    expect(fixture.componentInstance.province1).toBe('BC');
+    expect(de.componentInstance.controlDir.valid).toBe(true);
+  }));
+
+  it('should select a province through the ng-select UI and satisfy a reactive required FormControl', fakeAsync(() => {
+    const fixture = createTestingModule(
+      ProvinceReactTestComponent,
+      `<form [formGroup]="form">
+          <common-province
+             name='province1'
+             formControlName='province1'
+             [provinceList]="provinceList">
+          </common-province>
+      </form>`
+    );
+
+    const component = fixture.componentInstance;
+    const province1Control = component.form.get('province1');
+    province1Control?.setValidators(Validators.required);
+    province1Control?.updateValueAndValidity();
+    tickAndDetectChanges(fixture);
+
+    const de = getDebugElement(fixture, 'common-province', 'province1');
+
+    selectProvinceOptionThroughUi(fixture, de, 'British Columbia');
+
+    expect(province1Control?.value).toBe('BC');
+    expect(province1Control?.valid).toBe(true);
+  }));
+
+  // The clear button on an optional province makes ng-select emit null.
+  it('should clear an optional province through ng-select without throwing', fakeAsync(() => {
+    const fixture = createTestingModule(
+      ProvinceReactTestComponent,
+      `<form [formGroup]="form">
+          <common-province
+             name='province1'
+             formControlName='province1'
+             [provinceList]="provinceList">
+          </common-province>
+      </form>`
+    );
+
+    tickAndDetectChanges(fixture);
+    const province1Control = fixture.componentInstance.form.get('province1');
+    const de = getDebugElement(fixture, 'common-province', 'province1');
+    selectProvinceOptionThroughUi(fixture, de, 'British Columbia');
+
+    const ngSelectCmp = de.query(By.directive(NgSelectComponent))
+      .componentInstance as NgSelectComponent;
+    ngSelectCmp.clearModel();
+    tickAndDetectChanges(fixture);
+
+    expect(province1Control?.value).toBeNull();
   }));
 });

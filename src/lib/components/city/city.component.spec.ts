@@ -66,6 +66,12 @@ class CityReactTestComponent extends CityTestComponent implements OnInit {
   }
 }
 
+@Component({
+  template: '',
+  imports: [CityComponent, FormsModule],
+})
+class CityNgModelTestComponent extends CityTestComponent {}
+
 describe('City.Component', () => {
   it('should create', fakeAsync(() => {
     const fixture = createTestingModule(
@@ -130,5 +136,55 @@ describe('City.Component', () => {
     inputEl.dispatchEvent(new Event('change'));
 
     expect(inputEl.value).toBe(inputValue);
+  }));
+
+  // Clearing the input must propagate "" to the form control, so a required
+  // control becomes invalid instead of keeping the last typed value.
+  it('should clear a template-driven required ngModel when the input is cleared', fakeAsync(() => {
+    const fixture = createTestingModule(
+      CityNgModelTestComponent,
+      `<form>
+          <common-city name='city1' [(ngModel)]="city1" required></common-city>
+         </form>`
+    );
+
+    tickAndDetectChanges(fixture);
+    const de = getDebugElement(fixture, 'common-city', 'city1');
+
+    setInput(de, 'Victoria');
+    tickAndDetectChanges(fixture);
+    expect(fixture.componentInstance.city1).toBe('Victoria');
+
+    setInput(de, '');
+    tickAndDetectChanges(fixture);
+
+    expect(fixture.componentInstance.city1).toBe('');
+    expect(de.componentInstance.controlDir.hasError('required')).toBe(true);
+  }));
+
+  it('should clear a reactive required FormControl when the input is cleared', fakeAsync(() => {
+    const fixture = createTestingModule(
+      CityReactTestComponent,
+      `<form [formGroup]="form">
+            <common-city name='city1' formControlName='city1'></common-city>
+           </form>`
+    );
+
+    fixture.componentInstance.setCityRequired('city1');
+    tickAndDetectChanges(fixture);
+
+    const de = getDebugElement(fixture, 'common-city', 'city1');
+    const city1Control = fixture.componentInstance.form.get('city1');
+
+    setInput(de, 'Victoria');
+    tickAndDetectChanges(fixture);
+    expect(city1Control?.value).toBe('Victoria');
+    expect(city1Control?.valid).toBe(true);
+
+    setInput(de, '');
+    tickAndDetectChanges(fixture);
+
+    expect(city1Control?.value).toBe('');
+    expect(city1Control?.hasError('required')).toBe(true);
   }));
 });

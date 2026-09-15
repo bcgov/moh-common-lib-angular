@@ -93,11 +93,9 @@ export class CityComponent
     } else if (typeof data === 'object') {
       value = data.target.value;
     }
-    if (value) {
-      this.city = value;
-      this._onChange(value);
-      this.valueChange.emit(value);
-    }
+    this.city = value;
+    this._onChange(value);
+    this.valueChange.emit(value);
   }
 
   onBlur(event: any) {
