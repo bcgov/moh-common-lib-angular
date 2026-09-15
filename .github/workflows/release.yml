@@ -3,10 +3,21 @@ name: Release
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: >-
+          Version already committed on main (e.g. 2.1.0). Must exactly match
+          projects/common-lib/package.json. Recovers only a run that failed
+          before npm publish; the tag goes on the current main head.
+        required: true
+        type: string
 
 permissions: {}
 
-# GitHub keeps only one pending run. Do not merge another release while one waits.
+# GitHub keeps only one pending run per group, covering both the push route and the
+# workflow_dispatch recovery route. Do not merge another release, or dispatch one,
+# while one waits.
 concurrency:
   group: npm-release-main
   cancel-in-progress: false
@@ -43,23 +54,40 @@ jobs:
         with:
           node-version: '22'
           registry-url: https://registry.npmjs.org
-      - name: Compare library versions at the push endpoints
+      - name: Compare or confirm the library version to release
         id: version
         env:
+          EVENT_NAME: ${{ github.event_name }}
           BEFORE: ${{ github.event.before }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
           node <<'NODE'
           const fs = require('node:fs');
           const { execFileSync } = require('node:child_process');
-          const before = process.env.BEFORE;
-          if (!/^[0-9a-f]{40}$/.test(before) || /^0+$/.test(before)) {
-            throw new Error('Missing push baseline; manual investigation required.');
-          }
-          const previous = JSON.parse(execFileSync('git', [
-            '--no-pager', 'show', `${before}:projects/common-lib/package.json`
-          ], { encoding: 'utf8' })).version;
+          const eventName = process.env.EVENT_NAME;
           const version = JSON.parse(fs.readFileSync('projects/common-lib/package.json')).version;
-          const changed = previous !== version;
+          let changed;
+          if (eventName === 'workflow_dispatch') {
+            if (process.env.GITHUB_REF !== 'refs/heads/main') {
+              throw new Error(`Manual dispatch must run on main, not ${process.env.GITHUB_REF}; manual dispatch aborted.`);
+            }
+            const inputVersion = process.env.INPUT_VERSION || '';
+            if (inputVersion !== version) {
+              throw new Error(`Input version ${JSON.stringify(inputVersion)} does not match committed version ${version}; manual dispatch aborted.`);
+            }
+            changed = true;
+            console.log(`Manual dispatch confirmed for already-committed version ${version}.`);
+          } else {
+            const before = process.env.BEFORE;
+            if (!/^[0-9a-f]{40}$/.test(before) || /^0+$/.test(before)) {
+              throw new Error('Missing push baseline; manual investigation required.');
+            }
+            const previous = JSON.parse(execFileSync('git', [
+              '--no-pager', 'show', `${before}:projects/common-lib/package.json`
+            ], { encoding: 'utf8' })).version;
+            changed = previous !== version;
+            if (changed) console.log(`Release requested: ${previous} -> ${version}`);
+          }
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `changed=${changed}\n`);
           if (!changed) {
             console.log(`Library version remains ${version}; no release.`);
@@ -74,7 +102,6 @@ jobs:
             throw new Error('All four version locations must match; use release:set-version.');
           }
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `version=${version}\n`);
-          console.log(`Release requested: ${previous} -> ${version}`);
           NODE
       - name: Select OIDC-compatible npm
         if: steps.version.outputs.changed == 'true'
