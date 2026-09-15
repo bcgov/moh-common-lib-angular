@@ -116,9 +116,8 @@ export class ProvinceComponent extends AbstractFormControl implements OnInit {
     super.ngOnInit();
   }
 
-  onValueChange(event: Event) {
-    const target = event.target as HTMLSelectElement;
-    const value = target.value;
+  onValueChange(data: any) {
+    const value = data?.target ? (data.target as HTMLInputElement).value : data;
     if (value !== this.province) {
       this._onChange(value);
       this.valueChange.emit(value);

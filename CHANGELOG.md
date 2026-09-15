@@ -1,3 +1,100 @@
+## 2.1.0 (2026-09-15)
+
+This release adds the components and the captcha secondary entry point that fpcare and
+fpincome need to move off the legacy moh-common-lib, closes the packaging gap the 2.0.0
+notes flagged (ConfirmTemplateComponent and four validator directives are now actually
+exported), and fixes several form-binding defects, two of them (province and city) found
+in this rework pass. No export, selector, input, or output was removed or renamed.
+
+### Breaking
+
+- None.
+
+### Added
+
+- Nine new components, all exported from the library barrel: `PageFrameworkComponent`
+  (`common-page-framework`), `PageSectionComponent` (`common-page-section`),
+  `FormActionBarComponent` (`common-form-action-bar`), `PostalCodeComponent`
+  (`common-postal-code`), `WizardProgressBarComponent` (`common-wizard-progress-bar`),
+  `FileUploaderComponent` (`common-file-uploader`, with `PdfService` and the
+  `FileUploaderMsg` type) and `ThumbnailComponent` (`common-thumbnail`),
+  `CoreBreadcrumbComponent` (`common-core-breadcrumb`), and `ConsentModalComponent`
+  (`common-consent-modal`).
+- A new secondary entry point, `moh-common-lib-angular/captcha`, exporting
+  `CaptchaModule`, `CaptchaComponent` (selector `common-captcha`), `CAPTCHA_STATE`,
+  `CaptchaDataService`, and the `ServerPayload` type, so an app that never renders a
+  captcha does not pay for it.
+- `ConfirmTemplateComponent` (`common-confirm-template`, with the `ApiStatusCodes` enum)
+  and four validator directives that the 2.0.0 changelog listed as written but not
+  shipped are now actually exported from the barrel and present in the package:
+  `ValidateCityDirective`, `ValidateNameDirective`, `ValidateStreetDirective`, and
+  `DuplicateCheckDirective`, each alongside its helper function (`commonValidateCity`,
+  `commonValidateName`, `commonValidateStreet`, and `commonDuplicateCheck`). Three more
+  validator directives are new: `ValidatePostalcodeDirective`, `ValidateBcPostalDirective`,
+  and `ValidateRegionDirective`, with `commonValidatePostalcode`, `commonValidateBcPostal`,
+  and `commonValidateRegion`.
+- `DefaultPageGuardService` now also exports the `BYPASS_GUARDS` and `START_PAGE_URL`
+  tokens it already used internally.
+- The README inside the npm package is now a consumer guide (install, peer dependencies) instead of the repository's development README.
+- Repo-only: Storybook documentation for every exported component and the captcha entry
+  point. Not part of the published package.
+- Repo-only: a manual `workflow_dispatch` recovery route on the release workflow, for
+  re-running a release that failed before the npm publish step. No effect on consumers.
+
+### Fixed
+
+- Selecting a province from the `common-province` dropdown threw, because the
+  `(ngModelChange)` handler assumed a DOM event and read `.target.value` off the string
+  ng-select actually emits. Selecting a province now updates the bound value instead of
+  throwing, and clearing an optional province sets the value to `null`.
+- Clearing a `common-city` field left the bound value at whatever was last typed: the
+  empty string is falsy, so the change handler's `if (value)` guard skipped calling
+  `onChange`. Clearing the field now updates the bound value and control state.
+- `CityComponent`, `EmailComponent`, `NameComponent`, `PhnComponent`, and
+  `ProvinceComponent` called the reactive-forms `onChange` callback with a hardcoded
+  `true` instead of the typed value. `PhoneNumberComponent` had the same effect from
+  `this.phoneNumber ? true : false`, a computed boolean rather than a hardcoded one. A
+  form control bound to one of these fields (for example `formControlName="city"`) held
+  `true`/`false` instead of what the user typed. All six now hold the real value, for
+  both `[(ngModel)]` and reactive forms; a cleared required field is now invalid where it
+  previously stayed valid.
+- `AddressComponent` threw NG01203 when rendered: the component itself declared
+  `schemas: [NO_ERRORS_SCHEMA]` (not a test schema), masking five child components and
+  four validator attributes it referenced but never imported.
+- `SampleModalComponent.openModal()` called `.show()` on a `ViewChild` that never
+  matched, throwing a `TypeError`.
+- Three click handlers gained keyboard equivalents for accessibility: the close control
+  on the existing `SampleModalComponent`, and one each in the new `FileUploaderComponent`
+  and `ThumbnailComponent`.
+
+### Changed
+
+- `common-sin` and `common-phone-number` now provide their own `ngx-mask` config
+  (`providers: [provideNgxMask()]`), instead of importing `NgxMaskDirective` and relying
+  on an app-level `provideNgxMask()`. An app no longer needs to provide one just for
+  these two fields, and an app-level ngx-mask config (for example
+  `dropSpecialCharacters`) no longer reaches them, so the masked value they emit can
+  change shape if your app-level config differed from the library default.
+- `pdfjs-dist` (`^4.10.38`) is a new peer dependency, but it is declared optional
+  (`peerDependenciesMeta.pdfjs-dist.optional`) and loaded through a dynamic import with a
+  catch, so a consumer that never uses `FileUploaderComponent` does not need to install
+  it. It is used only by `PdfService`, which `FileUploaderComponent` injects; the captcha
+  entry point does not import it.
+
+### Consumer action required
+
+- If your app binds a form control to `common-city`, `common-email`, `common-name`,
+  `common-phn`, `common-phone-number`, or `common-province` and reads the control's value
+  (rather than only the component's own value or valueChange output), check that code:
+  the control now receives the typed value instead of a boolean, and a cleared required
+  field is now invalid.
+- If your app sets an app-level ngx-mask config and relies on it applying to
+  `common-sin` or `common-phone-number`, check the value those fields now produce; they
+  no longer pick up that config.
+- Install `pdfjs-dist@^4.10.38` only if you use `FileUploaderComponent`. The captcha
+  entry point does not need it.
+- Otherwise nothing: the new components and the captcha entry point are additive.
+
 ## 2.0.0 (2026-09-11)
 
 The library is now distributed as a compiled ng-packagr package instead of raw
