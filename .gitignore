@@ -37,6 +37,7 @@ debug.log
 /libpeerconnection.log
 testem.log
 /typings
+*storybook.log
 
 # System files
 .DS_Store

@@ -2,6 +2,7 @@
 const eslint = require('@eslint/js');
 const tseslint = require('typescript-eslint');
 const angular = require('angular-eslint');
+const storybook = require('eslint-plugin-storybook');
 
 // Type-aware linting is intentionally not configured here. Adding a
 // *-type-checked rule requires setting languageOptions.parserOptions.projectService.
@@ -42,5 +43,6 @@ module.exports = tseslint.config(
       ...angular.configs.templateRecommended,
       ...angular.configs.templateAccessibility,
     ],
-  }
+  },
+  ...storybook.configs['flat/recommended']
 );

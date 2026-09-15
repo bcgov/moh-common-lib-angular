@@ -12,6 +12,8 @@ const config: Config = {
     '!src/lib/**/*.model.ts',
     '!src/lib/**/*.interface.ts',
     '!src/lib/**/*.constants.ts',
+    '!src/**/*.stories.ts',
+    '!src/captcha/testing/**',
   ],
 };
 

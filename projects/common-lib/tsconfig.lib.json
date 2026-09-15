@@ -18,6 +18,7 @@
      file, which is why they need the ../../ prefix. */
   "exclude": [
     "../../src/**/*.spec.ts",
+    "../../src/**/*.stories.ts",
     "../../src/helpers/test-helpers.ts"
   ],
   "include": [

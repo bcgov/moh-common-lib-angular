@@ -6,7 +6,7 @@
     "start": "ng serve",
     "build": "ng build",
     "build:lib": "ng build moh-common-lib-angular-lib && npm run copy:lib",
-    "copy:readme": "cp ./README.md dist/moh-common-lib-angular/",
+    "copy:readme": "cp ./projects/common-lib/README.md dist/moh-common-lib-angular/",
     "copy:license": "cp ./LICENSE dist/moh-common-lib-angular/",
     "copy:lib": "npm run copy:readme && npm run copy:license",
     "pack:lib": "npm run build:lib && npm pack ./dist/moh-common-lib-angular --pack-destination ./dist",
@@ -14,6 +14,8 @@
     "release:notes": "./build_utils/release-notes.sh",
     "release:preflight": "./build_utils/release-preflight.sh",
     "watch": "ng build --watch --configuration development",
+    "storybook": "ng run moh-common-lib-angular:storybook",
+    "build-storybook": "ng run moh-common-lib-angular:build-storybook",
     "test": "ng test",
     "lint": "ng lint",
     "prettier": "./node_modules/.bin/prettier --single-quote --write './src/**/*.{ts,js,css,json,scss,html}'",
@@ -27,6 +29,10 @@
     ],
     "src/**/*.{js,scss}": [
       "prettier --write"
+    ],
+    ".storybook/**/*.ts": [
+      "prettier --write",
+      "eslint"
     ]
   },
   "private": true,
@@ -60,6 +66,9 @@
     "@angular/cli": "^19.2.24",
     "@angular/compiler-cli": "^19.2.20",
     "@eslint/js": "^9.39.5",
+    "@fortawesome/fontawesome-free": "7.3.1",
+    "@storybook/addon-a11y": "10.6.0",
+    "@storybook/angular": "10.6.0",
     "@types/date-fns": "^2.5.3",
     "@types/jest": "^30.0.0",
     "@types/zxcvbn": "^4.4.5",
@@ -67,6 +76,7 @@
     "bootstrap": "^5.3.6",
     "date-fns": "^4.1.0",
     "eslint": "^9.39.5",
+    "eslint-plugin-storybook": "10.6.0",
     "husky": "^9.1.7",
     "jest": "^30.5.1",
     "jest-environment-jsdom": "^30.5.1",
@@ -76,6 +86,7 @@
     "ngx-mask": "^19.0.7",
     "pdfjs-dist": "^4.10.38",
     "prettier": "3.7.4",
+    "storybook": "10.6.0",
     "typescript": "~5.7.2",
     "typescript-eslint": "8.32.0",
     "uuid": "^11.1.0",
