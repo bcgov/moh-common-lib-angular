@@ -181,10 +181,13 @@ jobs:
       NOTES_SHA256: ${{ needs.prepare.outputs.notes-sha256 }}
     steps:
       # No checkout, dependency install, lifecycle scripts, build, or cache here.
+      # No registry-url: setup-node would write a placeholder _authToken to the npm
+      # user config, and npm would send it instead of reporting missing credentials
+      # if trusted publishing were misconfigured. The registry comes from
+      # NPM_CONFIG_REGISTRY and the --registry flags.
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
-          registry-url: https://registry.npmjs.org
       - name: Select OIDC-compatible npm without lifecycle scripts
         run: npm install --global npm@11.5.1 --ignore-scripts --registry=https://registry.npmjs.org
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
