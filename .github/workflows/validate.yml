@@ -38,4 +38,5 @@ jobs:
       - run: npm ci
       - run: npm test -- --ci --watch=false --run-in-band
       - run: npm run lint
+      - run: npm run build-storybook
       - run: npm run pack:lib

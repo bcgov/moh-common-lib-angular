@@ -7,8 +7,9 @@ as `fpcare`.
 Packaged with ng-packagr into Angular Package Format output, with a secondary entry
 point at `moh-common-lib-angular/captcha`. The workspace root stays
 `private: true`; the thing that gets published is the built package in
-`dist/moh-common-lib-angular`. Not yet published to any registry. See Packaging and
-release below.
+`dist/moh-common-lib-angular`. Published to npm as
+[moh-common-lib-angular](https://www.npmjs.com/package/moh-common-lib-angular). See
+Packaging and release below.
 
 ---
 
@@ -25,6 +26,7 @@ release below.
 | Lint | ESLint flat config + angular-eslint | ESLint 9 |
 | Format | Prettier, enforced on commit by Husky 9 + lint-staged | Prettier 3.7 |
 | Styles | Sass (`.scss`), Bootstrap 5 tokens | see Styling below |
+| Component docs | Storybook, `@storybook/angular` webpack framework | 10.6 |
 
 Run `nvm use` in the repo root to pick up the pinned Node version.
 
@@ -119,6 +121,7 @@ Most library components follow the same shape. Match it when adding a new one.
    consuming app cannot see a new component.
 7. Add it to the catalogue table below and, if useful, to the showcase in
    `src/app/app.component.html`.
+8. Add `<name>.component.stories.ts` beside the component for Storybook.
 
 ---
 
@@ -131,11 +134,11 @@ Address and location:
 | Component | Selector | Purpose |
 |---|---|---|
 | `AddressComponent` | `common-address` | Composite address block: street lines, city, province, country, postal code |
-| `AddressValidatorComponent` | `common-address-validator` | Debounced address typeahead against an external lookup service |
+| `AddressValidatorComponent` | `common-address-validator` | Debounced address typeahead against an external lookup service (currently non-functional) |
 | `CityComponent` | `common-city` | City text input with character validation |
 | `CountryComponent` | `common-country` | Country picker, `ng-select` dropdown or free text |
-| `ProvinceComponent` | `common-province` | Province picker, `ng-select` dropdown or free text |
-| `StreetComponent` | `common-street` | Street input, optional BC Geocoder typeahead |
+| `ProvinceComponent` | `common-province` | Province picker, `ng-select` dropdown or free text (currently non-functional: throws on select) |
+| `StreetComponent` | `common-street` | Street input, optional BC Geocoder typeahead (currently non-functional) |
 
 Identity:
 
@@ -143,7 +146,7 @@ Identity:
 |---|---|---|
 | `NameComponent` | `common-name` | Single name field |
 | `FullNameComponent` | `common-full-name` | First, middle, last name bound to a `Person` |
-| `PhnComponent` | `common-phn` | Masked BC Personal Health Number with checksum validation |
+| `PhnComponent` | `common-phn` | Masked BC Personal Health Number with checksum validation (currently non-functional: value changes are not reported) |
 | `SinComponent` | `common-sin` | Masked Social Insurance Number |
 
 Contact:
@@ -169,7 +172,7 @@ Layout and presentation:
 |---|---|---|
 | `ErrorContainerComponent` | `common-error-container` | Inline error primitive used by every form control |
 | `HeaderComponent` | `common-header` | BC Gov header with logo and skip-to-content link |
-| `AccordionCommonComponent` | `common-accordion` | Collapsible section wrapper |
+| `AccordionCommonComponent` | `common-accordion` | Collapsible section wrapper (currently non-functional) |
 | `PageFrameworkComponent` | `common-page-framework` | Page layout with main column and optional aside |
 | `PageSectionComponent` | `common-page-section` | Section layout within a page |
 | `CoreBreadcrumbComponent` | `common-core-breadcrumb` | Breadcrumb bar with left, center and right slots |
@@ -228,7 +231,7 @@ with sources in `src/captcha/`.
 | `CaptchaComponent` | component | `common-captcha`. Image or audio challenge, emits a JWT through `onValidToken` |
 | `CaptchaModule` | NgModule | Compatibility module for apps that import an NgModule. Imports and exports the standalone component and provides `CaptchaDataService` |
 | `CaptchaDataService` | service | Fetch, verify and audio calls against the captcha API |
-| `CAPTCHA_STATE` | enum | The seven states the component moves through |
+| `CAPTCHA_STATE` | enum | The six states the component moves through |
 
 ```ts
 import { CaptchaModule } from 'moh-common-lib-angular/captcha';
@@ -246,6 +249,7 @@ import { CaptchaModule } from 'moh-common-lib-angular/captcha';
 | `AbstractPageGuardService` | Contract an app implements to control wizard navigation |
 | `DefaultPageGuardService` | Default implementation, reads `BYPASS_GUARDS` and `START_PAGE_URL` tokens |
 | `LoadPageGuardService` | `CanActivate` guard enforcing sequential navigation |
+| `PdfService` | Thin wrapper over `pdfjs-dist`, used internally by `FileUploaderComponent` for PDF uploads |
 | `RouteGuardService` | Older guard, superseded by `LoadPageGuardService` (deprecated) |
 | `AbstractPgCheckService` | Older guard contract (deprecated) |
 | `CheckCompleteBaseService` | Older page-completion tracking (deprecated) |
@@ -264,6 +268,9 @@ New work should use `AbstractPageGuardService` plus `LoadPageGuardService` and
 | `Container`, `WizardProgressItem` | class, type | Wizard container state |
 | `CommonImage` and friends | class, enum | Image model with sizing and error codes |
 | `SimpleDate`, `ErrorMessage` | interface | |
+| `ApiStatusCodes` | enum | Selects the icon shown by `ConfirmTemplateComponent` |
+| `GeoAddressResult` | interface | Result shape returned by `GeocoderService` |
+| `FileUploaderMsg` | interface | Customizes the required-file error message on `FileUploaderComponent` |
 | `LETTER`, `NUMBER`, `SPACE` | const | Input mask character constants |
 | `deburr` | function | Strips diacritics |
 | `scrollTo`, `scrollToError` | function | Scroll utilities. `scrollToError` targets `common-error-container` |
@@ -292,6 +299,8 @@ npm run pack:lib   # build:lib, then npm pack, producing the publishable tarball
 npm test           # ng test, Jest via @angular-builders/jest
 npm run lint       # ng lint, ESLint flat config
 npm run prettier   # format src/
+npm run storybook       # ng run moh-common-lib-angular:storybook, dev server
+npm run build-storybook # ng run moh-common-lib-angular:build-storybook, output to dist/storybook/
 ```
 
 ### Pre-commit hook
@@ -332,6 +341,25 @@ FileReader paths cannot execute under jsdom.
 
 Current state: 54 suites, 433 tests, all passing.
 
+### Storybook
+
+Stories live beside the component they document, as `<name>.component.stories.ts`,
+both under `src/lib/components/` and for the `captcha` secondary entry point. Config
+is in `.storybook/`.
+
+```bash
+npm run storybook       # dev server
+npm run build-storybook # static build to dist/storybook/
+```
+
+Preview CSS (Bootstrap 5, Font Awesome) is wired through the `storybook` and
+`build-storybook` targets' `styles` array in `angular.json` only. The library itself
+still ships no CSS and expects the consuming app to supply Bootstrap and Font Awesome.
+The showcase app's own `build` target has no `styles` array, so unlike Storybook it
+currently loads neither. The a11y addon panel runs automated accessibility checks
+against each story. Compodoc is disabled. PR validation builds Storybook; see
+Automated validation and releases below.
+
 ### Packaging and release
 
 ```bash
@@ -348,8 +376,11 @@ commit or tag. Publish the built tarball, never the workspace root (`private: tr
 
 The library compiles in **partial** Ivy mode (`compilationMode` in `tsconfig.lib.json`).
 Full mode makes ng-packagr write a `prepublishOnly` guard that aborts any publish, so do
-not remove that setting. `npm run build:lib` also copies `README.md` and `LICENSE` into
-`dist`, which ng-packagr cannot do itself because both sit outside its project root.
+not remove that setting. `npm run build:lib` also copies `LICENSE` and the npm package's
+own README, [projects/common-lib/README.md](projects/common-lib/README.md), into `dist`,
+which ng-packagr cannot do itself because both sit outside its project root. This root
+README stays the GitHub/contributor doc and is never copied into the package. Update the
+Catalogue in both files when exports change.
 
 The showcase app writes to `dist/showcase` rather than `dist/` so that the two builds do
 not delete each other's output.
@@ -357,13 +388,29 @@ not delete each other's output.
 #### Automated validation and releases
 
 - [PR validation](.github/workflows/validate.yml) targets PRs into `main`, including forks,
-  and runs `npm ci`, non-watching CI tests, lint, and `npm run pack:lib`. It has only
-  `contents: read`, no publishing secrets, and no `pull_request_target` trigger.
+  and runs `npm ci`, non-watching CI tests, lint, `npm run build-storybook`, and
+  `npm run pack:lib`. It has only `contents: read`, no publishing secrets, and no
+  `pull_request_target` trigger.
 - [Release](.github/workflows/release.yml) runs on pushes to `main` in
   `bcgov/moh-common-lib-angular`. It compares the library version at the push's `before`
   commit with the accepted push commit. An unchanged version skips all release work;
   merging these workflows while both versions remain `2.0.0` does **not** publish.
-  A missing/zero baseline fails closed. There is no tag or manual-dispatch trigger.
+  A missing/zero baseline fails closed. There is no tag trigger.
+- The same workflow also accepts a manual `workflow_dispatch` run, for recovery when a
+  push-triggered run failed before npm publication. From Actions > Release > Run
+  workflow, select `main` and enter the version already committed in
+  `projects/common-lib/package.json`; a mismatched input or a non-`main` ref fails the
+  run instead of releasing. That in-workflow `main` check is only a backstop: because a
+  dispatched run executes the workflow file from whichever branch is selected, the
+  control that actually prevents a release from another branch is the `npm`
+  environment's deployment-branch rule, restricted to `main` in setup step 2 below. The
+  dispatch route shares every later gate with the push route: strict `X.Y.Z` and
+  four-location version checks, preflight, tests, lint, pack, and the `npm`
+  environment's existing-tag/release/npm checks.
+- Dispatch limits: it cannot recover a run that already published to npm but failed at
+  the tag or GitHub Release step, because the existing npm version fails closed; create
+  the tag and release by hand instead. It tags the current `main` head, so any commits
+  merged after the version bump are included in that tag.
 - A release must have a strict stable `X.Y.Z` version (no leading zeroes, prerelease, or
   build suffix), matching versions in all four locations, a new tag, and a completed
   exact `## X.Y.Z (YYYY-MM-DD)` section in [CHANGELOG.md](CHANGELOG.md). A `v` prefix in
@@ -390,9 +437,9 @@ not delete each other's output.
 #### Required human setup and first publication
 
 These are follow-through instructions, **not authorization to commit, push, tag, publish,
-or change GitHub/npm settings**. The npm account is `istevens_npm`; the package has not
-yet been published. Trusted publishing must be configured on an existing npm package,
-so the first publication is a separately approved, authenticated human operation.
+or change GitHub/npm settings**. The npm account is `istevens_npm`. Trusted publishing
+must be configured on an existing npm package, so the first publication was a separate,
+authenticated human operation; step 4 records it.
 
 1. In GitHub Settings, protect `main` with a branch rule/ruleset: require PRs, reviewed
    approvals (including version and changelog), dismiss stale approvals, require the
@@ -411,57 +458,11 @@ so the first publication is a separately approved, authenticated human operation
    The workflow always names this environment; protection settings require human setup.
 3. Merge the workflow PR through review when separately approved. With unchanged
    `2.0.0`, the release job skips. Do not create, move, or delete `v2.0.0` to trigger it.
-4. Obtain explicit approval for the initial `moh-common-lib-angular@2.0.0` publication.
-   In a separate clean checkout of the existing tag, verify that both the local and
-   remote tag resolve to `cb06ab47043d8f63d57a5a23b3953066df951fa8`. Stop on a mismatch.
-   After approval, these commands prepare and inspect the bootstrap tarball:
-
-   ```bash
-   cd /home/istevens/repos/moh-common-lib-angular
-   git --no-pager ls-remote origin refs/tags/v2.0.0 'refs/tags/v2.0.0^{}'
-   git --no-pager worktree add --detach ../moh-common-lib-angular-bootstrap v2.0.0
-   cd /home/istevens/repos/moh-common-lib-angular-bootstrap
-   git --no-pager rev-parse HEAD
-   git --no-pager status --porcelain
-   nvm install 22
-   nvm use 22
-   npm install --global npm@11.5.1 --ignore-scripts --registry=https://registry.npmjs.org
-   export NPM_CONFIG_REGISTRY=https://registry.npmjs.org
-   export HUSKY=0
-   npm ci
-  npm test -- --ci --watch=false --run-in-band
-   npm run lint
-   npm run pack:lib
-   tar -xOf dist/moh-common-lib-angular-2.0.0.tgz package/package.json
-   sha256sum dist/moh-common-lib-angular-2.0.0.tgz
-   git --no-pager status --porcelain
-   npm view moh-common-lib-angular@2.0.0 version --registry=https://registry.npmjs.org
-   ```
-
-   Inspect the packed manifest and confirm `2.0.0` in all four source locations and
-   the packed manifest, public package identity, repository URL, and the existing
-   reviewed changelog. Both status commands must print nothing. The final registry
-   query must fail specifically with `E404`; success, auth errors, and network errors
-   all mean stop. The normal preflight deliberately rejects an existing tag, so it
-   cannot approve this bootstrap; do not weaken it or recreate the tag.
-
-   With the artifact reviewed and publication approval in hand, authenticate interactively
-   as `istevens_npm` (including npm's browser/2FA prompts), verify the identity, and
-   publish the exact inspected tarball. Do not put credentials in repository files,
-   scripts, command arguments, or GitHub secrets:
-
-   ```bash
-   cd /home/istevens/repos/moh-common-lib-angular-bootstrap
-   npm login --auth-type=web --registry=https://registry.npmjs.org
-   npm whoami --registry=https://registry.npmjs.org
-   npm publish ./dist/moh-common-lib-angular-2.0.0.tgz --access public --tag latest --ignore-scripts --registry=https://registry.npmjs.org
-   npm view moh-common-lib-angular@2.0.0 version dist.integrity --registry=https://registry.npmjs.org
-   ```
-
-   `npm whoami` must say `istevens_npm`; stop otherwise. Local bootstrap does not use
-   Actions OIDC or claim Actions provenance. After successful publication, inspect the
-   existing GitHub Release for `v2.0.0`, or create one through the GitHub UI using the
-   **existing tag** and its exact changelog section, only with release approval.
+4. Done. `moh-common-lib-angular@2.0.0` was published manually by `istevens_npm` on
+   2026-09-14, built from tag `v2.0.0` (`cb06ab47043d8f63d57a5a23b3953066df951fa8`) on
+   Node 22. Registry `dist.shasum` is `82bbc0f0d82ce56099468c072421233cb445622e`. This
+   bootstrap did not use Actions OIDC, so 2.0.0 carries no npm provenance. Tag `v2.0.0`
+   and its GitHub Release already existed and were left unchanged.
 5. Sign in to npmjs.com as `istevens_npm`. Open package `moh-common-lib-angular`,
    Settings, Trusted publishing, Add trusted publisher, GitHub Actions. Enter these
    case-sensitive values:
@@ -485,7 +486,6 @@ Choose the next stable version based on consumer impact, then use the existing t
 on the release PR branch. For example, only if review determines a patch is appropriate:
 
 ```bash
-cd /home/istevens/repos/moh-common-lib-angular
 npm run release:set-version -- 2.0.1
 npm run release:notes -- 2.0.1 v2.0.0
 ```
@@ -504,8 +504,9 @@ guarantee ordering. An ordinary unchanged-version push can replace a pending rel
 push. Merge no additional PRs while a release is queued/running; confirm each release
 completes before merging the next. A displaced release is not automatically replayed:
 use its original Actions run's **Re-run all jobs** if available, after checking remote
-state and coordinating all releases. Otherwise stop for an approved recovery plan; an
-empty push will not trigger publication of an unchanged version.
+state and coordinating all releases. Otherwise use the manual `workflow_dispatch` run
+described above, or stop for an approved recovery plan; an empty push will not trigger
+publication of an unchanged version.
 
 Reruns fail closed if the target npm version, tag, or GitHub Release already exists,
 even if it looks correct. They also block registry/network ambiguity and prevent an
@@ -640,11 +641,9 @@ Recorded so they are not rediscovered as surprises.
   combination; it clears on an `@angular-builders/jest` major that supports Jest 30.
   Note this is separate from the root `jest-preset-angular@16.2.0` that
   `setup-jest.ts` imports. The two-version split predates the Node 22 work.
-- **The library is not published to any registry yet.** The packaging works and the
-  artifact has been verified against a fresh Angular 19 application. The npm account is
-  `istevens_npm`; initial publication and trusted-publisher configuration still require
-  the human setup above. Until then, consumers take the tarball from `npm run pack:lib`
-  or link it with yalc.
+- **2.0.0 has no npm provenance.** It was published manually to bootstrap the package.
+  Releases from the workflow carry provenance once trusted publishing is configured
+  (step 5 of the human setup above).
 
 ---
 
