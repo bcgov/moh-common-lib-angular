@@ -24,13 +24,28 @@ Install these alongside the library. Ranges are exact matches to the published
 | `@angular/router` | `^19.2.0` |
 | `@ng-select/ng-select` | `^14.7.0` |
 | `date-fns` | `^4.1.0` |
+| `ngx-bootstrap` | `^19.0.2` |
 | `ngx-mask` | `^19.0.7` |
 | `rxjs` | `^7.8.0` |
 | `uuid` | `^11.1.0` |
 | `pdfjs-dist` | `^4.10.38` (optional) |
 
+`ngx-bootstrap` is required by any app that renders anything from the main entry
+point, not only apps that use `common-street` or `common-address-validator`: the main
+bundle imports `ngx-bootstrap/typeahead` at the top level, so the package has to
+resolve even if your app never touches the geocoder. The `moh-common-lib-angular/captcha`
+entry point imports only `@angular/*` and does not need it.
+
 `pdfjs-dist` is optional. Install it only if your app uses `FileUploaderComponent` to
 accept PDF uploads; apps that restrict uploads to images do not need it.
+
+If your app sets `[useGeoCoder]="true"` on `common-street`, or renders
+`common-address-validator` at all, it also needs an Angular animations provider:
+`provideAnimations()` or `provideNoopAnimations()` (or the `BrowserAnimationsModule` /
+`NoopAnimationsModule` equivalents). ngx-bootstrap's typeahead suggestion dropdown
+declares an Angular animation, and without a provider Angular rejects it when the
+dropdown opens. `@angular/animations` is deliberately not a peer dependency here:
+nothing in the built bundle imports it.
 
 ## Usage
 
@@ -69,11 +84,11 @@ Address and location:
 | Component | Selector | Purpose |
 |---|---|---|
 | `AddressComponent` | `common-address` | Composite address block: street lines, city, province, country, postal code |
-| `AddressValidatorComponent` | `common-address-validator` | Debounced address typeahead against an external lookup service (currently non-functional) |
+| `AddressValidatorComponent` | `common-address-validator` | Debounced address typeahead against an external lookup service set via `[serviceUrl]`; with none bound, the network lookup is skipped, but the field still shows its Loading and No Results status text |
 | `CityComponent` | `common-city` | City text input with character validation |
 | `CountryComponent` | `common-country` | Country picker, `ng-select` dropdown or free text |
-| `ProvinceComponent` | `common-province` | Province picker, `ng-select` dropdown or free text (currently non-functional: throws on select) |
-| `StreetComponent` | `common-street` | Street input, optional BC Geocoder typeahead (currently non-functional) |
+| `ProvinceComponent` | `common-province` | Province picker, `ng-select` dropdown or free text |
+| `StreetComponent` | `common-street` | Street input, with an optional BC Geocoder typeahead behind `[useGeoCoder]` (default `false`) |
 
 Identity:
 
@@ -81,7 +96,7 @@ Identity:
 |---|---|---|
 | `NameComponent` | `common-name` | Single name field |
 | `FullNameComponent` | `common-full-name` | First, middle, last name bound to a `Person` |
-| `PhnComponent` | `common-phn` | Masked BC Personal Health Number with checksum validation (currently non-functional: value changes are not reported) |
+| `PhnComponent` | `common-phn` | Masked BC Personal Health Number with checksum validation |
 | `SinComponent` | `common-sin` | Masked Social Insurance Number |
 
 Contact:

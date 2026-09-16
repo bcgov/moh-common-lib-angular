@@ -2,8 +2,10 @@
 
 This release turns on the BC geocoder typeahead that `common-street` and
 `common-address-validator` have carried in source but never rendered, which is why it
-adds `ngx-bootstrap` as a peer dependency, and it fixes six binding and styling
-defects. No export, selector, input, or output was removed or renamed.
+adds `ngx-bootstrap` as a peer dependency, and it fixes seven binding and styling
+defects. It also corrects two dead bindings that could never have fired, which change
+nothing observable on their own. No export, selector, input, or output was removed or
+renamed.
 
 ### Breaking
 
@@ -31,8 +33,8 @@ defects. No export, selector, input, or output was removed or renamed.
   suggestions from the service at `[serviceUrl]`. Unlike `common-street` it has no
   `useGeoCoder` input: its typeahead is always on, which is how it behaved before the
   markup was commented out. With no `[serviceUrl]` bound there is nothing to query, so
-  the lookup is skipped and the field stays a plain text box instead of showing the
-  error state.
+  the network lookup is skipped, but the field still shows its Loading and No Results
+  status text instead of the error state.
 - `ngx-bootstrap` `^19.0.2` is a new peer dependency, required by both of the above.
   The main entry point declared ten peers in 2.1.1 and declares eleven now; nothing was
   removed and no range was changed.
@@ -83,6 +85,35 @@ defects. No export, selector, input, or output was removed or renamed.
   component, and the rendered input agree. This applies to `common-street` used
   directly with `[useGeoCoder]="true"`; a `common-street` inside `common-address`
   never reaches the path, because `common-address` leaves the geocoder off.
+- `common-address-validator` never bound its inherited `disabled` state to its input.
+  `AddressComponent` passes `[disabled]="readOnlyFields.address ?? false"` down to it
+  (`address.component.html:24`), but the validator's own template never forwarded that
+  flag to the `<input>`, so a read-only address still rendered an editable,
+  model-mutating typeahead. The template now binds `[disabled]="disabled"` on the
+  input.
+- Pasting into `common-address-validator` with the mouse or a context menu triggered no
+  lookup at all. ngx-bootstrap's `TypeaheadDirective` does not subscribe to the lookup
+  observable until one macrotask after the DOM `input` event fires, because its own
+  `asyncActions()` debounces an internal `keyUpEventEmitter` at 0ms before the
+  `switchMap` subscribes. The search term was pushed into a plain `Subject` from
+  `(keyup)` only, and a paste fires `input` but never `keyup`, so nothing was ever
+  pushed and no lookup ran. The producer moved to the native `input` event, and the
+  subject became a `ReplaySubject(1)` so the term survives that one-task gap before
+  ngx-bootstrap subscribes. The `ReplaySubject` is load-bearing, not incidental:
+  reverting only `ReplaySubject(1)` back to `Subject`, while leaving the `(input)`
+  binding wired, broke four tests, including the ordinary single-keystroke lookup and
+  the no-reopen-on-selection behaviour, not just paste. Selecting a suggestion still
+  triggers no lookup, because ngx-bootstrap's selection path is a programmatic
+  view-to-model update that dispatches no `input` event; that is what replaces the old
+  keyCode 13/9 guard structurally.
+- The display-only search box inside `common-address-validator` is now explicitly
+  marked `[ngModelOptions]="{ standalone: true }"`. This is not a behaviour fix, exactly
+  like the `(selectEvent)` -> `(select)` correction above: `AddressValidatorComponent`
+  declares no `ControlContainer` viewProviders, so the inner `ngModel` never joined a
+  consumer's ambient form in the first place, and there is no observable change.
+  Verified by rendering `common-address` inside a form and reading
+  `Object.keys(ngForm.controls)`: the same five control keys appear with and without
+  the binding.
 
 ### Known issues
 
@@ -95,7 +126,10 @@ defects. No export, selector, input, or output was removed or renamed.
   and the term is heard. Input that fires both in the same task is not: paste from the
   mouse or context menu, and some IME paths, push the term into a subject nobody is
   listening to, and no lookup runs. This is inherited from the legacy 4.0.0 design
-  rather than introduced here, and it is ticketed rather than fixed in 2.2.0.
+  rather than introduced here, and it is ticketed rather than fixed in 2.2.0. This
+  release fixes the equivalent defect in `common-address-validator`'s lookup pipeline
+  (see Fixed above); `street.component.ts:170` still has it, so the two should not be
+  confused.
 - `common-address-validator` never shows its `Error` status. The field's label can
   report `Loading`, `Selected` and `No Results`, but a failed lookup falls through to
   `No Results` instead of `Error`. `onError()` sets the `hasError` flag, and the

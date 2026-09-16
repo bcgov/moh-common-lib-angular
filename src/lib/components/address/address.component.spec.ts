@@ -4,6 +4,7 @@ import {
   FormControl,
   FormGroup,
   FormsModule,
+  NgForm,
   ReactiveFormsModule,
 } from '@angular/forms';
 import { provideHttpClient } from '@angular/common/http';
@@ -189,6 +190,87 @@ describe('AddressComponent inside a reactive form', () => {
 
   it('should render without throwing when used inside a reactive [formGroup] host', () => {
     expect(() => fixture.detectChanges()).not.toThrow();
+  });
+});
+
+/**
+ * The address-validator branch of address.component.html
+ * (*ngIf="useAddressValidator") renders
+ * <common-address-validator name="street_{{ objectId }}" [(ngModel)]="...">,
+ * which registers a real control on the ambient NgForm that
+ * AddressComponent's viewProviders alias ControlContainer to
+ * (address.component.ts:107-109).
+ *
+ * NOT RED-GREEN FOR [ngModelOptions] - see the handoff in Amber's report.
+ * The dispatch packet's theory was that AddressValidatorComponent's own
+ * inner template ngModel (its display-only search box) also resolves that
+ * same ambient NgForm via @Host(), registering a second, spurious control -
+ * "address-validator_{{ label }}" - unless [ngModelOptions]="{ standalone:
+ * true }" keeps it out. Measured: reverting only that one attribute and
+ * re-running this exact test produces the SAME five keys, no leak, either
+ * way - AddressValidatorComponent declares no viewProviders of its own, so
+ * ControlContainer resolves null for its inner template's ngModel
+ * regardless of the outer alias, and [ngModelOptions] is a no-op on this
+ * specific path. This test is kept as a real, currently-true regression
+ * assertion (no leaked control exists today), not as proof the reverted
+ * line is what keeps it that way.
+ */
+@Component({
+  template: `
+    <form>
+      <common-address [address]="seed"></common-address>
+    </form>
+  `,
+  imports: [FormsModule, AddressComponent],
+})
+class TemplateFormAddressValidatorHostComponent {
+  @ViewChild(NgForm) ngForm!: NgForm;
+  @ViewChild(AddressComponent) addressComponent!: AddressComponent;
+  seed = Object.assign(new Address(), {
+    country: CANADA,
+    province: BRITISH_COLUMBIA,
+    city: 'Victoria',
+  });
+}
+
+describe('AddressComponent inside a template-driven form, with the address validator active', () => {
+  let fixture: ComponentFixture<TemplateFormAddressValidatorHostComponent>;
+  let host: TemplateFormAddressValidatorHostComponent;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TemplateFormAddressValidatorHostComponent],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(
+      TemplateFormAddressValidatorHostComponent
+    );
+    host = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('does not register the display-only address-validator search box as a second control on the ambient NgForm', () => {
+    // Sanity: the address-validator branch is actually the one rendering
+    // (not common-street), so this is exercising the path in question.
+    expect(host.addressComponent.useAddressValidator).toBe(true);
+    expect(
+      fixture.nativeElement.querySelector('common-address-validator input')
+    ).toBeTruthy();
+
+    const keys = Object.keys(host.ngForm.controls);
+
+    // Sanity: the real control from
+    // <common-address-validator name="street_{{ objectId }}"
+    // [(ngModel)]="addr.addressLine1"> is present.
+    expect(keys.some((k) => k.startsWith('street_'))).toBe(true);
+
+    const leaked = keys.filter((k) => k.startsWith('address-validator_'));
+    expect(leaked).toEqual([]);
   });
 });
 

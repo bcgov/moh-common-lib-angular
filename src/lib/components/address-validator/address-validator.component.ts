@@ -8,7 +8,7 @@ import {
   Optional,
   Self,
 } from '@angular/core';
-import { Subject, Observable, of, throwError } from 'rxjs';
+import { ReplaySubject, Observable, of, throwError } from 'rxjs';
 import {
   debounceTime,
   distinctUntilChanged,
@@ -126,8 +126,15 @@ export class AddressValidatorComponent
   public selectedAddress: boolean = false;
   /** The list of results, from API, that is passed to the typeahead list */
   public typeaheadList$: Observable<AddressResult[]> = of([]); // Result from address lookup
-  /** The subject that triggers on user text input and gets typeaheadList$ to update.  */
-  private searchText$ = new Subject<string>();
+  /**
+   * The subject that feeds typeaheadList$. A ReplaySubject(1), not a plain
+   * Subject: TypeaheadDirective does not subscribe to typeaheadList$ until
+   * one macrotask after the triggering native 'input' event (it debounces
+   * its own internal keyUpEventEmitter at 0ms before subscribing). A plain
+   * Subject would drop the value emitted from onInput() before anything is
+   * listening for it.
+   */
+  private searchText$ = new ReplaySubject<string>(1);
 
   override _onChange = (_: any) => {};
   override _onTouched = (_?: any) => {};
@@ -225,9 +232,26 @@ export class AddressValidatorComponent
       // enter & tab
       return;
     }
-    // Clear out selection
+    // The lookup itself is fed by the native 'input' event (see onInput);
+    // this handler only clears the stale "Selected" status once the user
+    // starts typing again.
     this.selectedAddress = false;
-    this.searchText$.next(this.search);
+  }
+
+  /**
+   * Feeds the lookup pipeline from the native DOM 'input' event, not from
+   * (ngModelChange) or (keyup). Both matter:
+   * - 'input' fires for typing, mouse paste, context-menu paste, cut and
+   *   drag-drop, so a pasted address is looked up the same as a typed one.
+   * - 'input' does NOT fire for the programmatic view-to-model update that
+   *   ngx-bootstrap's TypeaheadDirective performs when a suggestion is
+   *   selected (by mouse or Enter), so choosing a suggestion never
+   *   re-triggers a lookup; no keyCode guard is needed for that case.
+   */
+  onInput(event: Event): void {
+    this.selectedAddress = false;
+    const value = (event.target as HTMLInputElement).value;
+    this.searchText$.next(value);
   }
 
   onBlur(event = null): void {
