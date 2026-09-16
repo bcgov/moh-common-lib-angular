@@ -1,5 +1,8 @@
-import { TestBed } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
+import { Component, ViewChild } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { AddressComponent } from './address.component';
 import { Address } from '../../models/address.model';
@@ -8,6 +11,20 @@ import {
   BRITISH_COLUMBIA,
   PROVINCE_LIST,
 } from '../province/province.component';
+
+@Component({
+  template: `
+    <form [formGroup]="form">
+      <common-address [(address)]="address"></common-address>
+    </form>
+  `,
+  imports: [ReactiveFormsModule, AddressComponent],
+})
+class ReactiveAddressHostComponent {
+  @ViewChild(AddressComponent) addressComponent!: AddressComponent;
+  form = new FormGroup({});
+  address = Object.assign(new Address(), { city: 'Victoria' });
+}
 
 function createComponent() {
   const fixture = TestBed.createComponent(AddressComponent);
@@ -130,5 +147,34 @@ describe('AddressComponent', () => {
     component.setStreetAddress('');
     expect(component['addr'].city).toBe('');
     expect(component['addr'].postal).toBe('');
+  });
+});
+
+// AddressComponent declares the same viewProviders alias of ControlContainer
+// to NgForm that FileUploaderComponent had to make conditional in 2.1.1, but
+// it does not need the same fix: an alias is only resolved when something
+// asks for the token, and nothing in the address view injects
+// ControlContainer. The alias therefore stays unresolved inside a reactive
+// host, and no NullInjectorError is thrown. This test guards that: if a
+// future change makes the address view inject ControlContainer, it fails
+// here rather than in a consuming app.
+describe('AddressComponent inside a reactive form', () => {
+  let fixture: ComponentFixture<ReactiveAddressHostComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ReactiveAddressHostComponent, AddressComponent],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ReactiveAddressHostComponent);
+  });
+
+  it('should render without throwing when used inside a reactive [formGroup] host', () => {
+    expect(() => fixture.detectChanges()).not.toThrow();
   });
 });

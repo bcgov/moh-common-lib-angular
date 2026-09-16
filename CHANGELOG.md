@@ -1,3 +1,85 @@
+## 2.1.1 (2026-09-15)
+
+This is a patch release: eight bug fixes, no new exports, no new peer dependencies, no
+API additions or removals.
+
+### Breaking
+
+- None.
+
+### Fixed
+
+- `common-street` rendered only its label; the entire input, including its error
+  messages, was commented out of the template. It now renders a plain `[value]`-bound
+  text input wired to the component's `writeValue` `ControlValueAccessor` method and to
+  `onValueChange`, a template event handler that also changed in this release so it
+  keeps the component's own `street` field in sync; the field now works inside both
+  template-driven and reactive forms. The typeahead/geocoder suggestion path stays
+  disabled in this release; `useGeoCoder`, `(select)`, and `onSelect` are still present
+  for API compatibility, but nothing currently drives them.
+- `common-file-uploader` threw `NullInjectorError: No provider for NgForm` when placed
+  inside a reactive `[formGroup]` host, because its `viewProviders` unconditionally
+  aliased `ControlContainer` to `NgForm` and its constructor required a `ControlContainer`
+  to be resolvable. It now only aliases to an ambient `NgForm` when one actually exists;
+  inside a reactive form (where there is no `NgForm` to find) it resolves to `null`
+  instead of throwing, and the internal file input registers as a standalone `ngModel`
+  rather than trying to join the reactive form. Behaviour inside a template-driven
+  `ngForm` host, including the named control lookup `fileControl` relies on, is unchanged.
+  Inside a reactive host the component still does not participate in the form's
+  validity: `[required]` is not enforced, `form.valid` stays `true` with zero files
+  selected, and the required error message never renders. This is not a regression -
+  the component previously threw on construction in that host, so there was no working
+  required-file validation to lose.
+- `AbstractReactForm.markAllInputsTouched()` required an explicit `FormGroup | FormGroup[]
+  | null` argument even though the method already falls back to the instance's own
+  `formGroup` when nothing is passed. The parameter is now optional; call sites that used
+  to pass `null` only to satisfy the compiler can call the method with no argument.
+- `common-phn` never delivered a typed value to a bound form control, in any earlier
+  release. The template bound its masked input with `[ngModel]="phn"` but had no
+  `(change)`, `(input)`, or `(ngModelChange)` binding alongside it, so `onValueChange()`,
+  which already wrote the value back and called `_onChange`, was unreachable dead code.
+  The input now also binds `(change)="onValueChange($event)"`, matching the pattern
+  `common-street` uses; `[ngModel]` and `[mask]` are unchanged, because `NgxMaskDirective`
+  registers itself as the input's `ControlValueAccessor` and needs a form directive
+  (`ngModel` or `formControl`) present to work, so replacing it with a plain `[value]`
+  binding would have detached the mask. The value that lands in the bound control is the
+  masked display value, spaces included (for example `9999 999 998`), not the digits-only
+  string; `validatePhn()` already strips whitespace, leading zeros, and underscores before
+  running the checksum, so validation is unaffected. The field now works inside both
+  template-driven and reactive forms.
+- `common-phn`'s template was also missing a `(blur)` binding for the `onBlur()` method
+  that already existed on the component, so the control was never marked touched on blur
+  and the `blur` output never fired. The input now also binds `(blur)="onBlur($event)"`,
+  matching every other field in the library (city, street, postal-code, sin, and
+  phone-number all bind both). This is consumer-visible: the error messages in
+  `common-phn`'s own template, and any consumer validation that reads `touched` off the
+  bound control, now activate on blur.
+- `common-phone-number`'s masked input bound `(ngModelChange)="setPhoneNumber($event)"`,
+  which passes the new string value, not a DOM event. The handler assumed a `.target` on
+  its argument and fell back to `''` when there wasn't one, so the masked field stored an
+  empty string and cleared the bound control on every keystroke. `setPhoneNumber` now
+  accepts either a string (from the masked branch) or an `Event` (from the `#NoMask`
+  branch's `(input)` binding) and uses the string directly when there is no `.target`,
+  the same guard shape `ProvinceComponent.onValueChange` already uses. The `#NoMask`
+  branch is unaffected.
+- `common-city`'s `onValueChange` dereferenced `data.target` after only checking
+  `typeof data === 'object'`, and `typeof null === 'object'`, so passing `null` threw a
+  `TypeError` instead of clearing the field. `onValueChange` is public, and
+  `AddressComponent` calls it directly when it propagates a selected geocoder suggestion,
+  so a suggestion carrying no city reached this path.
+- `common-phone-number`'s template had a commented-out, dead duplicate of its own
+  `<common-error-container>` block sitting above the live one. It is removed; the live
+  error container is unchanged.
+
+### Consumer action required
+
+- Nothing. If your app renders `common-street`, it will now show an input where it
+  previously showed only a label; no code change is required to get it.
+- If your app renders `common-file-uploader` inside a reactive `[formGroup]` host and
+  needs required-file validation there, add your own validator to the form control:
+  `[required]` on the component is not enforced in that host, so the form stays valid
+  with no file selected.
+
 ## 2.1.0 (2026-09-15)
 
 This release adds the components and the captcha secondary entry point that fpcare and

@@ -111,10 +111,10 @@ export class PhoneNumberComponent
     // is a behaviour change.
   }
 
-  setPhoneNumber(event: Event) {
-    this.phoneNumber = event.target
-      ? (event.target as HTMLInputElement).value
-      : '';
+  setPhoneNumber(data: any) {
+    this.phoneNumber = data?.target
+      ? (data.target as HTMLInputElement).value
+      : data;
     this.valueChange.emit(this.phoneNumber);
     this._onChange(this.phoneNumber);
   }

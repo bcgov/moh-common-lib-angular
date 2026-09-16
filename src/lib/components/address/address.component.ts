@@ -98,6 +98,10 @@ export interface ReadOnlyFields {
     ValidateRegionDirective,
     ValidateStreetDirective,
   ],
+  // Lets the ngModel fields in this view share an ambient NgForm. Unlike
+  // FileUploaderComponent, this component never injects ControlContainer, so
+  // the alias is never resolved and a reactive host does not hit NgForm.
+  // address.component.spec.ts guards that.
   viewProviders: [
     { provide: ControlContainer, useExisting: forwardRef(() => NgForm) },
   ],

@@ -9,9 +9,10 @@ const meta: Meta<PhnComponent> = {
     docs: {
       description: {
         component:
-          'Known issue: this component is missing its (ngModelChange) and ' +
-          '(blur) bindings, so it renders and masks input but never reports a ' +
-          'value or shows an error.',
+          'Fixed in 2.1.1: the input is now wired with (change) and (blur) ' +
+          'bindings, so a typed value reaches a bound form control and leaving ' +
+          'the field marks the control touched. The value delivered is the ' +
+          'masked string.',
       },
     },
   },
