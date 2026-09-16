@@ -9,8 +9,7 @@ const meta: Meta<StreetComponent> = {
   tags: ['autodocs'],
   decorators: [
     applicationConfig({
-      // StreetComponent injects GeocoderService, which needs HttpClient even
-      // though the typeahead below never calls it (see the known-gap note).
+      // StreetComponent injects GeocoderService, which needs HttpClient.
       providers: [provideHttpClient()],
     }),
   ],
@@ -18,8 +17,9 @@ const meta: Meta<StreetComponent> = {
     docs: {
       description: {
         component:
-          'Known issue: the typeahead input is commented out, so this ' +
-          'renders only its label.',
+          'Renders a plain text input for the street address. The typeahead ' +
+          '(geocoder) suggestion path is not wired up in this release; the ' +
+          'field behaves like a plain text field.',
       },
     },
   },

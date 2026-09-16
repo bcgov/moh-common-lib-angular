@@ -1,5 +1,8 @@
-import { TestBed } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
+import { Component, ViewChild } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { AddressComponent } from './address.component';
 import { Address } from '../../models/address.model';
@@ -8,6 +11,20 @@ import {
   BRITISH_COLUMBIA,
   PROVINCE_LIST,
 } from '../province/province.component';
+
+@Component({
+  template: `
+    <form [formGroup]="form">
+      <common-address [(address)]="address"></common-address>
+    </form>
+  `,
+  imports: [ReactiveFormsModule, AddressComponent],
+})
+class ReactiveAddressHostComponent {
+  @ViewChild(AddressComponent) addressComponent!: AddressComponent;
+  form = new FormGroup({});
+  address = Object.assign(new Address(), { city: 'Victoria' });
+}
 
 function createComponent() {
   const fixture = TestBed.createComponent(AddressComponent);
@@ -130,5 +147,30 @@ describe('AddressComponent', () => {
     component.setStreetAddress('');
     expect(component['addr'].city).toBe('');
     expect(component['addr'].postal).toBe('');
+  });
+});
+
+// AddressComponent reuses NgForm as its ControlContainer the same way
+// FileUploaderComponent did before 2.1.1. This confirms common-address
+// renders without throwing when bound with [(address)] inside a reactive
+// [formGroup] host.
+describe('AddressComponent inside a reactive form', () => {
+  let fixture: ComponentFixture<ReactiveAddressHostComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ReactiveAddressHostComponent, AddressComponent],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ReactiveAddressHostComponent);
+  });
+
+  it('should render without throwing when used inside a reactive [formGroup] host', () => {
+    expect(() => fixture.detectChanges()).not.toThrow();
   });
 });

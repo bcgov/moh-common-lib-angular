@@ -8,6 +8,12 @@ class ConcreteReactForm extends AbstractReactForm {
     super(router);
   }
   continue(): void {}
+  // Calls markAllInputsTouched with no argument, typed directly against the
+  // real protected signature (not cast to any). Today the parameter is
+  // required, so this call site is a TypeScript compile error.
+  touchAllWithNoArgs(): void {
+    this.markAllInputsTouched();
+  }
 }
 
 describe('AbstractReactForm', () => {
@@ -64,6 +70,13 @@ describe('AbstractReactForm', () => {
       const ctrl = new FormControl('');
       form.formGroup = new FormGroup({ field: ctrl });
       (form as any).markAllInputsTouched(null);
+      expect(ctrl.touched).toBe(true);
+    });
+
+    it('should fall back to the instance formGroup when called with no argument', () => {
+      const ctrl = new FormControl('');
+      form.formGroup = new FormGroup({ field: ctrl });
+      form.touchAllWithNoArgs();
       expect(ctrl.touched).toBe(true);
     });
   });

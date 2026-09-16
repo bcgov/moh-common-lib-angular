@@ -4,9 +4,9 @@ import {
   EventEmitter,
   Input,
   NgZone,
+  Optional,
   Output,
   ViewChild,
-  forwardRef,
   ViewEncapsulation,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -61,7 +61,16 @@ const IMAGE_REDUCTION_SCALE_FACTOR: number = 0.8;
     ThumbnailComponent,
   ],
   viewProviders: [
-    { provide: ControlContainer, useExisting: forwardRef(() => NgForm) },
+    {
+      // Only alias to an ambient NgForm when one actually exists (template-driven
+      // host). Inside a reactive [formGroup] host there is no NgForm to find, so
+      // this resolves to null instead of throwing, and the inner ngModel input
+      // below falls back to being standalone rather than registering with the
+      // reactive FormGroupDirective (which ngModel does not support).
+      provide: ControlContainer,
+      useFactory: (ngForm: NgForm | null) => ngForm,
+      deps: [[new Optional(), NgForm]],
+    },
   ],
 })
 export class FileUploaderComponent extends Base {
@@ -82,7 +91,7 @@ export class FileUploaderComponent extends Base {
 
   constructor(
     private zone: NgZone,
-    private controlContainer: ControlContainer,
+    @Optional() private controlContainer: ControlContainer,
     private pdfService: PdfService
   ) {
     super();

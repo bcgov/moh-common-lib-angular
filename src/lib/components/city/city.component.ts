@@ -90,7 +90,7 @@ export class CityComponent
     let value: string = '';
     if (typeof data === 'string') {
       value = data;
-    } else if (typeof data === 'object') {
+    } else if (data && typeof data === 'object') {
       value = data.target.value;
     }
     this.city = value;

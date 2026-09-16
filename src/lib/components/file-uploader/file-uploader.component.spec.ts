@@ -5,7 +5,12 @@ import {
   fakeAsync,
   tick,
 } from '@angular/core/testing';
-import { FormsModule, NgForm } from '@angular/forms';
+import {
+  FormGroup,
+  FormsModule,
+  NgForm,
+  ReactiveFormsModule,
+} from '@angular/forms';
 import { FileUploaderComponent } from './file-uploader.component';
 import { PdfService } from './pdf.service';
 import { CommonImage, CommonImageError } from '../../models/images.model';
@@ -28,6 +33,30 @@ class HostComponent {
   @ViewChild(NgForm) form!: NgForm;
   images: CommonImage[] = [];
   errors: CommonImage[] = [];
+  required = false;
+}
+
+/**
+ * A reactive-form host. Before 2.1.1, FileUploaderComponent's viewProviders
+ * unconditionally re-used NgForm as its ControlContainer, and its constructor
+ * injected ControlContainer directly, so a reactive [formGroup] host had no
+ * NgForm instance to satisfy that dependency and this failed without the fix.
+ */
+@Component({
+  template: `
+    <form [formGroup]="form">
+      <common-file-uploader
+        id="docs"
+        [images]="images"
+        [required]="required"></common-file-uploader>
+    </form>
+  `,
+  imports: [ReactiveFormsModule, FileUploaderComponent],
+})
+class ReactiveHostComponent {
+  @ViewChild(FileUploaderComponent) uploader!: FileUploaderComponent;
+  form = new FormGroup({});
+  images: CommonImage[] = [];
   required = false;
 }
 
@@ -64,6 +93,18 @@ describe('FileUploaderComponent', () => {
 
   it('should create', () => {
     expect(uploader()).toBeTruthy();
+  });
+
+  // FileUploaderComponent's viewProviders re-uses NgForm as its
+  // ControlContainer, so this guards that a template-driven ngForm host
+  // keeps working: the uploader renders without throwing and fileControl
+  // resolves the control the form registered under its generated name.
+  it('should render without throwing inside a template-driven ngForm host, with fileControl resolving the named control', () => {
+    expect(() => fixture.detectChanges()).not.toThrow();
+    expect(uploader()).toBeTruthy();
+    expect(uploader().fileControl).toBe(
+      host.form.control.get('fileUploadBrowse-docs')
+    );
   });
 
   it('should default its inputs', () => {
@@ -400,5 +441,29 @@ describe('FileUploaderComponent', () => {
     expect(
       fixture.nativeElement.querySelectorAll('common-thumbnail').length
     ).toBe(1);
+  });
+});
+
+// viewProviders re-uses NgForm as the ControlContainer, and the constructor
+// injects ControlContainer directly. A reactive [formGroup] host has no
+// NgForm instance in its injector tree, so this fails without the fix.
+describe('FileUploaderComponent inside a reactive form', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ReactiveHostComponent, FileUploaderComponent],
+      providers: [
+        { provide: PdfService, useValue: { getDocument: jest.fn() } },
+      ],
+    }).compileComponents();
+  });
+
+  it('should render without throwing when used inside a reactive [formGroup] host', () => {
+    // Creation itself instantiates FileUploaderComponent, which is where the
+    // ControlContainer/NgForm dependency is requested, so both creation and
+    // the first change detection pass are wrapped here.
+    expect(() => {
+      const reactiveFixture = TestBed.createComponent(ReactiveHostComponent);
+      reactiveFixture.detectChanges();
+    }).not.toThrow();
   });
 });

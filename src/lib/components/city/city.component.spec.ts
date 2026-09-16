@@ -187,4 +187,13 @@ describe('City.Component', () => {
     expect(city1Control?.value).toBe('');
     expect(city1Control?.hasError('required')).toBe(true);
   }));
+
+  it('does not throw and normalises to an empty string when onValueChange is called with null', () => {
+    const fixture = TestBed.createComponent(CityComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(() => component.onValueChange(null)).not.toThrow();
+    expect(component.city).toBe('');
+  });
 });

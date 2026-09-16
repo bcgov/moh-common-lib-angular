@@ -8,6 +8,8 @@ import {
   OnInit,
 } from '@angular/core';
 import { NgControl } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { ErrorContainerComponent } from '../error-container/error-container.component';
 import { Observable, Subject, of } from 'rxjs';
 import {
   GeoAddressResult,
@@ -44,6 +46,7 @@ import { BRITISH_COLUMBIA } from '../province/province.component';
 @Component({
   selector: 'common-street',
   templateUrl: './street.component.html',
+  imports: [CommonModule, ErrorContainerComponent],
 })
 export class StreetComponent extends AbstractFormControl implements OnInit {
   @Input() label: string = 'Full street address or rural route';
@@ -116,7 +119,14 @@ export class StreetComponent extends AbstractFormControl implements OnInit {
     );
   }
 
-  onValueChange(value: any) {
+  onValueChange(data: any) {
+    let value: string = '';
+    if (typeof data === 'string') {
+      value = data;
+    } else if (data && typeof data === 'object') {
+      value = data.target.value;
+    }
+    this.street = value;
     if (this.useGeoCoder) {
       // set the search string
       this.search = value;
