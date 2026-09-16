@@ -150,10 +150,14 @@ describe('AddressComponent', () => {
   });
 });
 
-// AddressComponent reuses NgForm as its ControlContainer the same way
-// FileUploaderComponent did before 2.1.1. This confirms common-address
-// renders without throwing when bound with [(address)] inside a reactive
-// [formGroup] host.
+// AddressComponent declares the same viewProviders alias of ControlContainer
+// to NgForm that FileUploaderComponent had to make conditional in 2.1.1, but
+// it does not need the same fix: an alias is only resolved when something
+// asks for the token, and nothing in the address view injects
+// ControlContainer. The alias therefore stays unresolved inside a reactive
+// host, and no NullInjectorError is thrown. This test guards that: if a
+// future change makes the address view inject ControlContainer, it fails
+// here rather than in a consuming app.
 describe('AddressComponent inside a reactive form', () => {
   let fixture: ComponentFixture<ReactiveAddressHostComponent>;
 
