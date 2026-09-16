@@ -1,7 +1,12 @@
 // TODO: Check this file for any issues
 
-@use "sass:map";
-//@use '../../styles/variables.scss';
+@use 'sass:map';
+// styles/variables.scss cannot be pulled in here: it @use's Bootstrap 5's
+// _variables.scss, which calls mixins from _functions.scss that @use does not
+// bring into scope the way the old @import did. The tokens partial exists for
+// that reason: it carries the shared brand and breakpoint values without
+// Bootstrap's Sass attached.
+@use '../../styles/tokens' as vars;
 
 // Header, adds the gold bottom border and shadow
 header nav {
@@ -15,17 +20,21 @@ header nav {
 }
 
 header {
-  //Bootstrap 3 to 4: Change access of brand colours
-  //background-color: variables.$color-primary;
+  // BC government primary blue. The white title text below needs this dark
+  // background to stay legible.
+  background-color: vars.$color-primary;
   border-bottom: 2px solid #fcba19;
   padding-top: 10px;
   padding-bottom: 20px;
 
-  //Bootstrap 3 to 4: Using breakpoint mixin.
-  // @include media-breakpoint-down(sm) {
-  //   // padding-top: 2px;
-  //   padding-bottom: 8px;
-  // }
+  // Tokens rather than Bootstrap's media-breakpoint-down mixin, which is only
+  // available to stylesheets that load Bootstrap's Sass. Mind the tier rename
+  // from Bootstrap 4 to 5: this rule was written against `sm`, which is `md`
+  // now, and the rule below against `xs`, which is `sm`.
+  @media (max-width: #{vars.$breakpoint-md - 0.02px}) {
+    padding-top: 2px;
+    padding-bottom: 8px;
+  }
 
   .title {
     font-size: 30px;
@@ -33,9 +42,9 @@ header {
     color: #fff;
     align-self: center;
 
-    // @include media-breakpoint-down(xs){
-    //   font-size: 24px;
-    // }
+    @media (max-width: #{vars.$breakpoint-sm - 0.02px}) {
+      font-size: 24px;
+    }
   }
 
   .header-logo-print {
@@ -48,7 +57,7 @@ header .nav-link {
 }
 
 .separator:after {
-  content: " ";
+  content: ' ';
   background-color: #ffffff33;
   height: 100%;
   min-height: 100%;
@@ -57,12 +66,13 @@ header .nav-link {
   margin: 0 1em;
 }
 
-
 // A little Flexbox hack for vertical spacing when the items wrap to a new row.
 // For mobile.
 .header-container {
   margin-top: -1em;
-  & > .d-flex { margin-top: 1em; }
+  & > .d-flex {
+    margin-top: 1em;
+  }
 }
 
 .skip-to-content {
@@ -86,5 +96,8 @@ header .nav-link {
   // Only visible if focused
   opacity: 0;
   height: 0;
-  &:focus { opacity: 1; height: auto; }
+  &:focus {
+    opacity: 1;
+    height: auto;
+  }
 }

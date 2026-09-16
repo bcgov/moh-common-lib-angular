@@ -1,3 +1,166 @@
+## 2.2.0 (2026-09-16)
+
+This release turns on the BC geocoder typeahead that `common-street` and
+`common-address-validator` have carried in source but never rendered, which is why it
+adds `ngx-bootstrap` as a peer dependency, and it fixes seven binding and styling
+defects. It also corrects two dead bindings that could never have fired, which change
+nothing observable on their own. No export, selector, input, or output was removed or
+renamed.
+
+### Breaking
+
+- No API break: nothing was removed or renamed. There is one new hard requirement,
+  though. `ngx-bootstrap` `^19.0.2` is a mandatory peer dependency now, not an
+  optional one, because the main entry point imports `ngx-bootstrap/typeahead` at the
+  top level: an app that never touches the geocoder still fails to resolve without it.
+  npm 7 and later install missing peers automatically, so this only bites a build
+  running `--legacy-peer-deps` or a hand-curated lockfile, which is why the bump stays
+  minor. See Consumer action required below.
+
+### Added
+
+- `common-street` now offers BC geocoder suggestions when `[useGeoCoder]="true"`. The
+  input still defaults to `false`, and with it off the component renders exactly the
+  plain text field it rendered in 2.1.1, so existing usage does not change. With it on,
+  the field queries the geocoder once the user has typed three characters and paused
+  for 500ms. Choosing a suggestion puts the street portion, not the full address, into
+  the bound form control, and emits `(select)` with the whole `GeoAddressResult`:
+  street, city, and `country`/`province` overwritten with Canada and British Columbia.
+- `common-address-validator`'s typeahead now renders. The markup for it shipped in
+  2.1.1 inside an HTML comment, and the component did not import `TypeaheadModule`, so
+  the field was a plain text box: nothing subscribed to the lookup observable, so no
+  request was ever made and no suggestion ever appeared. The field now shows
+  suggestions from the service at `[serviceUrl]`. Unlike `common-street` it has no
+  `useGeoCoder` input: its typeahead is always on, which is how it behaved before the
+  markup was commented out. With no `[serviceUrl]` bound there is nothing to query, so
+  the network lookup is skipped, but the field still shows its Loading and No Results
+  status text instead of the error state.
+- `ngx-bootstrap` `^19.0.2` is a new peer dependency, required by both of the above.
+  The main entry point declared ten peers in 2.1.1 and declares eleven now; nothing was
+  removed and no range was changed.
+
+### Fixed
+
+- `common-header` drew its white title text over whatever background it was placed on,
+  because the `background-color` declaration was commented out during the Bootstrap
+  migration, along with the two responsive rules beside it. The BC government blue
+  background (`#036`) is back, and so are the two rules, restored from the legacy
+  moh-common-lib 4.0.0 stylesheet: below 768px the header padding tightens to 2px top
+  and 8px bottom, and below 576px the title drops to 24px. White on `#036` measures
+  12.6:1, well above the 4.5:1 body-text minimum. Note the reference point: 2.1.1
+  shipped no header media query at all, so relative to the release you are upgrading
+  from these rules are new behaviour, not a restoration. Below 768px the top padding
+  drops 10px to 2px, which moves the logo and title 8px up. Mobile screenshots diffed
+  against 2.1.1 will show that shift.
+- `common-address` listened for `(selectEvent)` on its inner `common-street`, but
+  `StreetComponent` declares `@Output() select`. An unmatched output on a component
+  element compiles without error and quietly becomes a plain DOM event listener, so
+  the handler could never have run. Nothing observable changes here: `common-address`
+  does not forward `useGeoCoder` to `common-street`, and `common-street` emits
+  `select` only from the typeahead branch of its template, so no selection event
+  reaches this binding in 2.1.1 or in 2.2.0. The template now binds `(select)`, which
+  corrects a dead binding in advance and removes the trap waiting for whoever
+  forwards `useGeoCoder` through `common-address` later.
+- `common-address` registered itself against `NG_VALUE_ACCESSOR` without `multi: true`.
+  That token is a multi-provider, so `@angular/forms` read a single object where it
+  expects an array of accessors and the control never bound. `formControlName="address"`
+  now reads and writes the address through the component.
+- `common-address` threw `Cannot read properties of undefined (reading 'country')` when
+  used as a form control without also passing `[address]`. `ngOnInit` guards `this.addr`
+  everywhere else but called `updateProvList()` unguarded, and a reactive form's
+  `writeValue` does not land until after `ngOnInit`. `updateProvList()` now returns
+  early when there is no address yet, the same way it already did for a province list
+  that has not loaded.
+- `common-phn`'s `validatePhn()` rewrote `this.phn` with its own cleaned-up copy of the
+  value: trimmed, leading zeros removed, underscores and spaces stripped. Validation
+  runs on every value change, so a user's masked input was being edited underneath them
+  as they typed. The checksum now runs against a local copy and the field keeps what the
+  user entered.
+- Choosing a geocoder suggestion in `common-street` left the full address in the bound
+  control. The typeahead writes its own option value, `fullAddress`, through the inner
+  `ngModel` before `(select)` fires, and `onSelect` updated only the component's own
+  `street` field. A consumer with no `(select)` handler ended up with
+  `1012 Douglas St, Victoria, BC` in a street field. `onSelect` now writes the street
+  back through the control's change callback and `valueChange`, so the control, the
+  component, and the rendered input agree. This applies to `common-street` used
+  directly with `[useGeoCoder]="true"`; a `common-street` inside `common-address`
+  never reaches the path, because `common-address` leaves the geocoder off.
+- `common-address-validator` never bound its inherited `disabled` state to its input.
+  `AddressComponent` passes `[disabled]="readOnlyFields.address ?? false"` down to it
+  (`address.component.html:24`), but the validator's own template never forwarded that
+  flag to the `<input>`, so a read-only address still rendered an editable,
+  model-mutating typeahead. The template now binds `[disabled]="disabled"` on the
+  input.
+- Pasting into `common-address-validator` with the mouse or a context menu triggered no
+  lookup at all. ngx-bootstrap's `TypeaheadDirective` does not subscribe to the lookup
+  observable until one macrotask after the DOM `input` event fires, because its own
+  `asyncActions()` debounces an internal `keyUpEventEmitter` at 0ms before the
+  `switchMap` subscribes. The search term was pushed into a plain `Subject` from
+  `(keyup)` only, and a paste fires `input` but never `keyup`, so nothing was ever
+  pushed and no lookup ran. The producer moved to the native `input` event, and the
+  subject became a `ReplaySubject(1)` so the term survives that one-task gap before
+  ngx-bootstrap subscribes. The `ReplaySubject` is load-bearing, not incidental:
+  reverting only `ReplaySubject(1)` back to `Subject`, while leaving the `(input)`
+  binding wired, broke four tests, including the ordinary single-keystroke lookup and
+  the no-reopen-on-selection behaviour, not just paste. Selecting a suggestion still
+  triggers no lookup, because ngx-bootstrap's selection path is a programmatic
+  view-to-model update that dispatches no `input` event; that is what replaces the old
+  keyCode 13/9 guard structurally.
+- The display-only search box inside `common-address-validator` is now explicitly
+  marked `[ngModelOptions]="{ standalone: true }"`. This is not a behaviour fix, exactly
+  like the `(selectEvent)` -> `(select)` correction above: `AddressValidatorComponent`
+  declares no `ControlContainer` viewProviders, so the inner `ngModel` never joined a
+  consumer's ambient form in the first place, and there is no observable change.
+  Verified by rendering `common-address` inside a form and reading
+  `Object.keys(ngForm.controls)`: the same five control keys appear with and without
+  the binding.
+
+### Known issues
+
+- The geocoder lookup in `common-street` is order-sensitive and can silently skip a
+  search. The component pushes the search term into a plain `Subject` with no replay,
+  from the input's `(keyup)` handler, while `TypeaheadDirective` does not subscribe to
+  the lookup observable until one task after the `input` event, because of its own
+  zero-delay debounce. Typing is safe: a browser fires `input` as the character is
+  inserted and `keyup` when the key is released, so the subscription is in place first
+  and the term is heard. Input that fires both in the same task is not: paste from the
+  mouse or context menu, and some IME paths, push the term into a subject nobody is
+  listening to, and no lookup runs. This is inherited from the legacy 4.0.0 design
+  rather than introduced here, and it is ticketed rather than fixed in 2.2.0. This
+  release fixes the equivalent defect in `common-address-validator`'s lookup pipeline
+  (see Fixed above); `street.component.ts:170` still has it, so the two should not be
+  confused.
+- `common-address-validator` never shows its `Error` status. The field's label can
+  report `Loading`, `Selected` and `No Results`, but a failed lookup falls through to
+  `No Results` instead of `Error`. `onError()` sets the `hasError` flag, and the
+  typeahead then fires its loading event with `false` once the failed request settles,
+  which `onLoading()` uses to clear that same flag before the label is read. The status
+  is cosmetic; the field itself behaves correctly and a failed lookup still yields an
+  empty suggestion list. This code is unchanged in 2.2.0 and the state was simply
+  unreachable before, because the component rendered no typeahead and therefore no
+  status at all. Ticketed rather than fixed here.
+
+### Consumer action required
+
+- If your app renders anything from the main entry point, install `ngx-bootstrap`
+  `^19.0.2`. The requirement is not limited to `common-street`: the main bundle imports
+  `ngx-bootstrap/typeahead` at the top level, so the package has to resolve even for an
+  app that never uses the geocoder. The `moh-common-lib-angular/captcha` entry point
+  imports only `@angular/*` and is unaffected.
+- If your app sets `[useGeoCoder]="true"` or renders `common-address-validator`, it also
+  needs an animations provider: `provideAnimations()` or `provideNoopAnimations()`, or
+  the equivalent `BrowserAnimationsModule` / `NoopAnimationsModule`. ngx-bootstrap's
+  `TypeaheadContainerComponent` declares `animations: [typeaheadAnimation]`, and without
+  a provider Angular rejects that synthetic animation property when the suggestion
+  dropdown opens. `@angular/animations` is deliberately not one of our peer
+  dependencies: nothing in the built bundle imports it, so declaring it would make every
+  consumer install a package our shipped code never touches.
+- Neither current consumer needs a dependency change. fpincome and fpcare both already
+  declare `ngx-bootstrap` `^19.0.2` and both import `BrowserAnimationsModule` in their
+  root module, so both requirements above are already met. fpcare renders
+  `common-address-validator`, whose typeahead is always on, so the animations provider
+  matters there even though fpcare never sets `useGeoCoder`.
+
 ## 2.1.1 (2026-09-15)
 
 This is a patch release: eight bug fixes, no new exports, no new peer dependencies, no

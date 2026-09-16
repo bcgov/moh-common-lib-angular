@@ -35,5 +35,6 @@ $gray: #f2f2f2;
 // Bootstrap grid breakpoints, for plain media queries. Components use these
 // rather than Bootstrap's media-breakpoint-up mixin, which is only available to
 // stylesheets that load Bootstrap's Sass.
+$breakpoint-sm: 576px;
 $breakpoint-md: 768px;
 $breakpoint-lg: 992px;

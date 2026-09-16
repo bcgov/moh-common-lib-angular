@@ -142,29 +142,30 @@ export class PhnComponent
       const weights: number[] = [-1, 2, 4, 8, 5, 10, 9, 7, 3, -1];
       let sumOfRemainders = 0;
 
-      // Clean up string
-      const value = this.phn.trim();
-      this.phn = value
+      // Clean up string. Validation works on a local copy so that the value
+      // the user typed is left exactly as they typed it.
+      const cleaned = this.phn
+        .trim()
         .replace(/^0+/, '') // remove leading zeros
         .replace(/_/g, '') // remove underlines
         .replace(/\s/g, ''); // spaces
 
       // Test for length
-      if (this.phn.length !== 10) {
+      if (cleaned.length !== 10) {
         return { invalid: true };
       }
       // Look for a number that starts with 9 if BC only
-      if (this.isBCPhn && this.phn[0] !== '9') {
+      if (this.isBCPhn && cleaned[0] !== '9') {
         return { invalid: true };
-      } else if (!this.isBCPhn && this.phn[0] === '9') {
+      } else if (!this.isBCPhn && cleaned[0] === '9') {
         // Number cannot have 9
         return { invalid: true };
       }
 
       // Walk through each character
-      for (let i = 0; i < this.phn.length; i++) {
+      for (let i = 0; i < cleaned.length; i++) {
         // pull out char
-        const char = this.phn.charAt(i);
+        const char = cleaned.charAt(i);
 
         // parse the number
         const num = Number(char);
@@ -196,7 +197,7 @@ export class PhnComponent
       }
 
       // Compare against 10th digitfinalDigit
-      const finalDigit = Number(this.phn.substring(9, 10));
+      const finalDigit = Number(cleaned.substring(9, 10));
       if (checkDigit !== finalDigit) {
         return { invalid: true };
       }
