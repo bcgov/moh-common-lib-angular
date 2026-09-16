@@ -9,10 +9,10 @@ const meta: Meta<PhnComponent> = {
     docs: {
       description: {
         component:
-          'Fixed in 2.1.1: the input is now wired with a (change) binding, so a ' +
-          'typed value reaches a bound form control. Known issue: the (blur) ' +
-          'binding is still missing, so leaving the field does not mark the ' +
-          'control touched.',
+          'Fixed in 2.1.1: the input is now wired with (change) and (blur) ' +
+          'bindings, so a typed value reaches a bound form control and leaving ' +
+          'the field marks the control touched. The value delivered is the ' +
+          'masked string.',
       },
     },
   },

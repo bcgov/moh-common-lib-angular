@@ -9,8 +9,8 @@ class ConcreteReactForm extends AbstractReactForm {
   }
   continue(): void {}
   // Calls markAllInputsTouched with no argument, typed directly against the
-  // real protected signature (not cast to any). Today the parameter is
-  // required, so this call site is a TypeScript compile error.
+  // real protected signature (not cast to any). This call site only compiles
+  // while the parameter stays optional.
   touchAllWithNoArgs(): void {
     this.markAllInputsTouched();
   }
