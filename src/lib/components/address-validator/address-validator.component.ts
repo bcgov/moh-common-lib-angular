@@ -31,6 +31,7 @@ import {
 } from '../../models/error-message.interface';
 import { deburr } from '../../../helpers/deburr';
 import { CommonModule } from '@angular/common';
+import { TypeaheadModule } from 'ngx-bootstrap/typeahead';
 import { ErrorContainerComponent } from '../error-container/error-container.component';
 
 /**
@@ -87,7 +88,12 @@ export interface AddressResult {
   selector: 'common-address-validator',
   templateUrl: './address-validator.component.html',
   styleUrls: ['./address-validator.component.scss'],
-  imports: [FormsModule, CommonModule, ErrorContainerComponent],
+  imports: [
+    FormsModule,
+    CommonModule,
+    TypeaheadModule,
+    ErrorContainerComponent,
+  ],
 })
 export class AddressValidatorComponent
   extends AbstractFormControl
@@ -258,6 +264,12 @@ export class AddressValidatorComponent
   }
 
   lookup(address: string): Observable<AddressResult[]> {
+    // No service to query without a URL, and HttpClient throws synchronously on
+    // an undefined one, which would surface as the field's error state.
+    if (!this.serviceUrl) {
+      return of([]);
+    }
+
     const params = new HttpParams().set('address', address);
 
     return this.http

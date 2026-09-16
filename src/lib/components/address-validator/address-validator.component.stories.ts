@@ -1,6 +1,7 @@
 import { applicationConfig } from '@storybook/angular';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { provideHttpClient } from '@angular/common/http';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { AddressValidatorComponent } from './address-validator.component';
 
 const meta: Meta<AddressValidatorComponent> = {
@@ -9,18 +10,18 @@ const meta: Meta<AddressValidatorComponent> = {
   tags: ['autodocs'],
   decorators: [
     applicationConfig({
-      // Injects HttpClient directly. No fake backend is wired up: see the
-      // known-gap note below for why a real lookup would not help either.
-      providers: [provideHttpClient()],
+      // Injects HttpClient directly. serviceUrl below points at a host that
+      // does not exist, so nothing is fetched unless someone types into it.
+      providers: [provideHttpClient(), provideNoopAnimations()],
     }),
   ],
   parameters: {
     docs: {
       description: {
         component:
-          'Known issue: the typeahead bindings were commented out during ' +
-          'the ngx-bootstrap removal, so this never calls the geocoder. It ' +
-          'renders as a plain text field.',
+          'Typeahead lookup against an address service. Point serviceUrl at ' +
+          'the geocoder and it suggests addresses as the user types, ' +
+          'emitting the chosen Address through (select).',
       },
     },
   },

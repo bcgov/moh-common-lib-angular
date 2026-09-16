@@ -53,8 +53,8 @@ export const Default: Story = {
   args: {
     address: sampleAddress(),
     isRequired: true,
-    // The address validator's typeahead is documented broken (see its own
-    // story); disabling it here falls back to the plain street field instead.
+    // Disabled so the story does not need an address service URL; this falls
+    // back to the plain street field.
     disableGeocoder: true,
     bcOnly: false,
     allowExtralines: false,

@@ -7,8 +7,9 @@ import {
   Self,
   OnInit,
 } from '@angular/core';
-import { NgControl } from '@angular/forms';
+import { FormsModule, NgControl } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { TypeaheadModule } from 'ngx-bootstrap/typeahead';
 import { ErrorContainerComponent } from '../error-container/error-container.component';
 import { Observable, Subject, of } from 'rxjs';
 import {
@@ -46,7 +47,12 @@ import { BRITISH_COLUMBIA } from '../province/province.component';
 @Component({
   selector: 'common-street',
   templateUrl: './street.component.html',
-  imports: [CommonModule, ErrorContainerComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TypeaheadModule,
+    ErrorContainerComponent,
+  ],
 })
 export class StreetComponent extends AbstractFormControl implements OnInit {
   @Input() label: string = 'Full street address or rural route';
@@ -159,7 +165,9 @@ export class StreetComponent extends AbstractFormControl implements OnInit {
       return;
     }
 
-    //this.searchText$.next(this.search);
+    // search is only populated while useGeoCoder is on; an empty string
+    // reaches distinctUntilChanged the same way a cleared field does.
+    this.searchText$.next(this.search ?? '');
   }
 
   onError(): Observable<GeoAddressResult[]> {
@@ -170,6 +178,12 @@ export class StreetComponent extends AbstractFormControl implements OnInit {
   onSelect(event: any): void {
     const data: GeoAddressResult = event.item;
     this.street = data.street;
+
+    // The typeahead has already pushed its own option value, the full address,
+    // through onValueChange and into the bound control. Write the street back
+    // so the control, this component and the input all hold the street only.
+    this._onChange(this.street);
+    this.valueChange.emit(this.street);
 
     // Set to defaults in response
     data.country = CANADA;

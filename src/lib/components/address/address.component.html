@@ -8,7 +8,7 @@
         label="{{ addrLabels.address1 }}"
         [ngModel]="addr.addressLine1"
         (ngModelChange)="setStreetAddress($event)"
-        (selectEvent)="setAddress($event)"
+        (select)="setAddress($event)"
         [required]="isRequired"
         [disabled]="readOnlyFields.address ?? false"
         [maxlength]="fieldMaxLengths.address ?? ''"

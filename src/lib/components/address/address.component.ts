@@ -98,9 +98,11 @@ export interface ReadOnlyFields {
     ValidateRegionDirective,
     ValidateStreetDirective,
   ],
-  // Lets the ngModel fields in this view share an ambient NgForm. Unlike
-  // FileUploaderComponent, this component never injects ControlContainer, so
-  // the alias is never resolved and a reactive host does not hit NgForm.
+  // Lets the ngModel fields in this view share an ambient NgForm. Every
+  // ngModel below injects ControlContainer (@Optional @Host), so the alias is
+  // resolved: inside a template-driven host each field's parent comes back as
+  // the host's NgForm. Inside a reactive host there is no NgForm to alias to
+  // and the optional injection yields null rather than throwing.
   // address.component.spec.ts guards that.
   viewProviders: [
     { provide: ControlContainer, useExisting: forwardRef(() => NgForm) },
@@ -108,6 +110,7 @@ export interface ReadOnlyFields {
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
+      multi: true,
       useExisting: forwardRef(() => AddressComponent),
     },
   ],
@@ -353,6 +356,9 @@ export class AddressComponent
     if (!this.provinceList) {
       return;
     } // When data is async and hasn't loaded
+    if (!this.addr) {
+      return;
+    } // ngOnInit runs before writeValue delivers the address
     this.provList = this.provinceList.filter(
       (prov) => prov.country === this.addr.country
     );
@@ -453,6 +459,9 @@ export class AddressComponent
   writeValue(value: Address) {
     if (value) {
       this.addr = value;
+      // ngOnInit runs before the address arrives, so the province list it built
+      // was empty. Rebuild it now that there is a country to filter on.
+      this.updateProvList();
     }
   }
 

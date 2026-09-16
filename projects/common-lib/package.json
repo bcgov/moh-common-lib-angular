@@ -1,6 +1,6 @@
 {
   "name": "moh-common-lib-angular",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "Shared Angular component library for BC Ministry of Health applications.",
   "keywords": [
     "bcgov",
@@ -20,6 +20,7 @@
     "@angular/router": "^19.2.0",
     "@ng-select/ng-select": "^14.7.0",
     "date-fns": "^4.1.0",
+    "ngx-bootstrap": "^19.0.2",
     "ngx-mask": "^19.0.7",
     "rxjs": "^7.8.0",
     "uuid": "^11.1.0",

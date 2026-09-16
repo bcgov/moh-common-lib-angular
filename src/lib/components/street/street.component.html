@@ -1,24 +1,50 @@
 <label for="{{ labelforId }}">{{ label }}</label>
+<!-- The geocoder path needs an NgControl on the input: TypeaheadDirective
+     injects one. The standalone ngModel keeps it out of any ambient form. -->
 <input
+  *ngIf="useGeoCoder; else plainStreetInput"
   class="form-control"
   spellcheck="false"
   type="text"
   id="{{ labelforId }}"
-  [value]="street"
-  (change)="onValueChange($event)"
+  [ngModel]="street"
+  [ngModelOptions]="{ standalone: true }"
+  (ngModelChange)="onValueChange($event)"
+  (keyup)="onKeyUp($event)"
   (blur)="onBlur($event)"
+  [typeahead]="typeaheadList$"
+  typeaheadOptionField="fullAddress"
+  [typeaheadMinLength]="3"
+  (typeaheadOnSelect)="onSelect($event)"
   [disabled]="disabled"
   [required]="required"
   [attr.maxlength]="maxlength"
   [placeholder]="placeholder"
   autocomplete="off" />
 
+<ng-template #plainStreetInput>
+  <input
+    class="form-control"
+    spellcheck="false"
+    type="text"
+    id="{{ labelforId }}"
+    [value]="street"
+    (change)="onValueChange($event)"
+    (blur)="onBlur($event)"
+    [disabled]="disabled"
+    [required]="required"
+    [attr.maxlength]="maxlength"
+    [placeholder]="placeholder"
+    autocomplete="off" />
+</ng-template>
+
 <!-- Error messages for input -->
 <common-error-container
   [displayError]="
     (controlDir &&
       !disabled &&
-      (controlDir.dirty || controlDir.touched) && !!controlDir.errors) ??
+      (controlDir.dirty || controlDir.touched) &&
+      !!controlDir.errors) ??
     false
   ">
   <div *ngIf="controlDir?.errors?.['required']">
