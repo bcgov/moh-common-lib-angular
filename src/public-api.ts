@@ -13,21 +13,26 @@ export { AbstractForm } from './lib/models/abstract-form';
 export { AbstractBaseForm } from './lib/models/abstract-base-form';
 export { AbstractFormControl } from './lib/models/abstract-form-control';
 export { AbstractReactForm } from './lib/models/abstract-react-form';
-export { Container } from './lib/models/container';
-export type { WizardProgressItem } from './lib/models/container';
-export type { ErrorMessage } from './lib/models/error-message.interface';
+export { Container, type WizardProgressItem } from './lib/models/container';
+export {
+  LabelReplacementTag,
+  type ErrorMessage,
+} from './lib/models/error-message.interface';
 export {
   CommonImage,
   CommonImageError,
   CommonImageProcessingError,
   CommonImageScaleFactorsImpl,
+  type CommonAttachmentJson,
 } from './lib/models/images.model';
 export { LETTER, NUMBER, SPACE } from './lib/models/mask.constants';
 
 // Services
 export { AbstractHttpService } from './lib/services/abstract-api-service';
-export { GeocoderService } from './lib/services/geocoder.service';
-export type { GeoAddressResult } from './lib/services/geocoder.service';
+export {
+  GeocoderService,
+  type GeoAddressResult,
+} from './lib/services/geocoder.service';
 export { AbstractPageGuardService } from './lib/services/abstract-page-guard.service';
 export {
   DefaultPageGuardService,
@@ -43,7 +48,12 @@ export { RouteGuardService } from './lib/services/route-guard.service';
 export { CommonLogger, CommonLogEvents } from './lib/services/logger.service';
 
 // Components
-export { AddressComponent } from './lib/components/address/address.component';
+export {
+  AddressComponent,
+  type AddrLabelList,
+  type Maxlengths,
+  type ReadOnlyFields,
+} from './lib/components/address/address.component';
 export { AddressValidatorComponent } from './lib/components/address-validator/address-validator.component';
 export { AccordionCommonComponent } from './lib/components/accordion/accordion.component';
 export { ButtonComponent } from './lib/components/button/button.component';
@@ -55,12 +65,22 @@ export {
 } from './lib/components/confirm-template/confirm-template.component';
 export { ConsentModalComponent } from './lib/components/consent-modal/consent-modal.component';
 export { CoreBreadcrumbComponent } from './lib/components/core-breadcrumb/core-breadcrumb.component';
-export { CountryComponent } from './lib/components/country/country.component';
+export {
+  CountryComponent,
+  COUNTRY_LIST,
+  CANADA,
+  getCountryDescription,
+  type CountryList,
+} from './lib/components/country/country.component';
+export { DateComponent } from './lib/components/date/date.component';
+export { DateFieldFormatDirective } from './lib/components/date/date-field-format.directive';
 export { EmailComponent } from './lib/components/email/email.component';
 export { ErrorContainerComponent } from './lib/components/error-container/error-container.component';
 export { FormActionBarComponent } from './lib/components/form-action-bar/form-action-bar.component';
-export { FileUploaderComponent } from './lib/components/file-uploader/file-uploader.component';
-export type { FileUploaderMsg } from './lib/components/file-uploader/file-uploader.component';
+export {
+  FileUploaderComponent,
+  type FileUploaderMsg,
+} from './lib/components/file-uploader/file-uploader.component';
 export { PdfService } from './lib/components/file-uploader/pdf.service';
 export { FullNameComponent } from './lib/components/full-name/full-name.component';
 export { HeaderComponent } from './lib/components/header/header.component';
@@ -75,13 +95,26 @@ export { PageSectionComponent } from './lib/components/page-section/page-section
 export { PostalCodeComponent } from './lib/components/postal-code/postal-code.component';
 export { PhnComponent } from './lib/components/phn/phn.component';
 export { PhoneNumberComponent } from './lib/components/phone-number/phone-number.component';
-export { ProvinceComponent } from './lib/components/province/province.component';
-export { RadioComponent } from './lib/components/radio/radio.component';
-export { SampleModalComponent } from './lib/components/sample-modal/sample-modal.component';
+export {
+  ProvinceComponent,
+  PROVINCE_LIST,
+  BRITISH_COLUMBIA,
+  getProvinceDescription,
+  type ProvinceList,
+} from './lib/components/province/province.component';
+export {
+  RadioComponent,
+  type IRadioItems,
+} from './lib/components/radio/radio.component';
+export {
+  SampleModalComponent,
+  type SampleImageInterface,
+} from './lib/components/sample-modal/sample-modal.component';
 export { WizardProgressBarComponent } from './lib/components/wizard-progress-bar/wizard-progress-bar.component';
 export { SinComponent } from './lib/components/sin/sin.component';
 export { StreetComponent } from './lib/components/street/street.component';
 export { ThumbnailComponent } from './lib/components/thumbnail/thumbnail.component';
+export { XiconButtonComponent } from './lib/components/xicon-button/xicon-button.component';
 
 // Validators
 export {
