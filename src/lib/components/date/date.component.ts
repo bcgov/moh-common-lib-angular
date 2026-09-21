@@ -38,8 +38,6 @@ import { ErrorContainerComponent } from '../error-container/error-container.comp
 import { DateFieldFormatDirective } from './date-field-format.directive';
 
 const MAX_YEAR_RANGE = 150;
-const distantFuture = addYears(startOfToday(), MAX_YEAR_RANGE);
-const distantPast = subYears(startOfToday(), MAX_YEAR_RANGE);
 
 /**
  * DateComponent
@@ -155,8 +153,16 @@ export class DateComponent
   };
 
   private initialised = false;
-  private today = startOfToday();
-  private tomorrow = addDays(this.today, 1);
+  /** Which bound, if any, the current restrictDate value installed. */
+  private restrictDateBound: 'start' | 'end' | null = null;
+  // Computed per read rather than captured once. A session left open across
+  // midnight would otherwise keep validating against the previous day.
+  private get today(): Date {
+    return startOfToday();
+  }
+  private get tomorrow(): Date {
+    return addDays(startOfToday(), 1);
+  }
   public isRequired = false; // TODO: remove if not required - value does not get set when using Reactive forms
 
   constructor(
@@ -265,10 +271,21 @@ You must use either [restrictDate] or the [dateRange*] inputs.
       // past does allow for today
       this._dateRangeEnd = this.today;
       this._dateRangeStart = null;
+      this.restrictDateBound = 'end';
     } else if (this.restrictDate === 'future') {
       // future does NOT allow for today
       this._dateRangeEnd = null;
       this._dateRangeStart = this.tomorrow;
+      this.restrictDateBound = 'start';
+    } else if (this.restrictDateBound) {
+      // 'any' lifts the restriction, so the bound it installed has to go with
+      // it. Only that one is cleared, leaving any explicit dateRange* alone.
+      if (this.restrictDateBound === 'end') {
+        this._dateRangeEnd = null;
+      } else {
+        this._dateRangeStart = null;
+      }
+      this.restrictDateBound = null;
     }
   }
 
@@ -318,12 +335,17 @@ You must use either [restrictDate] or the [dateRange*] inputs.
       // typed into the model, on a control that validateSelf is reporting
       // dayOutOfRange for, while the fields still show what was entered. Hold
       // the model empty until the entry is a real calendar date.
-      if (this.isRealCalendarDay(year, month, day)) {
+      if (
+        year !== null &&
+        month !== null &&
+        day !== null &&
+        this.isRealCalendarDay(year, month, day)
+      ) {
         // Date function appears to use setYear() so any year 0-99 results in year 1900 to 1999
         // Set each field individually, use setFullYear() instead of setYear()
         // Set time on date to 00:00:00 for comparing later
-        const dt = startOfDay(new Date(year ?? 0, month ?? 0, day ?? 1));
-        dt.setFullYear(year ?? 0);
+        const dt = startOfDay(new Date(year, month, day));
+        dt.setFullYear(year);
         this.date = dt;
       } else {
         this.date = null;
@@ -360,14 +382,7 @@ You must use either [restrictDate] or the [dateRange*] inputs.
    * True when day/month/year name a day that exists in that month, so that
    * new Date() will not roll it over into the following one.
    */
-  private isRealCalendarDay(
-    year: number | null,
-    month: number | null,
-    day: number | null
-  ): boolean {
-    if (year === null || month === null || day === null) {
-      return false;
-    }
+  private isRealCalendarDay(year: number, month: number, day: number): boolean {
     if (month < 0 || month > 11 || day < 1) {
       return false;
     }
@@ -469,6 +484,12 @@ You must use either [restrictDate] or the [dateRange*] inputs.
     if (!this.date) {
       return null;
     }
+
+    // The bound installed from restrictDate is a snapshot of today. Refresh it
+    // so a session running past midnight validates against the current day.
+    if (this.restrictDate !== 'any') {
+      this.applyRestrictDate();
+    }
     const _dt = startOfDay(this.date);
 
     if (this._dateRangeEnd && isAfter(_dt, this._dateRangeEnd)) {
@@ -502,12 +523,18 @@ You must use either [restrictDate] or the [dateRange*] inputs.
     }
 
     // Null end range only allow 150 years in future
-    if (!this._dateRangeEnd && isAfter(this.date, distantFuture)) {
+    if (
+      !this._dateRangeEnd &&
+      isAfter(this.date, addYears(startOfToday(), MAX_YEAR_RANGE))
+    ) {
       return { yearDistantFuture: true };
     }
 
     // Null start range only allow 150 years in past
-    if (!this._dateRangeStart && isBefore(this.date, distantPast)) {
+    if (
+      !this._dateRangeStart &&
+      isBefore(this.date, subYears(startOfToday(), MAX_YEAR_RANGE))
+    ) {
       return { yearDistantPast: true };
     }
 

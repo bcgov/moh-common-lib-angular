@@ -82,7 +82,16 @@ output was removed or renamed.
   matters for any form that derives a bound from another field: msp binds
   `[dateRangeStart]` to a spouse's or child's date of birth, which changes as the user
   edits it. The bounds are now recomputed when `restrictDate` changes, and the control is
-  revalidated whenever any of the three inputs change.
+  revalidated whenever any of the three inputs change. Returning `restrictDate` to `'any'`
+  also removes the bound the restriction had installed, which it previously left behind,
+  so lifting a `'past'` restriction no longer keeps rejecting future dates. Only the
+  restriction's own bound is cleared; an explicit `dateRange*` value is left alone.
+- `common-date` validated against the day the page was opened rather than the current one.
+  The 150-year limits were computed once at module load and `today`/`tomorrow` once per
+  component, and `restrictDate` materialised its bound from that snapshot. A session left
+  open across midnight therefore kept rejecting the new day: with `restrictDate="past"`,
+  today's date began failing as a future date. All of these are now computed when they are
+  read, and a `restrictDate` bound is refreshed before each range check.
 - The documentation on `restrictDate` described the opposite of what the code does. It
   read `"future" includes today, "past" does not`, while `'past'` allows today and
   `'future'` starts from tomorrow. Anyone configuring the restriction from that comment

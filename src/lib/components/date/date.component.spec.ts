@@ -261,6 +261,62 @@ describe('DateComponent', () => {
 
       expect(errorsOf(de)?.['noPastDatesAllowed']).toBe(true);
     }));
+
+    it("drops the restriction's bound when restrictDate returns to 'any'", fakeAsync(() => {
+      const fixture = createTestingModule(
+        DateReactTestComponent,
+        `<form [formGroup]="form">
+          <common-date name="date1" formControlName="date1" label="Date"
+                       [restrictDate]="restrict"></common-date>
+        </form>`
+      );
+      fixture.componentInstance.restrict = 'past';
+      tickAndDetectChanges(fixture);
+      const de = getDebugElement(fixture, 'common-date', 'date1');
+
+      fillDate(fixture, de, {
+        month: tomorrow.getMonth().toString(),
+        day: tomorrow.getDate().toString(),
+        year: tomorrow.getFullYear().toString(),
+      });
+      expect(errorsOf(de)?.['noFutureDatesAllowed']).toBe(true);
+
+      fixture.componentInstance.restrict = 'any';
+      tickAndDetectChanges(fixture);
+      // revalidate() defers to a microtask, so flush it before asserting.
+      tickAndDetectChanges(fixture);
+
+      expect(errorsOf(de)).toBeNull();
+    }));
+
+    // restrictDate installs a bound that is a snapshot of "today". A session
+    // left open across midnight keeps that stale snapshot, which is simulated
+    // here by planting yesterday's date into it.
+    it('refreshes a stale restrictDate bound instead of validating against it', fakeAsync(() => {
+      const fixture = createTestingModule(
+        DateReactTestComponent,
+        `<form [formGroup]="form">
+          <common-date name="date1" formControlName="date1" label="Date"
+                       [restrictDate]="restrict"></common-date>
+        </form>`
+      );
+      fixture.componentInstance.restrict = 'past';
+      tickAndDetectChanges(fixture);
+      const de = getDebugElement(fixture, 'common-date', 'date1');
+
+      fillDate(fixture, de, {
+        month: today.getMonth().toString(),
+        day: today.getDate().toString(),
+        year: today.getFullYear().toString(),
+      });
+      expect(errorsOf(de)).toBeNull();
+
+      de.componentInstance._dateRangeEnd = addDays(today, -1);
+      fixture.componentInstance.form.get('date1')?.updateValueAndValidity();
+      tickAndDetectChanges(fixture);
+
+      expect(errorsOf(de)).toBeNull();
+    }));
   });
 
   describe('self-validation errors', () => {
