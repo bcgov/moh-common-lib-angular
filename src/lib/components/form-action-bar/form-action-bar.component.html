@@ -4,7 +4,8 @@
       defaultColor ? 'btn-primary' : 'btn-secondary'
     }} submit"
     (click)="onClick($event)"
-    [ngClass]="{ disabled: !canContinue || isLoading }">
+    [ngClass]="{ disabled: !canContinue || isLoading }"
+    [disabled]="!canContinue || isLoading">
     <ng-container *ngIf="!isLoading; else loadingSpinner">
       {{ submitLabel }}
     </ng-container>

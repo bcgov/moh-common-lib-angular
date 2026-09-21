@@ -6,6 +6,7 @@ import {
   EventEmitter,
   Optional,
   Self,
+  SimpleChange,
   SimpleChanges,
   OnChanges,
   Inject,
@@ -213,13 +214,32 @@ export class DateComponent
       this.applyRestrictDate();
     }
 
+    // Compare the bounds by value, not by reference. A parent that rebuilds its
+    // bound Date on every change-detection pass (a getter, or ngDoCheck
+    // recomputing a range) hands us a new object with the same instant each
+    // time. Revalidating on that would schedule a microtask, which schedules
+    // another pass, which rebuilds the Date again: an infinite loop that pegs
+    // the renderer.
     if (
       changes['restrictDate'] ||
-      changes['dateRangeStart'] ||
-      changes['dateRangeEnd']
+      this.dateInputChanged(changes['dateRangeStart']) ||
+      this.dateInputChanged(changes['dateRangeEnd'])
     ) {
       this.revalidate();
     }
+  }
+
+  /** True when a bound Date input moved to a different day. */
+  private dateInputChanged(change: SimpleChange | undefined): boolean {
+    if (!change) {
+      return false;
+    }
+    const previous = change.previousValue as Date | null | undefined;
+    const current = change.currentValue as Date | null | undefined;
+    if (!previous || !current) {
+      return previous !== current;
+    }
+    return startOfDay(previous).getTime() !== startOfDay(current).getTime();
   }
 
   override ngOnInit() {

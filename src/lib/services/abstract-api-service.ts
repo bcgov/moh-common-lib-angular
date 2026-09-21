@@ -1,17 +1,20 @@
 // TODO: code refactor
 
-import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  HttpHeaders,
+  HttpParams,
+} from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 import { CommonImage } from '../models/images.model';
 
-
 /**
  * Abstract class for HTTP Service
  */
 export abstract class AbstractHttpService {
-
   /** Set to true during development to print every request and response to the console. */
   protected logHTTPRequestsToConsole = false;
 
@@ -40,35 +43,52 @@ export abstract class AbstractHttpService {
    */
   protected post<T>(url: string, body: object): Observable<T> {
     if (this.logHTTPRequestsToConsole) {
-      console.log( 'Post Request: ', body );
+      console.log('Post Request: ', body);
     }
     const observable = this.http.post(url, body, this.httpOptions);
     return this.setupRequest(observable);
   }
 
   /** Attaches error handling and optional console logging to any HTTP observable. */
-  protected setupRequest<T>(observable: Observable<any> ): Observable<T> {
-    // All failed requests should trigger the abstract method handleError
-    observable = observable.pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
+  protected setupRequest<T>(observable: Observable<any>): Observable<T> {
+    // All failed requests should trigger the abstract method handleError. handleError's
+    // return type is intentionally unknown, not T: it runs before the response is typed,
+    // so there is no honest way for it to promise a T. The cast back to Observable<T> is
+    // deliberately kept here, in one place, rather than pushed onto every implementer.
+    observable = observable.pipe(
+      catchError(
+        (error: HttpErrorResponse) => this.handleError(error) as Observable<T>
+      )
+    );
     // Optionally add console logging
     if (this.logHTTPRequestsToConsole) {
-      observable = observable.pipe(tap(
-        data => console.log('HTTP Success: ', data),
-        error => console.log('HTTP Error: ', error)
-      ));
+      observable = observable.pipe(
+        tap(
+          (data) => console.log('HTTP Success: ', data),
+          (error) => console.log('HTTP Error: ', error)
+        )
+      );
     }
     return observable;
   }
 
   /** The HttpOptions object that Angular takes for GET and POST requests. Used in every HTTP request from this service. */
-  protected get httpOptions(): {headers: HttpHeaders, params?: HttpParams} {
+  protected get httpOptions(): { headers: HttpHeaders; params?: HttpParams } {
     return {
-      headers: this._headers
+      headers: this._headers,
     };
   }
 
-  /** Handles all failed requests that throw either a server error (400/500) or a client error (e.g. lost internet). */
-  protected abstract handleError(error: HttpErrorResponse): Observable<never>;
+  /**
+   * Handles all failed requests that throw either a server error (400/500) or a client
+   * error (e.g. lost internet). Rethrowing (the pattern used inside this library) is one
+   * valid implementation, but consumers commonly swallow the error and return a fallback
+   * value instead, so `Observable<never>` was never honest: it forced anyone doing the
+   * latter into an `as unknown as Observable<never>` cast to say the opposite of what they
+   * meant. `Observable<unknown>` accepts either shape with no cast; `setupRequest` is the
+   * only caller and reconciles the type back to `T` there.
+   */
+  protected abstract handleError(error: HttpErrorResponse): Observable<unknown>;
 
   /* Helper function for generating a unique UUID per request for logging. */
   protected generateUUID() {
@@ -83,16 +103,17 @@ export abstract class AbstractHttpService {
    * @param attachment CommonImage to upload
    */
   protected uploadAttachment(relativeUrl: string, attachment: CommonImage) {
-    const options = {headers: this._headers, responseType: 'text' as const};
+    const options = { headers: this._headers, responseType: 'text' as const };
 
     const binary = atob(attachment.fileContent.split(',')[1]);
     const array = [];
     for (let i = 0; i < binary.length; i++) {
-        array.push(binary.charCodeAt(i));
+      array.push(binary.charCodeAt(i));
     }
-    const blob = new Blob([new Uint8Array(array)], {type: attachment.contentType});
+    const blob = new Blob([new Uint8Array(array)], {
+      type: attachment.contentType,
+    });
 
     return this.http.post(relativeUrl, blob, options);
   }
-
 }
