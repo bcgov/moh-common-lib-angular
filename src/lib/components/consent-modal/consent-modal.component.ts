@@ -1,8 +1,10 @@
 import {
+  ChangeDetectorRef,
   Component,
   ElementRef,
   EventEmitter,
   HostListener,
+  inject,
   Input,
   Output,
   ViewChild,
@@ -56,6 +58,8 @@ export class ConsentModalComponent extends Base {
   isOpen = false;
   agreeCheck = false;
 
+  private readonly changeDetectorRef = inject(ChangeDetectorRef);
+
   private static readonly FOCUSABLE =
     'a[href], input:not([disabled]), select:not([disabled]), ' +
     'textarea:not([disabled]), button:not([disabled]), [tabindex="0"]';
@@ -64,8 +68,21 @@ export class ConsentModalComponent extends Base {
   show() {
     this.isOpen = true;
     this.agreeCheck = false;
+    // Hosts commonly open the modal from ngOnInit or ngAfterViewInit, which run
+    // after this component's own bindings were checked. Settling the view here
+    // keeps [style.display] consistent before Angular verifies it, instead of
+    // raising NG0100 in development builds.
+    this.changeDetectorRef.detectChanges();
     // Focus the first control once the dialog has rendered.
     setTimeout(() => this.focusable()[0]?.focus());
+  }
+
+  /**
+   * Legacy name for show(). Kept as a thin alias so callers written against
+   * moh-common-lib 3.6.2 keep working unchanged.
+   */
+  showFullSizeView() {
+    this.show();
   }
 
   hide() {

@@ -1,0 +1,543 @@
+import {
+  Component,
+  OnInit,
+  Input,
+  Output,
+  EventEmitter,
+  Optional,
+  Self,
+  SimpleChanges,
+  OnChanges,
+  Inject,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import {
+  ControlValueAccessor,
+  NgControl,
+  ValidationErrors,
+  NG_VALIDATORS,
+} from '@angular/forms';
+import {
+  ErrorMessage,
+  LabelReplacementTag,
+} from '../../models/error-message.interface';
+import {
+  getDaysInMonth,
+  isAfter,
+  isBefore,
+  startOfToday,
+  addYears,
+  subYears,
+  compareAsc,
+  startOfDay,
+  addDays,
+} from 'date-fns';
+import { MoHCommonLibraryError } from '../../../helpers/library-error';
+import { AbstractFormControl } from '../../models/abstract-form-control';
+import { ErrorContainerComponent } from '../error-container/error-container.component';
+import { DateFieldFormatDirective } from './date-field-format.directive';
+
+const MAX_YEAR_RANGE = 150;
+
+/**
+ * DateComponent
+ * You cannot use "[restrictDate]" in combination with either "[dateRangeEnd]" or "[dateRangeStart]".
+ * You must use either [restrictDate] or the [dateRange*] inputs.
+ *
+ * @example
+ *  To trigger 'no future dates allowed' using date ranges set the range end date to yesterday's date.
+ *    <common-date name='effectiveDate'
+ *       label="Effective Date"
+ *       [dateRangeEnd]='yesterday'
+ *       [(ngModel)]="effectiveDate"></common-date>
+ *
+ *  To trigger 'no past dates allowed' using date ranges set the range start date to today's date.
+ *    <common-date name='effectiveDate'
+ *       label="Effective Date"
+ *       [dateRangeStart]="today"
+ *       [(ngModel)]="effectiveDate"></common-date>
+ *
+ *  To allow instructions under label.
+ *    <common-date name='effectiveDate'
+ *       label="Effective Date"
+ *       [dateRangeEnd]='yesterday'
+ *       [(ngModel)]="effectiveDate">
+ *      <p>This is a test.</p>
+ *    </common-date>
+ * @export
+ */
+@Component({
+  selector: 'common-date',
+  templateUrl: './date.component.html',
+  styleUrls: ['./date.component.scss'],
+  imports: [CommonModule, ErrorContainerComponent, DateFieldFormatDirective],
+})
+export class DateComponent
+  extends AbstractFormControl
+  implements OnInit, ControlValueAccessor, OnChanges
+{
+  // Inputs for disabled & errorMessage are found in the AbstractFormControl class
+  @Input() date: Date | null = null;
+  @Output() dateChange: EventEmitter<Date | null> =
+    new EventEmitter<Date | null>();
+
+  @Input() label = 'Date';
+  /**
+   * Restricts which dates validate. 'past' allows today and every date before
+   * it; 'future' starts from tomorrow, so today is rejected. Do not combine
+   * with dateRangeStart or dateRangeEnd - they set the same bounds, and doing
+   * both throws MoHCommonLibraryError.
+   */
+  @Input() restrictDate: 'future' | 'past' | 'any' = 'any';
+
+  // The actual values displayed to the user.  May not precisely match Date
+  // object, because these fields can be blank whereas a Date can never have a
+  // "blank" year for example. All are nullable strings of numbers "0" or "2".
+  _year = '';
+  _month = 'null'; // this makes it so the blank option is selected in the input
+  _day = '';
+
+  // variables for date ranges
+  _dateRangeStart: Date | null = null;
+  _dateRangeEnd: Date | null = null;
+
+  /**
+   * The earliest valid date that can be used.
+   * Do NOT combine with restrictDates, as they set the same underlying values.
+   */
+  @Input()
+  set dateRangeStart(dt: Date | null) {
+    // Set time on date to 00:00:00 for comparing later
+    this._dateRangeStart = dt ? startOfDay(dt) : null;
+  }
+
+  /**
+   * The latest valid date that can be used.
+   * Do NOT combine with restrictDates, as they set the same underlying values.
+   */
+  @Input()
+  set dateRangeEnd(dt: Date | null) {
+    // Set time on date to 00:00:00 for comparing later
+    this._dateRangeEnd = dt ? startOfDay(dt) : null;
+  }
+
+  public monthList: string[] = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
+
+  monthLabelforId = 'month_' + this.objectId;
+  dayLabelforId = 'day_' + this.objectId;
+  yearLabelforId = 'year_' + this.objectId;
+
+  // Abstract variable defined
+  override _defaultErrMsg: ErrorMessage = {
+    required: `${LabelReplacementTag} is required.`,
+    dayOutOfRange: `Invalid ${LabelReplacementTag}.`,
+    yearDistantPast: `Invalid ${LabelReplacementTag}.`,
+    yearDistantFuture: `Invalid ${LabelReplacementTag}.`,
+    noPastDatesAllowed: `Invalid ${LabelReplacementTag}.`,
+    noFutureDatesAllowed: `Invalid ${LabelReplacementTag}.`,
+    invalidValue: `Invalid ${LabelReplacementTag}.`,
+    invalidRange: `Invalid ${LabelReplacementTag}.`,
+  };
+
+  private initialised = false;
+  /** Which bound, if any, the current restrictDate value installed. */
+  private restrictDateBound: 'start' | 'end' | null = null;
+  // Computed per read rather than captured once. A session left open across
+  // midnight would otherwise keep validating against the previous day.
+  private get today(): Date {
+    return startOfToday();
+  }
+  private get tomorrow(): Date {
+    return addDays(startOfToday(), 1);
+  }
+  public isRequired = false; // TODO: remove if not required - value does not get set when using Reactive forms
+
+  constructor(
+    @Optional() @Self() public controlDir: NgControl,
+    @Optional()
+    @Self()
+    @Inject(NG_VALIDATORS)
+    private injectedValidators: any[]
+  ) {
+    super();
+    if (controlDir) {
+      controlDir.valueAccessor = this;
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    /*
+     * Works, creates new object literal
+     * obj = {
+     *   errorMessage: 'newMessage';
+     * }
+     *
+     * Doesn't work, modifies existing object.  Would have to manually call cd.detectChanges() afterwards.
+     * obj.errorMessage = 'newMessage';
+     */
+    if (changes['errorMessage']) {
+      this.setErrorMsg();
+    }
+
+    // date is a public input paired with dateChange, so a parent can drive the
+    // component with [(date)] instead of the forms API. The fields have to
+    // follow it, or the parent holds a date the user cannot see.
+    if (changes['date']) {
+      if (this.date) {
+        this.setDisplayVariables();
+      } else {
+        this.clearDisplayFields();
+      }
+    }
+
+    // Only after ngOnInit: before it, the bounds are still being established
+    // and ngOnInit's restrictDate/dateRange* conflict check has not run yet.
+    if (!this.initialised) {
+      return;
+    }
+
+    if (changes['restrictDate']) {
+      this.applyRestrictDate();
+    }
+
+    if (
+      changes['restrictDate'] ||
+      changes['dateRangeStart'] ||
+      changes['dateRangeEnd']
+    ) {
+      this.revalidate();
+    }
+  }
+
+  override ngOnInit() {
+    super.ngOnInit();
+
+    // Set to midnight, so we don't accidentally compare against hours/minutes/seconds
+
+    if (
+      this.restrictDate !== 'any' &&
+      (this._dateRangeEnd || this._dateRangeStart)
+    ) {
+      const msg = `<common-date> - Invalid @Input() option configuration.
+You cannot use "[restrictDate]" in combination with either  "[dateRangeEnd]" or "[dateRangeStart]".
+You must use either [restrictDate] or the [dateRange*] inputs.
+
+    <common-date name='effectiveDate'
+        label="Effective Date"
+        [restrictDate]="'past'"   <<< problem, choose one
+        [dateRangeEnd]='today'    <<< problem, choose one
+        [(ngModel)]="effectiveDate"
+    ></common-date>
+
+  `;
+      throw new MoHCommonLibraryError(msg);
+    }
+
+    this.applyRestrictDate();
+
+    this.registerValidation(this.controlDir, this.validateSelf).then(() => {
+      if (this.injectedValidators && this.injectedValidators.length) {
+        // TODO: Potentially move to AbstractFormControl
+        // Inspect the validator functions for one that has a {required: true}
+        // property. Importantly, we are inspecting the validator function
+        // itself and NOT the current state of the NgControl. -- Does not work for reactive forms
+        this.isRequired =
+          this.injectedValidators.filter((x) => x.required).length >= 1;
+      }
+    });
+
+    this.initialised = true;
+  }
+
+  /**
+   * Translates restrictDate into the range the validator actually reads.
+   * 'past' allows today, 'future' starts from tomorrow.
+   */
+  private applyRestrictDate() {
+    if (this.restrictDate === 'past') {
+      // past does allow for today
+      this._dateRangeEnd = this.today;
+      this._dateRangeStart = null;
+      this.restrictDateBound = 'end';
+    } else if (this.restrictDate === 'future') {
+      // future does NOT allow for today
+      this._dateRangeEnd = null;
+      this._dateRangeStart = this.tomorrow;
+      this.restrictDateBound = 'start';
+    } else if (this.restrictDateBound) {
+      // 'any' lifts the restriction, so the bound it installed has to go with
+      // it. Only that one is cleared, leaving any explicit dateRange* alone.
+      if (this.restrictDateBound === 'end') {
+        this._dateRangeEnd = null;
+      } else {
+        this._dateRangeStart = null;
+      }
+      this.restrictDateBound = null;
+    }
+  }
+
+  /**
+   * Re-runs the validator after the bounds move, so a value entered under the
+   * old rule does not keep its old validity. Deferred because the bounds change
+   * during change detection, and the error container reads the result.
+   */
+  private revalidate() {
+    Promise.resolve().then(() =>
+      this.controlDir?.control?.updateValueAndValidity()
+    );
+  }
+
+  get month(): number | undefined {
+    if (this.date) {
+      return this.date.getMonth();
+    }
+    return undefined;
+  }
+
+  get day(): number | undefined {
+    if (this.date) {
+      return this.date.getDate();
+    }
+    return undefined;
+  }
+
+  get year(): number | undefined {
+    if (this.date) {
+      return this.date.getFullYear();
+    }
+    return undefined;
+  }
+
+  /**
+   * Handles creating / destroying date and emitting changes based on user behaviour.
+   */
+  private processDate() {
+    if (this.canCreateDate()) {
+      const year = this.getNumericValue(this._year);
+      const month = this.getNumericValue(this._month);
+      const day = this.getNumericValue(this._day);
+
+      // new Date() rolls an impossible day over into the next month, so 30
+      // February becomes 1 March. Emitting that would put a date the user never
+      // typed into the model, on a control that validateSelf is reporting
+      // dayOutOfRange for, while the fields still show what was entered. Hold
+      // the model empty until the entry is a real calendar date.
+      if (
+        year !== null &&
+        month !== null &&
+        day !== null &&
+        this.isRealCalendarDay(year, month, day)
+      ) {
+        // Date function appears to use setYear() so any year 0-99 results in year 1900 to 1999
+        // Set each field individually, use setFullYear() instead of setYear()
+        // Set time on date to 00:00:00 for comparing later
+        const dt = startOfDay(new Date(year, month, day));
+        dt.setFullYear(year);
+        this.date = dt;
+      } else {
+        this.date = null;
+      }
+    } else {
+      // Trigger validator for emptying fields use case. This is to remove the 'Invalid date' error.
+      if (this.date || (!this._year && !this._day && this._month === 'null')) {
+        // Destroys the internal Date object.
+        this.date = null;
+      }
+    }
+
+    this._onChange(this.date);
+    this._onTouched(this.date);
+    this.dateChange.emit(this.date);
+  }
+
+  /**
+   * Returns true if and only if the day/month/year fields are all filled out.
+   */
+  private canCreateDate(): boolean {
+    // special because "0" is valid (Jan)
+    const monthCheck =
+      (typeof this._month === 'string' && this._month !== 'null') ||
+      typeof this._month === 'number';
+
+    if (!!this._year && !!this._day && monthCheck) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * True when day/month/year name a day that exists in that month, so that
+   * new Date() will not roll it over into the following one.
+   */
+  private isRealCalendarDay(year: number, month: number, day: number): boolean {
+    if (month < 0 || month > 11 || day < 1) {
+      return false;
+    }
+    return day <= getDaysInMonth(new Date(year, month, 1));
+  }
+
+  /** Convert string to numeric value or null if not */
+  private getNumericValue(value: string): number | null {
+    const parsed = parseInt(value, 10);
+    return isNaN(parsed) ? null : parsed;
+  }
+
+  private setDisplayVariables() {
+    if (!this.date) {
+      return;
+    }
+    this._day = this.date.getDate().toString();
+    this._month = this.date.getMonth().toString();
+    this._year = this.date.getFullYear().toString();
+  }
+
+  writeValue(value: Date | null): void {
+    if (value) {
+      this.date = value;
+      this.setDisplayVariables();
+    } else if (value === null) {
+      // Resetting a control writes null. Clear the display fields too, or the
+      // user keeps seeing the old date in a control that now reads as empty.
+      this.date = null;
+      this.clearDisplayFields();
+    }
+  }
+
+  /** Returns the three fields to the state that renders as empty. */
+  private clearDisplayFields() {
+    this._year = '';
+    this._month = 'null';
+    this._day = '';
+  }
+
+  onBlurDay(event: Event) {
+    this._day = (event.target as HTMLInputElement).value;
+    this.processDate();
+  }
+  onBlurYear(event: Event) {
+    this._year = (event.target as HTMLInputElement).value;
+    this.processDate();
+  }
+  onBlurMonth(event: Event) {
+    this._month = (event.target as HTMLSelectElement).value;
+    this.processDate();
+  }
+
+  /**
+   * Validates the DateComponent instance itself, using internal private variables.
+   */
+  private validateSelf(): ValidationErrors | null {
+    const year = parseInt(this._year, 10);
+    const month = parseInt(this._month, 10);
+    const day = parseInt(this._day, 10);
+
+    // Nothing empty fields - nothing to validate OR have required error
+    if (isNaN(year) && isNaN(month) && isNaN(day)) {
+      return null;
+    }
+
+    // Partially filled out is always invalid, if year is present it must be greater than zero
+    if (
+      isNaN(year) ||
+      isNaN(month) ||
+      isNaN(day) ||
+      (!isNaN(year) && year <= 0)
+    ) {
+      return { invalidValue: true };
+    }
+
+    // We can hardcode the day, since we're only interested in total days for that month.
+    const daysInMonth = getDaysInMonth(new Date(year, month, 1));
+    if (day > daysInMonth || day < 1) {
+      return { dayOutOfRange: true };
+    }
+
+    const dateRangeResult = this.validateRange();
+    if (dateRangeResult) {
+      return dateRangeResult;
+    }
+
+    const distantDatesResult = this.validateDistantDates();
+    if (distantDatesResult) {
+      return distantDatesResult;
+    }
+
+    return null;
+  }
+
+  // If you set restrictDate, it will return noFutureDatesAllowed / noPastDatesAllowed
+  // If you just set dateRangeStart / dateRangeEnd, you get invalidRange
+  private validateRange(): ValidationErrors | null {
+    if (!this.date) {
+      return null;
+    }
+
+    // The bound installed from restrictDate is a snapshot of today. Refresh it
+    // so a session running past midnight validates against the current day.
+    if (this.restrictDate !== 'any') {
+      this.applyRestrictDate();
+    }
+    const _dt = startOfDay(this.date);
+
+    if (this._dateRangeEnd && isAfter(_dt, this._dateRangeEnd)) {
+      if (
+        this.restrictDate === 'past' ||
+        compareAsc(this._dateRangeEnd, this.today) === 0
+      ) {
+        return { noFutureDatesAllowed: true };
+      }
+
+      return { invalidRange: true };
+    }
+
+    if (this._dateRangeStart && isBefore(_dt, this._dateRangeStart)) {
+      if (
+        this.restrictDate === 'future' ||
+        compareAsc(this._dateRangeStart, this.tomorrow) === 0
+      ) {
+        return { noPastDatesAllowed: true };
+      }
+
+      return { invalidRange: true };
+    }
+
+    return null;
+  }
+
+  private validateDistantDates(): ValidationErrors | null {
+    if (!this.date) {
+      return null;
+    }
+
+    // Null end range only allow 150 years in future
+    if (
+      !this._dateRangeEnd &&
+      isAfter(this.date, addYears(startOfToday(), MAX_YEAR_RANGE))
+    ) {
+      return { yearDistantFuture: true };
+    }
+
+    // Null start range only allow 150 years in past
+    if (
+      !this._dateRangeStart &&
+      isBefore(this.date, subYears(startOfToday(), MAX_YEAR_RANGE))
+    ) {
+      return { yearDistantPast: true };
+    }
+
+    return null;
+  }
+}

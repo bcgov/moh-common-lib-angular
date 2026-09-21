@@ -1,3 +1,160 @@
+## 2.3.0 (2026-09-21)
+
+This release exists to unblock MOH-MSP-Enrolment's `msp` app, which is moving from
+Angular 7 to Angular 19 and from the legacy `moh-common-lib` 3.6.2 to this package. msp
+renders 26 of this library's selectors and imports 39 of its symbols, and it was the first
+consumer to need surface that 2.2.0 did not have. It adds the two components msp renders
+that had no equivalent here, exports fifteen symbols that were already declared but
+unreachable, restores one legacy method name, and fixes a change-detection defect that
+every consumer of `common-consent-modal` has been hitting. No export, selector, input or
+output was removed or renamed.
+
+### Breaking
+
+- None. Nothing was removed or renamed, and no peer dependency was added or changed.
+
+### Added
+
+- `common-date` (`DateComponent`), ported from `moh-common-lib` 3.6.2. A three-field
+  month/day/year date entry implementing `ControlValueAccessor`, so it binds through
+  `ngModel` or `formControlName` like any other control. `@Input()` surface: `date`,
+  `label`, `restrictDate` (`'future' | 'past' | 'any'`), `dateRangeStart`, `dateRangeEnd`,
+  plus `disabled` and `errorMessage` inherited from `AbstractFormControl`.
+  `@Output() dateChange` emits the assembled `Date`, or `null` once the fields are
+  cleared. It self-validates and can report `dayOutOfRange`, `invalidValue`,
+  `invalidRange`, `noPastDatesAllowed`, `noFutureDatesAllowed`, `yearDistantPast` and
+  `yearDistantFuture` alongside the host's `required`. Combining `restrictDate` with
+  either `dateRange` input throws `MoHCommonLibraryError`, because the two configure the
+  same underlying bounds; that fail-fast is carried over deliberately.
+  The legacy component reached `date-fns` through v2-style default deep imports
+  (`import getDaysInMonth from 'date-fns/getDaysInMonth'`), a form v4 removed. All nine
+  functions it uses are now named imports from the package root. `date-fns ^4.1.0` has
+  been a peer dependency since 2.2.0, so this adds no new requirement.
+- `[commonDateFieldFormat]` (`DateFieldFormatDirective`), also ported from 3.6.2 and
+  exported in its own right. `common-date` puts it on the day and year inputs, where it
+  strips non-digits and truncates to the field's `maxlength` as the user types.
+- `common-xicon-button` (`XiconButtonComponent`), ported from 3.6.2. A small circled-x
+  remove control. `@Input() label` is mandatory and its absence throws
+  `MoHCommonLibraryError` at init, because the label is the button's only accessible
+  name. `@Output() clickEvent` fires on activation.
+  One deliberate difference from the legacy component: it does **not** declare a `click`
+  output. The 3.6.2 version declared both `clickEvent` and `click`, and the latter shadows
+  the native DOM event, which `@angular-eslint/no-output-native` rejects. Consumers
+  binding `(click)` are unaffected - with no output declared, Angular attaches a native
+  listener on the host and the inner button's click bubbles to it. This was verified in a
+  browser, not inferred: a native listener on the host fires exactly once per click, with
+  no double-fire.
+- `ConsentModalComponent.showFullSizeView()`, a thin alias for `show()`. 2.1.0 renamed the
+  method when the component was ported; this restores the legacy name so callers written
+  against `moh-common-lib` 3.6.2 keep working unchanged. Both names do the same thing.
+- Fifteen symbols that were declared in the library but never exported from
+  `public-api.ts`, so consumers could not import them:
+  `COUNTRY_LIST`, `CountryList`, `CANADA`, `getCountryDescription`, `PROVINCE_LIST`,
+  `ProvinceList`, `BRITISH_COLUMBIA`, `getProvinceDescription`, `LabelReplacementTag`,
+  `SampleImageInterface`, `CommonAttachmentJson`, `AddrLabelList`, `Maxlengths`,
+  `ReadOnlyFields` and `IRadioItems`.
+  Four of those were not merely inconvenient but impossible to work around:
+  `AddressComponent` declares `@Input() labels!: AddrLabelList`,
+  `@Input() maxlengths!: Maxlengths` and `@Input() disabled: boolean | ReadOnlyFields`,
+  and `RadioComponent` declares `@Input() radioLabels: IRadioItems[]`, so a typed consumer
+  had no way to name the shape those inputs require.
+
+### Fixed
+
+- `common-consent-modal` raised `NG0100:
+  ExpressionChangedAfterItHasBeenCheckedError: Previous value for 'display': 'none'.
+  Current value: 'block'` on every open. `show()` set `isOpen = true` synchronously, and
+  hosts normally call it from `ngOnInit` or `ngAfterViewInit`, which run after this
+  component's own bindings have already been checked; the `[style.display]` binding then
+  changed before Angular's verification pass. `show()` now settles its own view through an
+  injected `ChangeDetectorRef`.
+  The error is raised only in development builds, since production skips
+  `checkNoChanges`, and the modal always displayed correctly either way. It is fixed here
+  because it fired for every consumer on every open and filled the console.
+  Worth recording how it was found: the library's own 518 tests and the consuming app's
+  341 unit tests were all green. It surfaced only when that app's end-to-end specs ran in
+  a real browser and asserted zero `console.error` calls.
+
+- `common-date` kept stale validity when its bounds moved. `restrictDate` was translated
+  into a range only in `ngOnInit`, so changing it later had no effect at all, and changing
+  `dateRangeStart` or `dateRangeEnd` updated the bounds but never re-ran the validator. A
+  value entered under the old rule kept its old errors, or its absence of them. This
+  matters for any form that derives a bound from another field: msp binds
+  `[dateRangeStart]` to a spouse's or child's date of birth, which changes as the user
+  edits it. The bounds are now recomputed when `restrictDate` changes, and the control is
+  revalidated whenever any of the three inputs change. Returning `restrictDate` to `'any'`
+  also removes the bound the restriction had installed, which it previously left behind,
+  so lifting a `'past'` restriction no longer keeps rejecting future dates. Only the
+  restriction's own bound is cleared; an explicit `dateRange*` value is left alone.
+- `common-date` validated against the day the page was opened rather than the current one.
+  The 150-year limits were computed once at module load and `today`/`tomorrow` once per
+  component, and `restrictDate` materialised its bound from that snapshot. A session left
+  open across midnight therefore kept rejecting the new day: with `restrictDate="past"`,
+  today's date began failing as a future date. All of these are now computed when they are
+  read, and a `restrictDate` bound is refreshed before each range check.
+- The documentation on `restrictDate` described the opposite of what the code does. It
+  read `"future" includes today, "past" does not`, while `'past'` allows today and
+  `'future'` starts from tomorrow. Anyone configuring the restriction from that comment
+  would have chosen the wrong value. Corrected, and expanded to note that combining it
+  with the `dateRange*` inputs throws.
+- `[commonDateFieldFormat]` emptied any input that had no `maxlength`. The directive read
+  the attribute and truncated with `Number(maxlength)`, which is `0` when the attribute is
+  absent, so every keystroke was replaced with an empty string. Harmless on the two fields
+  inside `common-date`, which both carry a `maxlength`, but the directive is exported for
+  use on any input, where it was destructive. It now truncates only when the host carries
+  a usable positive `maxlength`, and still strips non-digits either way.
+- `common-date`'s `date` input did not reach the fields. It is a public `@Input()` paired
+  with `dateChange`, so `[(date)]` is a supported alternative to the forms API, but
+  `ngOnChanges` only handled `errorMessage` and nothing called `setDisplayVariables()`
+  outside `writeValue`. `<common-date [date]="selectedDate">` therefore rendered three
+  blank fields while the component held a date, including for a value bound before first
+  render. Changes to `date` now update the day, month and year fields, and clear them
+  when it becomes null. Also carried over from moh-common-lib 3.6.2.
+- `common-date` emitted a rolled-over date for an impossible calendar day. `new Date()`
+  turns 30 February 2020 into 1 March, and `processDate()` assigned and emitted that
+  through `_onChange` and `dateChange` without checking. The form model then held a date
+  the user never typed, on a control simultaneously reporting `dayOutOfRange`, while the
+  inputs still showed what was entered. The model is now held empty until the three
+  fields name a day that actually exists in that month; the `dayOutOfRange` error is
+  unchanged. Also carried over from moh-common-lib 3.6.2.
+- `common-date` ignored `writeValue(null)`, so resetting a reactive control left the
+  previous date in place along with all three display fields. `formControl.reset()` or
+  `setValue(null)` produced a control that reads as empty while the user still sees the
+  old date on screen, and the stale `Date` could be submitted or rendered. Clearing now
+  resets the `Date` and the day, month and year fields together. `writeValue(undefined)`
+  is unchanged and still leaves the control alone. This defect was carried over from
+  moh-common-lib 3.6.2, which has it too.
+
+### Changed
+
+- `public-api.ts` now emits one export statement per source file, using inline `type`
+  modifiers where a file contributes both values and types. No symbol was added, removed
+  or renamed by that consolidation, and the built `public-api.d.ts` re-exports every one
+  of them exactly as before.
+
+### Known issues
+
+- `[disabled]` bound on an `AbstractFormControl` subclass (`common-phn`, `common-sin`,
+  `common-date`, `common-city` and the rest) is overridden when a form directive is
+  attached to the same element. `NgModel` calls `setDisabledState` during setup, which
+  resets the value the input just supplied. This is standard Angular behaviour for a
+  `ControlValueAccessor` rather than a defect here, and it predates this release; disable
+  the control through the form API instead. `[errorMessage]` on the same components is
+  unaffected and binds normally.
+
+### Consumer action required
+
+- None. No peer dependency was added or changed, and nothing needs updating in an app
+  already running 2.2.0.
+- If you are migrating from legacy `moh-common-lib` 3.6.2 and render
+  `common-xicon-button`, note the missing `click` output described under Added. Binding
+  `(click)` continues to work; `(clickEvent)` is the explicit output.
+- Unchanged from 2.1.0, and worth restating because it is the single largest cost of
+  migrating off the legacy package: `SharedCoreModule` is an empty compatibility shim. It
+  declares and exports nothing, where the 3.6.2 module declared and exported 46 items and
+  provided `NgForm`. Every component in this library is standalone, so each consuming
+  NgModule has to import the specific components its templates render.
+
 ## 2.2.0 (2026-09-16)
 
 This release turns on the BC geocoder typeahead that `common-street` and
