@@ -84,7 +84,12 @@ export class DateComponent
     new EventEmitter<Date | null>();
 
   @Input() label = 'Date';
-  /** Can be one of: "future", "past". "future" includes today, "past" does not. */
+  /**
+   * Restricts which dates validate. 'past' allows today and every date before
+   * it; 'future' starts from tomorrow, so today is rejected. Do not combine
+   * with dateRangeStart or dateRangeEnd - they set the same bounds, and doing
+   * both throws MoHCommonLibraryError.
+   */
   @Input() restrictDate: 'future' | 'past' | 'any' = 'any';
 
   // The actual values displayed to the user.  May not precisely match Date
@@ -149,6 +154,7 @@ export class DateComponent
     invalidRange: `Invalid ${LabelReplacementTag}.`,
   };
 
+  private initialised = false;
   private today = startOfToday();
   private tomorrow = addDays(this.today, 1);
   public isRequired = false; // TODO: remove if not required - value does not get set when using Reactive forms
@@ -190,6 +196,24 @@ export class DateComponent
         this.clearDisplayFields();
       }
     }
+
+    // Only after ngOnInit: before it, the bounds are still being established
+    // and ngOnInit's restrictDate/dateRange* conflict check has not run yet.
+    if (!this.initialised) {
+      return;
+    }
+
+    if (changes['restrictDate']) {
+      this.applyRestrictDate();
+    }
+
+    if (
+      changes['restrictDate'] ||
+      changes['dateRangeStart'] ||
+      changes['dateRangeEnd']
+    ) {
+      this.revalidate();
+    }
   }
 
   override ngOnInit() {
@@ -216,16 +240,7 @@ You must use either [restrictDate] or the [dateRange*] inputs.
       throw new MoHCommonLibraryError(msg);
     }
 
-    // Initialize date range logic
-    if (this.restrictDate === 'past') {
-      // past does allow for today
-      this._dateRangeEnd = this.today;
-      this._dateRangeStart = null;
-    } else if (this.restrictDate === 'future') {
-      // future does NOT allow for today
-      this._dateRangeEnd = null;
-      this._dateRangeStart = this.tomorrow;
-    }
+    this.applyRestrictDate();
 
     this.registerValidation(this.controlDir, this.validateSelf).then(() => {
       if (this.injectedValidators && this.injectedValidators.length) {
@@ -237,6 +252,35 @@ You must use either [restrictDate] or the [dateRange*] inputs.
           this.injectedValidators.filter((x) => x.required).length >= 1;
       }
     });
+
+    this.initialised = true;
+  }
+
+  /**
+   * Translates restrictDate into the range the validator actually reads.
+   * 'past' allows today, 'future' starts from tomorrow.
+   */
+  private applyRestrictDate() {
+    if (this.restrictDate === 'past') {
+      // past does allow for today
+      this._dateRangeEnd = this.today;
+      this._dateRangeStart = null;
+    } else if (this.restrictDate === 'future') {
+      // future does NOT allow for today
+      this._dateRangeEnd = null;
+      this._dateRangeStart = this.tomorrow;
+    }
+  }
+
+  /**
+   * Re-runs the validator after the bounds move, so a value entered under the
+   * old rule does not keep its old validity. Deferred because the bounds change
+   * during change detection, and the error container reads the result.
+   */
+  private revalidate() {
+    Promise.resolve().then(() =>
+      this.controlDir?.control?.updateValueAndValidity()
+    );
   }
 
   get month(): number | undefined {

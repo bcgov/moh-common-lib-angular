@@ -75,6 +75,19 @@ output was removed or renamed.
   341 unit tests were all green. It surfaced only when that app's end-to-end specs ran in
   a real browser and asserted zero `console.error` calls.
 
+- `common-date` kept stale validity when its bounds moved. `restrictDate` was translated
+  into a range only in `ngOnInit`, so changing it later had no effect at all, and changing
+  `dateRangeStart` or `dateRangeEnd` updated the bounds but never re-ran the validator. A
+  value entered under the old rule kept its old errors, or its absence of them. This
+  matters for any form that derives a bound from another field: msp binds
+  `[dateRangeStart]` to a spouse's or child's date of birth, which changes as the user
+  edits it. The bounds are now recomputed when `restrictDate` changes, and the control is
+  revalidated whenever any of the three inputs change.
+- The documentation on `restrictDate` described the opposite of what the code does. It
+  read `"future" includes today, "past" does not`, while `'past'` allows today and
+  `'future'` starts from tomorrow. Anyone configuring the restriction from that comment
+  would have chosen the wrong value. Corrected, and expanded to note that combining it
+  with the `dateRange*` inputs throws.
 - `[commonDateFieldFormat]` emptied any input that had no `maxlength`. The directive read
   the attribute and truncated with `Number(maxlength)`, which is `0` when the attribute is
   absent, so every keystroke was replaced with an empty string. Harmless on the two fields

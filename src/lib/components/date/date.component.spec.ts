@@ -27,6 +27,7 @@ class DateTestComponent {
   date1: Date | null = null;
   rangeStart: Date | null = null;
   rangeEnd: Date | null = null;
+  restrict: 'future' | 'past' | 'any' = 'any';
 
   defaultLabel = 'Date';
 }
@@ -199,6 +200,66 @@ describe('DateComponent', () => {
       tickAndDetectChanges(fixture);
 
       expect(fields(de)).toEqual({ month: 'null', day: '', year: '' });
+    }));
+  });
+
+  // msp binds [dateRangeStart] to values that change as the user edits other
+  // fields (a spouse's or child's date of birth, for instance), so the bounds
+  // move after the control already holds a value.
+  describe('bounds changing after initialisation', () => {
+    it('revalidates when dateRangeEnd tightens past the entered date', fakeAsync(() => {
+      const fixture = createTestingModule(
+        DateReactTestComponent,
+        `<form [formGroup]="form">
+          <common-date name="date1" formControlName="date1" label="Date"
+                       [dateRangeEnd]="rangeEnd"></common-date>
+        </form>`
+      );
+      fixture.componentInstance.rangeEnd = addDays(today, 10);
+      tickAndDetectChanges(fixture);
+      const de = getDebugElement(fixture, 'common-date', 'date1');
+
+      const entered = addDays(today, 5);
+      fillDate(fixture, de, {
+        month: entered.getMonth().toString(),
+        day: entered.getDate().toString(),
+        year: entered.getFullYear().toString(),
+      });
+      expect(errorsOf(de)).toBeNull();
+
+      fixture.componentInstance.rangeEnd = addDays(today, 1);
+      tickAndDetectChanges(fixture);
+      // revalidate() defers to a microtask, so flush it before asserting.
+      tickAndDetectChanges(fixture);
+
+      expect(errorsOf(de)?.['invalidRange']).toBe(true);
+    }));
+
+    it("recomputes the bounds when restrictDate changes to 'future'", fakeAsync(() => {
+      const fixture = createTestingModule(
+        DateReactTestComponent,
+        `<form [formGroup]="form">
+          <common-date name="date1" formControlName="date1" label="Date"
+                       [restrictDate]="restrict"></common-date>
+        </form>`
+      );
+      tickAndDetectChanges(fixture);
+      const de = getDebugElement(fixture, 'common-date', 'date1');
+
+      const past = addDays(today, -5);
+      fillDate(fixture, de, {
+        month: past.getMonth().toString(),
+        day: past.getDate().toString(),
+        year: past.getFullYear().toString(),
+      });
+      expect(errorsOf(de)).toBeNull();
+
+      fixture.componentInstance.restrict = 'future';
+      tickAndDetectChanges(fixture);
+      // revalidate() defers to a microtask, so flush it before asserting.
+      tickAndDetectChanges(fixture);
+
+      expect(errorsOf(de)?.['noPastDatesAllowed']).toBe(true);
     }));
   });
 
