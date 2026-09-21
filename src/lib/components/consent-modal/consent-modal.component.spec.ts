@@ -77,6 +77,24 @@ describe('ConsentModalComponent', () => {
     expect(dialog().getAttribute('aria-modal')).toBe('true');
   }));
 
+  // showFullSizeView() is the legacy moh-common-lib 3.6.2 name for show(),
+  // kept as a thin alias (consent-modal.component.ts) so callers ported from
+  // that library keep working unchanged. Assert it produces the identical
+  // rendered result show() does, not just that isOpen flips - including the
+  // same focus-the-first-control side effect show() has (the projected <a
+  // href> is the first focusable element ahead of the checkbox).
+  it('showFullSizeView() should delegate to show(), with identical behaviour', fakeAsync(() => {
+    modal.showFullSizeView();
+    tick();
+    fixture.detectChanges();
+    expect(modal.isOpen).toBe(true);
+    expect(dialog().style.display).toBe('block');
+    expect(dialog().getAttribute('aria-modal')).toBe('true');
+    expect(document.activeElement).toBe(
+      fixture.nativeElement.querySelector('a[href]')
+    );
+  }));
+
   it('should label the dialog with its title', fakeAsync(() => {
     modal.show();
     tick();
