@@ -397,6 +397,42 @@ describe('DateComponent', () => {
       expect(yearInput.value).toBe('2019');
     }));
 
+    // Resetting a reactive control writes null through writeValue. Clearing has
+    // to reach the three display fields as well as the Date, otherwise the
+    // control reads as empty while the user still sees the old date on screen.
+    it('writeValue(null) clears the Date and all three display fields', fakeAsync(() => {
+      const fixture = createTestingModule(
+        DateReactTestComponent,
+        `<form [formGroup]="form">
+          <common-date name="date1" formControlName="date1" label="Date"></common-date>
+        </form>`
+      );
+      tickAndDetectChanges(fixture);
+      const de = getDebugElement(fixture, 'common-date', 'date1');
+      const control = fixture.componentInstance.form.get('date1');
+
+      control?.setValue(new Date(2019, 5, 21));
+      tickAndDetectChanges(fixture);
+
+      control?.setValue(null);
+      tickAndDetectChanges(fixture);
+
+      const monthSelect: HTMLSelectElement = de.query(
+        By.css('select.monthSelect')
+      ).nativeElement;
+      const dayInput: HTMLInputElement = de.query(
+        By.css('input.dayInput')
+      ).nativeElement;
+      const yearInput: HTMLInputElement = de.query(
+        By.css('input.yearInput')
+      ).nativeElement;
+
+      expect(de.componentInstance.date).toBeNull();
+      expect(monthSelect.value).toBe('null');
+      expect(dayInput.value).toBe('');
+      expect(yearInput.value).toBe('');
+    }));
+
     it('blurring a field emits dateChange and calls the registered onChange with the new Date', fakeAsync(() => {
       const fixture = createTestingModule(
         DateNgModelTestComponent,

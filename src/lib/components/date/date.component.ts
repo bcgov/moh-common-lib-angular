@@ -307,10 +307,17 @@ You must use either [restrictDate] or the [dateRange*] inputs.
     this._year = this.date.getFullYear().toString();
   }
 
-  writeValue(value: Date): void {
+  writeValue(value: Date | null): void {
     if (value) {
       this.date = value;
       this.setDisplayVariables();
+    } else if (value === null) {
+      // Resetting a control writes null. Clear the display fields too, or the
+      // user keeps seeing the old date in a control that now reads as empty.
+      this.date = null;
+      this._year = '';
+      this._month = 'null';
+      this._day = '';
     }
   }
 

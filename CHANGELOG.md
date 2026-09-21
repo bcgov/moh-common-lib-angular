@@ -75,6 +75,14 @@ output was removed or renamed.
   341 unit tests were all green. It surfaced only when that app's end-to-end specs ran in
   a real browser and asserted zero `console.error` calls.
 
+- `common-date` ignored `writeValue(null)`, so resetting a reactive control left the
+  previous date in place along with all three display fields. `formControl.reset()` or
+  `setValue(null)` produced a control that reads as empty while the user still sees the
+  old date on screen, and the stale `Date` could be submitted or rendered. Clearing now
+  resets the `Date` and the day, month and year fields together. `writeValue(undefined)`
+  is unchanged and still leaves the control alone. This defect was carried over from
+  moh-common-lib 3.6.2, which has it too.
+
 ### Changed
 
 - `public-api.ts` now emits one export statement per source file, using inline `type`
