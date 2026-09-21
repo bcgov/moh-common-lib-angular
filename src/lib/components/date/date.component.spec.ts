@@ -55,6 +55,14 @@ class DateReactTestComponent extends DateTestComponent implements OnInit {
 })
 class DateNgModelTestComponent extends DateTestComponent {}
 
+// No forms module at all, so no NgControl is attached and the component is
+// driven purely through its own [date] input.
+@Component({
+  template: '',
+  imports: [DateComponent],
+})
+class DatePlainTestComponent extends DateTestComponent {}
+
 const today = startOfToday();
 const tomorrow = addDays(today, 1);
 
@@ -140,6 +148,59 @@ describe('DateComponent', () => {
 
     expect(errorsOf(de)?.['required']).toBeFalsy();
   }));
+
+  // date is a public @Input() paired with dateChange, so [(date)] is a
+  // supported way to drive the component without the forms API. The display
+  // fields have to follow it, or the parent holds a date the user cannot see.
+  describe('[date] input without a form directive', () => {
+    const fields = (de: any) => ({
+      month: de.query(By.css('select.monthSelect')).nativeElement.value,
+      day: de.query(By.css('input.dayInput')).nativeElement.value,
+      year: de.query(By.css('input.yearInput')).nativeElement.value,
+    });
+
+    it('renders the fields for a date bound before first render', fakeAsync(() => {
+      const fixture = createTestingModule(
+        DatePlainTestComponent,
+        `<common-date name="date1" label="Date" [date]="date1"></common-date>`
+      );
+      fixture.componentInstance.date1 = new Date(2019, 5, 21);
+      tickAndDetectChanges(fixture);
+      const de = getDebugElement(fixture, 'common-date', 'date1');
+
+      expect(fields(de)).toEqual({ month: '5', day: '21', year: '2019' });
+    }));
+
+    it('follows a later change to the bound date', fakeAsync(() => {
+      const fixture = createTestingModule(
+        DatePlainTestComponent,
+        `<common-date name="date1" label="Date" [date]="date1"></common-date>`
+      );
+      fixture.componentInstance.date1 = new Date(2019, 5, 21);
+      tickAndDetectChanges(fixture);
+      const de = getDebugElement(fixture, 'common-date', 'date1');
+
+      fixture.componentInstance.date1 = new Date(2021, 0, 2);
+      tickAndDetectChanges(fixture);
+
+      expect(fields(de)).toEqual({ month: '0', day: '2', year: '2021' });
+    }));
+
+    it('clears the fields when the bound date becomes null', fakeAsync(() => {
+      const fixture = createTestingModule(
+        DatePlainTestComponent,
+        `<common-date name="date1" label="Date" [date]="date1"></common-date>`
+      );
+      fixture.componentInstance.date1 = new Date(2019, 5, 21);
+      tickAndDetectChanges(fixture);
+      const de = getDebugElement(fixture, 'common-date', 'date1');
+
+      fixture.componentInstance.date1 = null;
+      tickAndDetectChanges(fixture);
+
+      expect(fields(de)).toEqual({ month: 'null', day: '', year: '' });
+    }));
+  });
 
   describe('self-validation errors', () => {
     let fixture: ComponentFixture<DateReactTestComponent>;

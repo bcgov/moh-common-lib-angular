@@ -179,6 +179,17 @@ export class DateComponent
     if (changes['errorMessage']) {
       this.setErrorMsg();
     }
+
+    // date is a public input paired with dateChange, so a parent can drive the
+    // component with [(date)] instead of the forms API. The fields have to
+    // follow it, or the parent holds a date the user cannot see.
+    if (changes['date']) {
+      if (this.date) {
+        this.setDisplayVariables();
+      } else {
+        this.clearDisplayFields();
+      }
+    }
   }
 
   override ngOnInit() {
@@ -342,10 +353,15 @@ You must use either [restrictDate] or the [dateRange*] inputs.
       // Resetting a control writes null. Clear the display fields too, or the
       // user keeps seeing the old date in a control that now reads as empty.
       this.date = null;
-      this._year = '';
-      this._month = 'null';
-      this._day = '';
+      this.clearDisplayFields();
     }
+  }
+
+  /** Returns the three fields to the state that renders as empty. */
+  private clearDisplayFields() {
+    this._year = '';
+    this._month = 'null';
+    this._day = '';
   }
 
   onBlurDay(event: Event) {

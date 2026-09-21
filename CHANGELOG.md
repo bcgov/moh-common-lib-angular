@@ -75,6 +75,13 @@ output was removed or renamed.
   341 unit tests were all green. It surfaced only when that app's end-to-end specs ran in
   a real browser and asserted zero `console.error` calls.
 
+- `common-date`'s `date` input did not reach the fields. It is a public `@Input()` paired
+  with `dateChange`, so `[(date)]` is a supported alternative to the forms API, but
+  `ngOnChanges` only handled `errorMessage` and nothing called `setDisplayVariables()`
+  outside `writeValue`. `<common-date [date]="selectedDate">` therefore rendered three
+  blank fields while the component held a date, including for a value bound before first
+  render. Changes to `date` now update the day, month and year fields, and clear them
+  when it becomes null. Also carried over from moh-common-lib 3.6.2.
 - `common-date` emitted a rolled-over date for an impossible calendar day. `new Date()`
   turns 30 February 2020 into 1 March, and `processDate()` assigned and emitted that
   through `_onChange` and `dateChange` without checking. The form model then held a date
