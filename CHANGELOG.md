@@ -75,6 +75,13 @@ output was removed or renamed.
   341 unit tests were all green. It surfaced only when that app's end-to-end specs ran in
   a real browser and asserted zero `console.error` calls.
 
+- `common-date` emitted a rolled-over date for an impossible calendar day. `new Date()`
+  turns 30 February 2020 into 1 March, and `processDate()` assigned and emitted that
+  through `_onChange` and `dateChange` without checking. The form model then held a date
+  the user never typed, on a control simultaneously reporting `dayOutOfRange`, while the
+  inputs still showed what was entered. The model is now held empty until the three
+  fields name a day that actually exists in that month; the `dayOutOfRange` error is
+  unchanged. Also carried over from moh-common-lib 3.6.2.
 - `common-date` ignored `writeValue(null)`, so resetting a reactive control left the
   previous date in place along with all three display fields. `formControl.reset()` or
   `setValue(null)` produced a control that reads as empty while the user still sees the

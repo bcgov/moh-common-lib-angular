@@ -258,12 +258,21 @@ You must use either [restrictDate] or the [dateRange*] inputs.
       const month = this.getNumericValue(this._month);
       const day = this.getNumericValue(this._day);
 
-      // Date function appears to use setYear() so any year 0-99 results in year 1900 to 1999
-      // Set each field individually, use setFullYear() instead of setYear()
-      // Set time on date to 00:00:00 for comparing later
-      const dt = startOfDay(new Date(year ?? 0, month ?? 0, day ?? 1));
-      dt.setFullYear(year ?? 0);
-      this.date = dt;
+      // new Date() rolls an impossible day over into the next month, so 30
+      // February becomes 1 March. Emitting that would put a date the user never
+      // typed into the model, on a control that validateSelf is reporting
+      // dayOutOfRange for, while the fields still show what was entered. Hold
+      // the model empty until the entry is a real calendar date.
+      if (this.isRealCalendarDay(year, month, day)) {
+        // Date function appears to use setYear() so any year 0-99 results in year 1900 to 1999
+        // Set each field individually, use setFullYear() instead of setYear()
+        // Set time on date to 00:00:00 for comparing later
+        const dt = startOfDay(new Date(year ?? 0, month ?? 0, day ?? 1));
+        dt.setFullYear(year ?? 0);
+        this.date = dt;
+      } else {
+        this.date = null;
+      }
     } else {
       // Trigger validator for emptying fields use case. This is to remove the 'Invalid date' error.
       if (this.date || (!this._year && !this._day && this._month === 'null')) {
@@ -290,6 +299,24 @@ You must use either [restrictDate] or the [dateRange*] inputs.
       return true;
     }
     return false;
+  }
+
+  /**
+   * True when day/month/year name a day that exists in that month, so that
+   * new Date() will not roll it over into the following one.
+   */
+  private isRealCalendarDay(
+    year: number | null,
+    month: number | null,
+    day: number | null
+  ): boolean {
+    if (year === null || month === null || day === null) {
+      return false;
+    }
+    if (month < 0 || month > 11 || day < 1) {
+      return false;
+    }
+    return day <= getDaysInMonth(new Date(year, month, 1));
   }
 
   /** Convert string to numeric value or null if not */

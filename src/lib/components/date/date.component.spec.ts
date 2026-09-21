@@ -162,6 +162,28 @@ describe('DateComponent', () => {
       expect(errorsOf(de)?.['dayOutOfRange']).toBe(true);
     }));
 
+    // new Date(2020, 1, 30) silently rolls over to 1 March. Emitting that would
+    // leave the form model holding a date the user never typed, on a control
+    // that is simultaneously reporting dayOutOfRange, while the inputs still
+    // show 30 February.
+    it('does not emit a rolled-over date for an impossible calendar day', fakeAsync(() => {
+      build(`<form [formGroup]="form">
+        <common-date name="date1" formControlName="date1" label="Date"></common-date>
+      </form>`);
+      const control = fixture.componentInstance.form.get('date1');
+      const emitted: (Date | null)[] = [];
+      de.componentInstance.dateChange.subscribe((d: Date | null) =>
+        emitted.push(d)
+      );
+
+      fillDate(fixture, de, { month: '1', day: '30', year: '2020' });
+
+      expect(errorsOf(de)?.['dayOutOfRange']).toBe(true);
+      expect(control?.value).toBeNull();
+      expect(de.componentInstance.date).toBeNull();
+      expect(emitted.every((d) => d === null)).toBe(true);
+    }));
+
     it('flags yearDistantPast for a date more than 150 years ago with no dateRange bound', fakeAsync(() => {
       build(`<form [formGroup]="form">
         <common-date name="date1" formControlName="date1" label="Date"></common-date>
