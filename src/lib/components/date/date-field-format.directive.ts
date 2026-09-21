@@ -11,14 +11,20 @@ export class DateFieldFormatDirective {
   @HostListener('input', ['$event'])
   onInput(event: Event) {
     const input = event.target as HTMLInputElement;
-    const maxlen = input.getAttribute('maxlength');
+    const maxlen = Number.parseInt(input.getAttribute('maxlength') ?? '', 10);
 
     let trimmed = input.value.trim();
     if (/[^\d]+/.test(input.value)) {
       trimmed = trimmed.replace(/[^\d]/g, '');
     }
 
-    trimmed = trimmed.substr(0, Number(maxlen));
+    // Only truncate when the host actually carries a usable maxlength. Without
+    // the guard an absent attribute reads as 0 and empties the field on every
+    // keystroke, which matters because this directive is exported for use on
+    // any input, not just the two inside common-date.
+    if (Number.isInteger(maxlen) && maxlen > 0) {
+      trimmed = trimmed.slice(0, maxlen);
+    }
 
     input.value = trimmed;
     this.ngModelChange.emit(trimmed);

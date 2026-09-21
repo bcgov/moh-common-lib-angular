@@ -75,6 +75,12 @@ output was removed or renamed.
   341 unit tests were all green. It surfaced only when that app's end-to-end specs ran in
   a real browser and asserted zero `console.error` calls.
 
+- `[commonDateFieldFormat]` emptied any input that had no `maxlength`. The directive read
+  the attribute and truncated with `Number(maxlength)`, which is `0` when the attribute is
+  absent, so every keystroke was replaced with an empty string. Harmless on the two fields
+  inside `common-date`, which both carry a `maxlength`, but the directive is exported for
+  use on any input, where it was destructive. It now truncates only when the host carries
+  a usable positive `maxlength`, and still strips non-digits either way.
 - `common-date`'s `date` input did not reach the fields. It is a public `@Input()` paired
   with `dateChange`, so `[(date)]` is a supported alternative to the forms API, but
   `ngOnChanges` only handled `errorMessage` and nothing called `setDisplayVariables()`

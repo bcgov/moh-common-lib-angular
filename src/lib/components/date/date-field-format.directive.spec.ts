@@ -19,6 +19,53 @@ class HostComponent {
   }
 }
 
+// The directive is exported on its own, so it can be applied to any input,
+// not just the two inside common-date that carry a maxlength.
+@Component({
+  template: `
+    <input commonDateFieldFormat (ngModelChange)="onChange($event)" />
+  `,
+  imports: [DateFieldFormatDirective],
+})
+class NoMaxlengthHostComponent {
+  emitted: string[] = [];
+
+  onChange(value: string) {
+    this.emitted.push(value);
+  }
+}
+
+describe('DateFieldFormatDirective without a maxlength on the host', () => {
+  let fixture: ComponentFixture<NoMaxlengthHostComponent>;
+  let input: HTMLInputElement;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [NoMaxlengthHostComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(NoMaxlengthHostComponent);
+    fixture.detectChanges();
+    input = fixture.nativeElement.querySelector('input');
+  });
+
+  it('keeps the typed digits instead of clearing the field', () => {
+    input.value = '12345';
+    input.dispatchEvent(new Event('input'));
+
+    expect(input.value).toBe('12345');
+    expect(fixture.componentInstance.emitted).toEqual(['12345']);
+  });
+
+  it('still strips non-digit characters', () => {
+    input.value = '1a2b3';
+    input.dispatchEvent(new Event('input'));
+
+    expect(input.value).toBe('123');
+    expect(fixture.componentInstance.emitted).toEqual(['123']);
+  });
+});
+
 describe('DateFieldFormatDirective', () => {
   let fixture: ComponentFixture<HostComponent>;
   let input: HTMLInputElement;
