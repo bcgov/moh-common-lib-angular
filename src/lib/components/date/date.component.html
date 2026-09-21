@@ -1,0 +1,101 @@
+<fieldset>
+  <legend class="date--legend">{{ label }}</legend>
+  <ng-container *ngTemplateOutlet="instructionText"></ng-container>
+  <div class="date-row">
+    <select
+      class="form-control monthSelect"
+      id="{{ monthLabelforId }}"
+      name="{{ monthLabelforId }}"
+      [value]="_month"
+      (blur)="onBlurMonth($event)"
+      [disabled]="disabled"
+      [required]="isRequired"
+      aria-label="Month">
+      <!-- We show the blank option so the user can clear out their data.-->
+      <option
+        value="null"
+        label="Month"
+        selected
+        [disabled]="isRequired"></option>
+      <option *ngFor="let month of monthList; let i = index" [value]="i">
+        {{ month }}
+      </option>
+    </select>
+
+    <input
+      type="number"
+      class="form-control dayInput"
+      id="{{ dayLabelforId }}"
+      name="{{ dayLabelforId }}"
+      placeholder="Day"
+      [value]="_day"
+      (blur)="onBlurDay($event)"
+      commonDateFieldFormat
+      [disabled]="disabled"
+      [required]="isRequired"
+      maxlength="2"
+      step="any"
+      aria-label="Day"
+      autocomplete="off" />
+
+    <input
+      type="number"
+      class="form-control yearInput"
+      id="{{ yearLabelforId }}"
+      name="{{ yearLabelforId }}"
+      placeholder="Year"
+      [value]="_year"
+      (blur)="onBlurYear($event)"
+      commonDateFieldFormat
+      [disabled]="disabled"
+      [required]="isRequired"
+      maxlength="4"
+      step="any"
+      aria-label="Year"
+      autocomplete="off" />
+  </div>
+</fieldset>
+
+<common-error-container
+  [displayError]="
+    (controlDir &&
+      !disabled &&
+      (controlDir.touched || controlDir.dirty) &&
+      !!controlDir.errors) ??
+    false
+  ">
+  <div *ngIf="controlDir?.errors?.['required']; else ComponentErrors">
+    {{ _defaultErrMsg['required'] }}
+  </div>
+</common-error-container>
+
+<ng-template #instructionText>
+  <ng-content></ng-content>
+</ng-template>
+
+<!--Errors triggered by self-validation within component-->
+<ng-template #ComponentErrors>
+  <div *ngIf="controlDir?.errors?.['dayOutOfRange']">
+    {{ _defaultErrMsg['dayOutOfRange'] }}
+  </div>
+  <div *ngIf="controlDir?.errors?.['yearDistantPast']">
+    {{ _defaultErrMsg['yearDistantPast'] }}
+  </div>
+  <div *ngIf="controlDir?.errors?.['yearDistantFuture']">
+    {{ _defaultErrMsg['yearDistantFuture'] }}
+  </div>
+  <div *ngIf="controlDir?.errors?.['noPastDatesAllowed']">
+    {{ _defaultErrMsg['noPastDatesAllowed'] }}
+  </div>
+  <div *ngIf="controlDir?.errors?.['noFutureDatesAllowed']">
+    {{ _defaultErrMsg['noFutureDatesAllowed'] }}
+  </div>
+  <div *ngIf="controlDir?.errors?.['invalidRange']">
+    {{ _defaultErrMsg['invalidRange'] }}
+  </div>
+
+  <!-- Case should not happen until something is not formatted correctly-->
+  <div *ngIf="controlDir?.errors?.['invalidValue']">
+    {{ _defaultErrMsg['invalidValue'] }}
+  </div>
+</ng-template>
