@@ -1,3 +1,109 @@
+## 2.4.0 (2026-09-21)
+
+Leads with a fix for anyone running 2.3.0's `common-date` bounds validation: it could
+pin the browser in an endless change-detection loop, and that fix is the most important
+thing in this release. The rest closes gaps found while wiring msp against this library:
+five default error-message constants and four already-referenced types were declared but
+unreachable through the public entry point, `AbstractHttpService.handleError()` declared
+a return type that was a lie for any consumer that swallows the error rather than
+rethrowing it, and `common-form-action-bar`'s disabled state was cosmetic only. No
+export, selector, input or output was removed or renamed.
+
+### Breaking
+
+- None. `AbstractHttpService.handleError()`'s abstract return type widens from
+  `Observable<never>` to `Observable<unknown>`; every existing implementation, in this
+  library and outside it, already satisfies the wider type unchanged (see Changed below).
+  No peer dependency was added or changed.
+
+### Added
+
+- Five default error-message constants, plus the function that applies them, are now
+  exported from the public entry point: `RequiredMsg`, `InvalidMsg`, `DuplicateMsg`,
+  `RegionCharsMsg`, and `replaceLabelTag`. They were already declared in
+  `error-message.interface.ts` and used internally, but nothing reached `public-api.ts`.
+  `ErrorMessage.required` has been mandatory since 2.0.0, where legacy `moh-common-lib`
+  3.6.2 had it optional, so every consumer must supply it - and without this export, the
+  only way to match this library's own wording was to retype `'{label} is required.'` by
+  hand. msp does exactly that 53 times (38 in `moving-information.component.ts`, 15 in
+  `update-child.component.ts`) because it had no constant to import.
+- Four types the exported API already references can now be named directly by a typed
+  consumer: `CommonImageScaleFactors` (returned by the exported
+  `CommonImageScaleFactorsImpl.scaleDown()`), `PageListInterface` (consumed by
+  `CheckCompleteBaseService.pageCheckList`), `PageList` (consumed by
+  `PageStateService.pageList`), and `CommonLogMessage` (the argument type of
+  `CommonLogger.log()` and `.logError()`). `MaskModel` and `DefaultSubmitLabel` stay
+  internal, and `PasswordComponent` stays unexported; both remain deliberate and
+  unchanged.
+
+### Fixed
+
+- `common-date` could pin the browser in an endless change-detection loop. 2.3.0 taught
+  `ngOnChanges` to revalidate when `dateRangeStart` or `dateRangeEnd` changed, but Angular
+  reports a change by reference, so a parent that rebuilds the bound `Date` on every pass
+  (a getter, or `ngDoCheck` recomputing a range) looked like a real change each time.
+  `revalidate()` then scheduled a microtask, the microtask scheduled another pass, and the
+  parent rebuilt the `Date` again. The renderer sat at 100% CPU and never settled; the page
+  never became interactive.
+  The bounds are now compared by value, so an equal instant in a new object is not treated
+  as a change. A real change still revalidates, which is what 2.3.0 set out to fix.
+  Found in MOH-MSP-Enrolment, whose `personal-information` component assigns fresh
+  `subYears`/`addDays` results to the bound range inside `ngDoCheck`. Diagnosed from five
+  `Debugger.pause` samples during the hang, every one inside Angular's change-detection
+  internals.
+- `common-form-action-bar` toggled only a CSS class when `canContinue` was false, while
+  `onClick()` already gated the emit on the same flag. A button that looks disabled but
+  carries no `disabled` attribute stays in the tab order and reachable to a screen reader,
+  with no programmatic signal that activating it does nothing - a WCAG failure. The button
+  now also binds `[disabled]="!canContinue || isLoading"`, alongside the existing
+  `.disabled` class used for styling. Bootstrap's own stylesheet already applies an
+  identical rule to both `.btn.disabled` and `.btn:disabled` (`.btn:disabled, .btn.disabled
+  { color, background-color, border-color, opacity, pointer-events }`, one shared
+  declaration block), so a Storybook render with Bootstrap loaded is pixel-identical
+  before and after this change; only the semantics improve. Mouse behaviour is unchanged,
+  because `onClick()` already made a disabled click inert.
+
+### Changed
+
+- `AbstractHttpService.handleError()`'s abstract return type widens from
+  `Observable<never>` to `Observable<unknown>`. Every implementer inside this library
+  throws or rethrows, so `Observable<never>` was accurate for them, but it was never
+  honest for a consumer that swallows the error and returns a fallback value instead -
+  common enough that msp's own services do it five times, and the legacy moh-common-lib
+  3.6.2 consent modal did it too. Under the old signature, returning a real value required
+  `return of(error) as unknown as Observable<never>`: a cast asserting the opposite of
+  what the code actually does. `Observable<unknown>` accepts either shape, throwing or
+  returning a value, with no cast at all.
+  `AbstractHttpService.get<T>()` and `.post<T>()` are unaffected: `setupRequest<T>()` is
+  `handleError()`'s only caller, and it reconciles the type back to `T` in exactly one
+  place, with a single explicit `as Observable<T>` cast that replaces the implicit one
+  `Observable<never>` used to provide for free.
+  `Observable<any>` was tried and rejected even though it also happened to leave
+  `post<T>()`'s typing intact here (`setupRequest<T>`'s own return annotation is explicit,
+  so the boundary re-asserts `T` regardless) - `unknown` was kept because it does not
+  silently admit an unrelated value anywhere else a future caller of `handleError()`
+  might use its result, and this repo's lint config already tracks `no-explicit-any` as a
+  (ratcheted) warning.
+
+### Consumer action required
+
+- Nothing to change to adopt this release. Every item above is additive or widening: five
+  new named exports, four new named types, and a strictly wider abstract method signature
+  that every existing subclass, in this library or outside it, already satisfies without
+  modification.
+- If your app renders `common-form-action-bar` and depended on the submit button staying
+  focusable or clickable while `canContinue` is false - relying on the earlier,
+  cosmetic-only disabled state - that no longer holds: the button is now genuinely
+  disabled (out of the tab order, inert to click, and announced as disabled) whenever
+  `canContinue` is false or `isLoading` is true.
+- Upgrade from 2.3.0 if you render `common-date` with a bound `dateRangeStart` or
+  `dateRangeEnd`; see Fixed above. No API changed and no peer dependency moved for that
+  fix, so the upgrade is a version bump and nothing else.
+- Worth checking regardless of this release: a parent that hands `common-date` a freshly
+  built `Date` on every change-detection pass was always doing more work than it needed
+  to. This release makes that harmless rather than fatal, but computing the bound once, or
+  only when its inputs change, is still the better shape.
+
 ## 2.3.0 (2026-09-21)
 
 This release exists to unblock MOH-MSP-Enrolment's `msp` app, which is moving from

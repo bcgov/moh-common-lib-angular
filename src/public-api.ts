@@ -16,6 +16,11 @@ export { AbstractReactForm } from './lib/models/abstract-react-form';
 export { Container, type WizardProgressItem } from './lib/models/container';
 export {
   LabelReplacementTag,
+  RequiredMsg,
+  InvalidMsg,
+  DuplicateMsg,
+  RegionCharsMsg,
+  replaceLabelTag,
   type ErrorMessage,
 } from './lib/models/error-message.interface';
 export {
@@ -23,6 +28,7 @@ export {
   CommonImageError,
   CommonImageProcessingError,
   CommonImageScaleFactorsImpl,
+  type CommonImageScaleFactors,
   type CommonAttachmentJson,
 } from './lib/models/images.model';
 export { LETTER, NUMBER, SPACE } from './lib/models/mask.constants';
@@ -40,12 +46,22 @@ export {
   START_PAGE_URL,
 } from './lib/services/default-page-guard.service';
 export { LoadPageGuardService } from './lib/services/load-page-guard.service';
-export { PageStateService } from './lib/services/page-state.service';
+export {
+  PageStateService,
+  type PageList,
+} from './lib/services/page-state.service';
 export { ContainerService } from './lib/services/container.service';
 export { AbstractPgCheckService } from './lib/services/abstract-pg-check.service';
-export { CheckCompleteBaseService } from './lib/services/check-complete-base.service';
+export {
+  CheckCompleteBaseService,
+  type PageListInterface,
+} from './lib/services/check-complete-base.service';
 export { RouteGuardService } from './lib/services/route-guard.service';
-export { CommonLogger, CommonLogEvents } from './lib/services/logger.service';
+export {
+  CommonLogger,
+  CommonLogEvents,
+  type CommonLogMessage,
+} from './lib/services/logger.service';
 
 // Components
 export {

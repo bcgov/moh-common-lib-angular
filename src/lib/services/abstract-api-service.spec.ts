@@ -8,7 +8,7 @@ import {
   HttpHeaders,
   HttpErrorResponse,
 } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { AbstractHttpService } from './abstract-api-service';
 import { CommonImage } from '../models/images.model';
 
@@ -36,6 +36,26 @@ class ConcreteHttpService extends AbstractHttpService {
   }
   testUUID() {
     return this.generateUUID();
+  }
+}
+
+// `handleError`'s return type is `Observable<unknown>`, not `Observable<never>`, so an
+// implementer that swallows the error and returns a real value compiles with no cast at
+// all - not even a single `as`. Before this change, returning `of(error)` here required
+// `as unknown as Observable<never>` to satisfy the abstract method.
+class SwallowingHttpService extends AbstractHttpService {
+  protected _headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+
+  constructor(http: HttpClient) {
+    super(http);
+  }
+
+  protected handleError(error: HttpErrorResponse): Observable<unknown> {
+    return of({ swallowed: true, status: error.status });
+  }
+
+  testPost<T>(url: string, body: any) {
+    return this.post<T>(url, body);
   }
 }
 
@@ -83,6 +103,21 @@ describe('AbstractHttpService', () => {
 
   it('generateUUID() should return different values on successive calls', () => {
     expect(service.testUUID()).not.toBe(service.testUUID());
+  });
+
+  it('handleError() implementer can return a fallback value with no cast, and setupRequest delivers it', () => {
+    const service = new SwallowingHttpService(TestBed.inject(HttpClient));
+    const results: any[] = [];
+    service
+      .testPost('/api/log', { message: { event: 'test' } })
+      .subscribe((value) => {
+        results.push(value);
+      });
+
+    const req = httpMock.expectOne('/api/log');
+    req.flush('server exploded', { status: 500, statusText: 'Server Error' });
+
+    expect(results).toEqual([{ swallowed: true, status: 500 }]);
   });
 
   it('uploadAttachment() should POST a Blob to the given URL', () => {

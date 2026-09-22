@@ -72,6 +72,32 @@ describe('FormActionBarComponent', () => {
     expect(bar.classList).toContain('disabled');
   });
 
+  it('should set the button disabled attribute when canContinue is false', () => {
+    const { fixture, component } = createComponent();
+    component.canContinue = false;
+    fixture.detectChanges();
+    const button: HTMLButtonElement =
+      fixture.nativeElement.querySelector('button');
+    expect(button.disabled).toBe(true);
+  });
+
+  it('should set the button disabled attribute while loading', () => {
+    const { fixture, component } = createComponent();
+    component.isLoading = true;
+    fixture.detectChanges();
+    const button: HTMLButtonElement =
+      fixture.nativeElement.querySelector('button');
+    expect(button.disabled).toBe(true);
+  });
+
+  it('should not set the button disabled attribute when canContinue is true and not loading', () => {
+    const { fixture } = createComponent();
+    fixture.detectChanges();
+    const button: HTMLButtonElement =
+      fixture.nativeElement.querySelector('button');
+    expect(button.disabled).toBe(false);
+  });
+
   it('should show the spinner instead of the label while loading', () => {
     const { fixture, component } = createComponent();
     component.isLoading = true;

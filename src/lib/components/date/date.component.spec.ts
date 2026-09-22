@@ -289,6 +289,40 @@ describe('DateComponent', () => {
       expect(errorsOf(de)).toBeNull();
     }));
 
+    // A parent that rebuilds its bound Date every change-detection pass (a
+    // getter, or ngDoCheck recomputing a range) hands over a new object with
+    // the same instant. Revalidating on that schedules a microtask, which
+    // schedules another pass, which rebuilds the Date: an infinite loop.
+    it('does not revalidate when a bound Date is replaced by an equal value', fakeAsync(() => {
+      const fixture = createTestingModule(
+        DateReactTestComponent,
+        `<form [formGroup]="form">
+          <common-date name="date1" formControlName="date1" label="Date"
+                       [dateRangeEnd]="rangeEnd"></common-date>
+        </form>`
+      );
+      fixture.componentInstance.rangeEnd = addDays(today, 10);
+      tickAndDetectChanges(fixture);
+      const de = getDebugElement(fixture, 'common-date', 'date1');
+      const control = fixture.componentInstance.form.get('date1');
+      const spy = jest.spyOn(control as any, 'updateValueAndValidity');
+
+      // Same instant, new object - exactly what a getter or ngDoCheck produces.
+      fixture.componentInstance.rangeEnd = addDays(today, 10);
+      tickAndDetectChanges(fixture);
+      tickAndDetectChanges(fixture);
+
+      expect(spy).not.toHaveBeenCalled();
+
+      // A real change still revalidates.
+      fixture.componentInstance.rangeEnd = addDays(today, 3);
+      tickAndDetectChanges(fixture);
+      tickAndDetectChanges(fixture);
+
+      expect(spy).toHaveBeenCalled();
+      expect(de.componentInstance._dateRangeEnd).not.toBeNull();
+    }));
+
     // restrictDate installs a bound that is a snapshot of "today". A session
     // left open across midnight keeps that stale snapshot, which is simulated
     // here by planting yesterday's date into it.
