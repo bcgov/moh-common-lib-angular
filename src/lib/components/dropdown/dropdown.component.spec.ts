@@ -101,6 +101,17 @@ class DropdownObjectItemsTestComponent implements OnInit {
   }
 }
 
+@Component({
+  template: `
+    <common-dropdown [items]="items" [value]="boundValue"></common-dropdown>
+  `,
+  imports: [DropdownComponent],
+})
+class DropdownValueBindingTestComponent {
+  items: string[] = ['Option A', 'Option B', 'Option C'];
+  boundValue: string | null = 'Option A';
+}
+
 /**
  * Drives ng-select through its real UI: opens the dropdown and clicks the
  * rendered .ng-option whose label matches, exercising the component's real
@@ -210,6 +221,24 @@ describe('Dropdown.Component', () => {
 
     expect(() => component.writeValue('Option C')).not.toThrow();
     expect(component.value).toBe('Option C');
+  });
+
+  // The dropdown is clearable by default, so a parent that clears its own
+  // bound value (for example resetting a form field to null outside of
+  // reactive forms) must be able to clear the selection through [value] the
+  // same way writeValue(null) already does through formControlName/ngModel.
+  it('clears the selection when [value] is bound to null after being set', () => {
+    const fixture = TestBed.createComponent(DropdownValueBindingTestComponent);
+    fixture.detectChanges();
+
+    const dropdown = fixture.debugElement.query(By.directive(DropdownComponent))
+      .componentInstance as DropdownComponent;
+    expect(dropdown.value).toBe('Option A');
+
+    fixture.componentInstance.boundValue = null;
+    fixture.detectChanges();
+
+    expect(dropdown.value).toBeNull();
   });
 
   // ng-select gets no bindValue override here, so the value ng-select emits IS

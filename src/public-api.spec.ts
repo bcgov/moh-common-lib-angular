@@ -106,8 +106,10 @@ class SharedCoreHostComponent {
 class SharedCoreHostModule {}
 
 describe('SharedCoreModule', () => {
-  it('resolves and renders common-dropdown and another lib component inside a non-standalone NgModule host', () => {
-    TestBed.configureTestingModule({ imports: [SharedCoreHostModule] });
+  it('resolves and renders common-dropdown and another lib component inside a non-standalone NgModule host', async () => {
+    await TestBed.configureTestingModule({
+      imports: [SharedCoreHostModule],
+    }).compileComponents();
     const fixture = TestBed.createComponent(SharedCoreHostComponent);
     fixture.detectChanges();
 

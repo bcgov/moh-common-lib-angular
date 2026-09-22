@@ -49,7 +49,7 @@ export class DropdownComponent extends AbstractFormControl {
 
   @Input()
   set value(val: any) {
-    if (val !== undefined && val !== null) {
+    if (val !== undefined) {
       this.selected = val;
     }
   }
