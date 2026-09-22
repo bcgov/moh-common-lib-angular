@@ -27,6 +27,18 @@ const meta: Meta<DropdownComponent> = {
 export default meta;
 type Story = StoryObj<DropdownComponent>;
 
+// Hoisted so ObjectItems' `value` is the exact same object reference as one
+// of its `items`, rather than a separate literal that merely matches on
+// label. ng-select's own comparator (no bindValue/compareWith here) falls
+// back to a label match for a distinct object, which would still select the
+// right option - but the point of this story is to show whole-object
+// binding, so it should stand on object identity, not that fallback.
+const ADMINISTERING_FOR_OPTIONS = [
+  { label: 'Employees', value: 'EMPLOYEES' },
+  { label: 'Contractors', value: 'CONTRACTORS' },
+  { label: 'Both', value: 'BOTH' },
+];
+
 export const PlainItems: Story = {
   args: {
     label: 'Select an option',
@@ -41,12 +53,8 @@ export const PlainItems: Story = {
 export const ObjectItems: Story = {
   args: {
     label: 'Administering for',
-    items: [
-      { label: 'Employees', value: 'EMPLOYEES' },
-      { label: 'Contractors', value: 'CONTRACTORS' },
-      { label: 'Both', value: 'BOTH' },
-    ],
-    value: { label: 'Employees', value: 'EMPLOYEES' },
+    items: ADMINISTERING_FOR_OPTIONS,
+    value: ADMINISTERING_FOR_OPTIONS[0],
     required: false,
     disabled: false,
     clearable: false,
