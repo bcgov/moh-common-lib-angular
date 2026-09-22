@@ -11,6 +11,9 @@ import {
   type CommonLogMessage,
 } from './public-api';
 import { CommonImageScaleFactorsImpl } from './public-api';
+import { Component, NgModule } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { SharedCoreModule } from './public-api';
 
 // Guards two things added in 2.4.0:
 // - The five default error-message constants (and the function that applies them) are
@@ -72,5 +75,52 @@ describe('public-api', () => {
       const message: CommonLogMessage = { event: 'navigation' };
       expect(message.event).toBe('navigation');
     });
+  });
+});
+
+// SharedCoreModule is the point of 2.5.0: an app that still declares its
+// components in an NgModule (rather than going standalone) needs a single
+// import to get every common-* tag resolving in its templates. A host
+// declared, non-standalone, in an NgModule that only imports SharedCoreModule
+// exercises exactly that path. If SharedCoreModule dropped DropdownComponent
+// from SHARED_CORE_IMPORTS, or omitted it from `exports`, compileComponents()
+// below would throw on the unknown 'common-dropdown' element.
+/* eslint-disable @angular-eslint/prefer-standalone -- non-standalone is the case under test */
+@Component({
+  selector: 'shared-core-host',
+  standalone: false,
+  template: `
+    <common-dropdown label="Pick one" [items]="items"></common-dropdown>
+    <common-button label="Go"></common-button>
+  `,
+})
+class SharedCoreHostComponent {
+  items = ['A', 'B'];
+}
+/* eslint-enable @angular-eslint/prefer-standalone */
+
+@NgModule({
+  declarations: [SharedCoreHostComponent],
+  imports: [SharedCoreModule],
+})
+class SharedCoreHostModule {}
+
+describe('SharedCoreModule', () => {
+  it('resolves and renders common-dropdown and another lib component inside a non-standalone NgModule host', () => {
+    TestBed.configureTestingModule({ imports: [SharedCoreHostModule] });
+    const fixture = TestBed.createComponent(SharedCoreHostComponent);
+    fixture.detectChanges();
+
+    const dropdownEl: HTMLElement =
+      fixture.nativeElement.querySelector('common-dropdown');
+    const buttonEl: HTMLElement =
+      fixture.nativeElement.querySelector('common-button');
+
+    expect(dropdownEl).toBeTruthy();
+    expect(buttonEl).toBeTruthy();
+    // Proves DropdownComponent's own template actually rendered inside the
+    // tag - not just that Angular matched an unknown custom element name.
+    expect(dropdownEl.querySelector('ng-select')).toBeTruthy();
+    expect(buttonEl.textContent).toContain('Go');
   });
 });

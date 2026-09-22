@@ -1,3 +1,55 @@
+## 2.5.0 (2026-09-22)
+
+Restores three pieces of the pre-2.0 `moh-common-lib` 3.3.5 public contract that
+`sitereg` (MOH-IAM-Enrolment) was still written against: `SharedCoreModule` was an
+empty shim, `DropdownComponent` did not exist as a standalone component, and
+`CommonLogger` had lost the protected `_log()`/`_logError()` split a `log()`/
+`logError()` override needs. The return-type narrowing below ships in a minor because
+it restores the 3.3.5 contract rather than breaking a new one, and no consumer this
+library can see - fpcare, msp, or sitereg - uses the value `log()`/`logError()` used
+to return.
+
+### Breaking
+
+- `CommonLogger.log()` and `.logError()` now return `void` instead of
+  `Subscription | Observable<never>`, matching 3.3.5. A consumer that used the
+  returned value must subclass `CommonLogger` and call `this._log(...)` /
+  `this._logError(...)` from inside it; `_log`/`_logError` are protected and cannot be
+  called from outside the class. `logHttpError()` now calls `_logError()` directly
+  rather than the public `logError()`, matching 3.3.5's own implementation - a
+  subclass that overrides `logError()` to change behaviour (for example, sitereg's
+  `LoggerService` skipping the send while debugging) no longer sees HTTP errors
+  through that override; they go straight to `_logError()`.
+
+### Added
+
+- `SharedCoreModule` now imports and exports every standalone component and
+  validator directive the entry point exports, except `PasswordComponent`. Captcha
+  stays in its own `moh-common-lib-angular/captcha` entry point, unchanged.
+- `DropdownComponent` (`common-dropdown`), a standalone `ng-select`-backed
+  single-select dropdown restoring 3.3.5's `DropdownComponent`. Inputs: `label`,
+  `items`, `value`, `labelforId`, `placeholder`, `required`, `clearable`, `addTag`,
+  `addTagText`. Outputs: `valueChange`, `blur`, plus `ControlValueAccessor`/
+  `formControlName` support. 3.3.5's `autocorrect` input is dropped: ng-select 14 has
+  no matching input. 3.3.5's `model` property is renamed `value`, matching every other
+  single-value control's `value`/`valueChange` convention. Extends `AbstractFormControl`
+  rather than `Base`, unlike 3.3.5.
+- `CommonLogger` regains the protected `_log()` / `_logError()` methods 3.3.5 had.
+  `log()` and `logError()` are now thin `void`-returning wrappers around them,
+  matching 3.3.5 exactly. A subclass that overrides `log()`/`logError()` and calls
+  `this._log(...)` / `this._logError(...)` - the pattern sitereg's `LoggerService`
+  was written against - compiles again.
+
+### Consumer action required
+
+- `common-radio`'s `statusChange` and `common-city`/`common-street`'s `maxlen` are
+  not restored: 3.3.5 never had them either (`valueChange` and `maxlength` are
+  correct in both versions). An app using those names has its own drift to fix.
+- An app that already imports `SharedCoreModule` (for example fpcare's `CoreModule`,
+  fpincome) now pulls every component and directive into its bundle instead of
+  nothing, losing tree-shaking on that import. Import individual standalone
+  components instead where bundle budget matters.
+
 ## 2.4.0 (2026-09-21)
 
 Leads with a fix for anyone running 2.3.0's `common-date` bounds validation: it could

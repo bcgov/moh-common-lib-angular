@@ -67,6 +67,22 @@ export class ExampleComponent {
 }
 ```
 
+If your own component is still declared in an `NgModule` rather than standalone,
+import `SharedCoreModule` instead of listing each component individually. It imports
+and re-exports every component and validator directive in the Catalogue below, except
+`PasswordComponent`, which this library does not export at all.
+
+```ts
+import { NgModule } from '@angular/core';
+import { SharedCoreModule } from 'moh-common-lib-angular';
+
+@NgModule({
+  declarations: [ExampleComponent],
+  imports: [SharedCoreModule],
+})
+export class ExampleModule {}
+```
+
 ## Styles
 
 Component templates use Bootstrap 5 utility classes and Font Awesome 4.7 icon classes
@@ -77,7 +93,7 @@ Font Awesome stylesheets in your app's global styles).
 
 ## Catalogue
 
-### Components (29 exported)
+### Components (32 exported)
 
 Address and location:
 
@@ -113,6 +129,9 @@ Generic inputs:
 | `CheckboxComponent` | `common-checkbox` | Single checkbox with label |
 | `RadioComponent` | `common-radio` | Radio group driven by an `IRadioItems[]` list |
 | `ButtonComponent` | `common-button` | Bootstrap-styled button, re-emits click as `btnClick` |
+| `XiconButtonComponent` | `common-xicon-button` | Small "x" close/remove button, emits `clickEvent` |
+| `DropdownComponent` | `common-dropdown` | Generic ng-select single-select dropdown; object items display `item.label`, value is the whole item |
+| `DateComponent` | `common-date` | Date input with optional range or future/past restriction |
 | `PostalCodeComponent` | `common-postal-code` | Masked Canadian postal code, optional BC-only check |
 
 Layout and presentation:
@@ -180,7 +199,7 @@ import { CaptchaModule } from 'moh-common-lib-angular/captcha';
 |---|---|
 | `AbstractHttpService` | Base class for HTTP API services. Supplies `get`/`post`, uuid generation, attachment upload. |
 | `GeocoderService` | BC Geocoder address lookup, returns `GeoAddressResult[]` |
-| `CommonLogger` / `CommonLogEvents` | Splunk-bound application logging |
+| `CommonLogger` / `CommonLogEvents` | Splunk-bound application logging. `log()`/`logError()` are `void`; a subclass that needs the underlying `Subscription`/`Observable` overrides them and calls the protected `_log()`/`_logError()` instead (since 2.5.0) |
 | `PageStateService` | Tracks per-page completion for multi-page form flows |
 | `ContainerService` | Observable bus between a page container and its action bar |
 | `AbstractPageGuardService` | Contract an app implements to control wizard navigation |
