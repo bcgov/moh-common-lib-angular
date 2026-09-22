@@ -1,0 +1,28 @@
+<label for="{{ labelforId }}" class="control-label">{{ label }}</label>
+
+<ng-select
+  [items]="items"
+  [ngModel]="value"
+  (ngModelChange)="onValueChange($event)"
+  (blur)="onBlur($event)"
+  [required]="required"
+  [disabled]="disabled"
+  [clearable]="clearable"
+  [addTag]="addTag"
+  [addTagText]="addTagText"
+  labelForId="{{ labelforId }}"
+  placeholder="{{ placeholder }}"></ng-select>
+
+<!-- Error messages for component -->
+<common-error-container
+  [displayError]="
+    (controlDir &&
+      !disabled &&
+      (controlDir.dirty || controlDir.touched) &&
+      !!controlDir.errors) ??
+    false
+  ">
+  <div *ngIf="controlDir?.errors?.['required']">
+    {{ _defaultErrMsg.required }}
+  </div>
+</common-error-container>

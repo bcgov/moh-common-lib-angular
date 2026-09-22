@@ -89,6 +89,7 @@ export {
   type CountryList,
 } from './lib/components/country/country.component';
 export { DateComponent } from './lib/components/date/date.component';
+export { DropdownComponent } from './lib/components/dropdown/dropdown.component';
 export { DateFieldFormatDirective } from './lib/components/date/date-field-format.directive';
 export { EmailComponent } from './lib/components/email/email.component';
 export { ErrorContainerComponent } from './lib/components/error-container/error-container.component';
@@ -167,9 +168,100 @@ export { deburr } from './helpers/deburr';
 export { scrollTo, scrollToError } from './helpers/scroll-helpers';
 export { MoHCommonLibraryError } from './helpers/library-error';
 
-// SharedCoreModule — compatibility shim for apps that used moh-common-lib's NgModule.
-// The new library uses standalone components. Import individual components directly.
-// TODO: Replace SharedCoreModule usage with individual standalone component imports.
+// SharedCoreModule - convenience NgModule for apps that declare non-standalone
+// components in an NgModule and need `common-*` tags available in those templates.
+// It imports and re-exports every standalone component and validator directive this
+// entry point exports (PasswordComponent excepted, since it is not exported above).
+// Prefer importing the individual standalone components/directives directly in new
+// code; reach for this module only where the consuming component's own module is
+// still NgModule-based and pulling in one import per tag is not worth it.
 import { NgModule } from '@angular/core';
-@NgModule({})
+import { AddressComponent } from './lib/components/address/address.component';
+import { AddressValidatorComponent } from './lib/components/address-validator/address-validator.component';
+import { AccordionCommonComponent } from './lib/components/accordion/accordion.component';
+import { ButtonComponent } from './lib/components/button/button.component';
+import { CheckboxComponent } from './lib/components/checkbox/checkbox.component';
+import { CityComponent } from './lib/components/city/city.component';
+import { ConfirmTemplateComponent } from './lib/components/confirm-template/confirm-template.component';
+import { ConsentModalComponent } from './lib/components/consent-modal/consent-modal.component';
+import { CoreBreadcrumbComponent } from './lib/components/core-breadcrumb/core-breadcrumb.component';
+import { CountryComponent } from './lib/components/country/country.component';
+import { DateComponent } from './lib/components/date/date.component';
+import { DateFieldFormatDirective } from './lib/components/date/date-field-format.directive';
+import { DropdownComponent } from './lib/components/dropdown/dropdown.component';
+import { EmailComponent } from './lib/components/email/email.component';
+import { ErrorContainerComponent } from './lib/components/error-container/error-container.component';
+import { FormActionBarComponent } from './lib/components/form-action-bar/form-action-bar.component';
+import { FileUploaderComponent } from './lib/components/file-uploader/file-uploader.component';
+import { FullNameComponent } from './lib/components/full-name/full-name.component';
+import { HeaderComponent } from './lib/components/header/header.component';
+import { NameComponent } from './lib/components/name/name.component';
+import { PageFrameworkComponent } from './lib/components/page-framework/page-framework.component';
+import { PageSectionComponent } from './lib/components/page-section/page-section.component';
+import { PostalCodeComponent } from './lib/components/postal-code/postal-code.component';
+import { PhnComponent } from './lib/components/phn/phn.component';
+import { PhoneNumberComponent } from './lib/components/phone-number/phone-number.component';
+import { ProvinceComponent } from './lib/components/province/province.component';
+import { RadioComponent } from './lib/components/radio/radio.component';
+import { SampleModalComponent } from './lib/components/sample-modal/sample-modal.component';
+import { WizardProgressBarComponent } from './lib/components/wizard-progress-bar/wizard-progress-bar.component';
+import { SinComponent } from './lib/components/sin/sin.component';
+import { StreetComponent } from './lib/components/street/street.component';
+import { ThumbnailComponent } from './lib/components/thumbnail/thumbnail.component';
+import { XiconButtonComponent } from './lib/components/xicon-button/xicon-button.component';
+import { ValidateCityDirective } from './lib/components/city/validate-city.directive';
+import { ValidateNameDirective } from './lib/components/name/validate-name.directive';
+import { ValidateStreetDirective } from './lib/components/street/validate-street.directive';
+import { DuplicateCheckDirective } from './lib/components/duplicate-check/duplicate-check.directive';
+import { ValidatePostalcodeDirective } from './lib/components/postal-code/validate-postalcode.directive';
+import { ValidateBcPostalDirective } from './lib/components/postal-code/validate-bc-postal.directive';
+import { ValidateRegionDirective } from './lib/components/validate-region/validate-region.directive';
+
+const SHARED_CORE_IMPORTS = [
+  AddressComponent,
+  AddressValidatorComponent,
+  AccordionCommonComponent,
+  ButtonComponent,
+  CheckboxComponent,
+  CityComponent,
+  ConfirmTemplateComponent,
+  ConsentModalComponent,
+  CoreBreadcrumbComponent,
+  CountryComponent,
+  DateComponent,
+  DateFieldFormatDirective,
+  DropdownComponent,
+  EmailComponent,
+  ErrorContainerComponent,
+  FormActionBarComponent,
+  FileUploaderComponent,
+  FullNameComponent,
+  HeaderComponent,
+  NameComponent,
+  PageFrameworkComponent,
+  PageSectionComponent,
+  PostalCodeComponent,
+  PhnComponent,
+  PhoneNumberComponent,
+  ProvinceComponent,
+  RadioComponent,
+  SampleModalComponent,
+  WizardProgressBarComponent,
+  SinComponent,
+  StreetComponent,
+  ThumbnailComponent,
+  XiconButtonComponent,
+  ValidateCityDirective,
+  ValidateNameDirective,
+  ValidateStreetDirective,
+  DuplicateCheckDirective,
+  ValidatePostalcodeDirective,
+  ValidateBcPostalDirective,
+  ValidateRegionDirective,
+];
+
+@NgModule({
+  imports: SHARED_CORE_IMPORTS,
+  exports: SHARED_CORE_IMPORTS,
+})
 export class SharedCoreModule {}

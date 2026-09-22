@@ -77,8 +77,9 @@ src/
 Most library components follow the same shape. Match it when adding a new one.
 
 - **Standalone.** No component is declared in an NgModule. Each declares its own
-  `imports` array. `SharedCoreModule` is an empty no-op kept only so older consumers
-  that imported an NgModule keep compiling.
+  `imports` array. `SharedCoreModule` imports and re-exports every standalone
+  component and validator directive for consumers whose own components are still
+  NgModule-declared; see Compatibility module below.
 - **Selector prefix `common-`.** For example `common-phn`, `common-address`.
 - **Form controls extend `AbstractFormControl`** (`src/lib/models/abstract-form-control.ts`).
   That base is `@Directive()`-decorated and supplies two inherited inputs, `disabled`
@@ -127,7 +128,7 @@ Most library components follow the same shape. Match it when adding a new one.
 
 ## Catalogue
 
-### Components (29 exported)
+### Components (32 exported)
 
 Address and location:
 
@@ -163,6 +164,9 @@ Generic inputs:
 | `CheckboxComponent` | `common-checkbox` | Single checkbox with label |
 | `RadioComponent` | `common-radio` | Radio group driven by an `IRadioItems[]` list |
 | `ButtonComponent` | `common-button` | Bootstrap-styled button, re-emits click as `btnClick` |
+| `XiconButtonComponent` | `common-xicon-button` | Small "x" close/remove button, emits `clickEvent` |
+| `DropdownComponent` | `common-dropdown` | Generic ng-select single-select dropdown; object items display `item.label`, value is the whole item |
+| `DateComponent` | `common-date` | Date input with optional range or future/past restriction |
 
 | `PostalCodeComponent` | `common-postal-code` | Masked Canadian postal code, optional BC-only check |
 
@@ -243,7 +247,7 @@ import { CaptchaModule } from 'moh-common-lib-angular/captcha';
 |---|---|
 | `AbstractHttpService` | Base class for HTTP API services. Supplies `get`/`post`, uuid generation, attachment upload. |
 | `GeocoderService` | BC Geocoder address lookup, returns `GeoAddressResult[]` |
-| `CommonLogger` / `CommonLogEvents` | Splunk-bound application logging |
+| `CommonLogger` / `CommonLogEvents` | Splunk-bound application logging. `log()`/`logError()` are `void`; a subclass that needs the underlying `Subscription`/`Observable` overrides them and calls the protected `_log()`/`_logError()` instead (since 2.5.0) |
 | `PageStateService` | Tracks per-page completion for multi-page form flows |
 | `ContainerService` | Observable bus between a page container and its action bar |
 | `AbstractPageGuardService` | Contract an app implements to control wizard navigation |
@@ -339,7 +343,7 @@ excluded entirely. Overall coverage is around 73% of statements; the branch figu
 lower, and `src/lib/components/file-uploader/` is the weakest because its canvas and
 FileReader paths cannot execute under jsdom.
 
-Current state: 54 suites, 433 tests, all passing.
+Current state: 60 suites, 547 tests, all passing.
 
 ### Storybook
 
@@ -637,7 +641,7 @@ Recorded so they are not rediscovered as surprises.
 - **The Jest transform is driven by a preset that does not declare support for the
   installed Jest.** `@angular-builders/jest@19.0.1` pins `jest-preset-angular@14.5.4`
   exactly, and that copy peer-requires `jest ^29` while the repo runs Jest 30. An
-  `overrides` entry forces the resolution. All 433 tests pass, but nothing guards this
+  `overrides` entry forces the resolution. All 547 tests pass, but nothing guards this
   combination; it clears on an `@angular-builders/jest` major that supports Jest 30.
   Note this is separate from the root `jest-preset-angular@16.2.0` that
   `setup-jest.ts` imports. The two-version split predates the Node 22 work.
@@ -647,8 +651,17 @@ Recorded so they are not rediscovered as surprises.
 
 ---
 
-## Compatibility shim
+## Compatibility module
 
-`SharedCoreModule` is exported as an empty `NgModule` so apps that previously imported
-the old library module keep compiling. It declares and exports nothing. Migrate to
-importing individual standalone components directly.
+`SharedCoreModule` (from `src/public-api.ts`, since 2.5.0) is an `NgModule` that
+imports and re-exports every standalone component and validator directive this entry
+point exports: every component in the Catalogue above and all seven validator
+directives. `PasswordComponent` is not included, since it is not exported from the
+entry point either. Captcha is not included; import `CaptchaModule` from the separate
+`moh-common-lib-angular/captcha` entry point for that.
+
+Import `SharedCoreModule` into an `NgModule` whose own components are still
+NgModule-declared (not standalone) and need `common-*` tags available in their
+templates - it saves importing each standalone component individually. A standalone
+component's own `imports` array should import the individual components/directives it
+uses directly instead; pulling in the whole module there adds nothing it needs.

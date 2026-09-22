@@ -85,17 +85,19 @@ export class CommonLogger extends AbstractHttpService {
        dateObj: new Date()
     });
     ```
+   * `log()` itself returns nothing; a subclass that wants the underlying
+   * `Subscription`/`Observable` (for example to add its own conditional
+   * behaviour before sending) should call the protected `_log()` instead,
+   * the way a subclass overriding `log()` normally does.
    * @param message A JavaScript object, nesting is fine, with `event` property set.
    */
-  public log(message: CommonLogMessage) {
-    this.setSeverity(SeverityLevels.INFO);
-    return this._sendLog(message);
+  public log(message: CommonLogMessage): void {
+    this._log(message);
   }
 
   /** Log an error-level message to Splunk. See `log()` for usage details. */
-  public logError(errorMessage: CommonLogMessage) {
-    this.setSeverity(SeverityLevels.ERROR);
-    return this._sendLog(errorMessage);
+  public logError(errorMessage: CommonLogMessage): void {
+    this._logError(errorMessage);
   }
 
   /**
@@ -103,12 +105,30 @@ export class CommonLogger extends AbstractHttpService {
    * error response code.
    */
   public logHttpError(error: HttpErrorResponse) {
-    return this.logError({
+    return this._logError({
       event: CommonLogEvents.error,
       message: error.message,
       errorName: error.name,
       statusText: error.statusText,
     });
+  }
+
+  /**
+   * Sends a message at INFO severity. Protected so a subclass overriding the
+   * public, void-returning `log()` can still reach the underlying
+   * `Subscription`/`Observable` `_sendLog()` produces, the split `log()`/
+   * `_log()` `moh-common-lib` 3.x had.
+   * @param message A JavaScript object, nesting is fine, with `event` property set.
+   */
+  protected _log(message: CommonLogMessage) {
+    this.setSeverity(SeverityLevels.INFO);
+    return this._sendLog(message);
+  }
+
+  /** Sends a message at ERROR severity. See `_log()` for usage details. */
+  protected _logError(errorMessage: CommonLogMessage) {
+    this.setSeverity(SeverityLevels.ERROR);
+    return this._sendLog(errorMessage);
   }
 
   /**
