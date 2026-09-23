@@ -1,6 +1,6 @@
 {
   "name": "moh-common-lib-angular",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "description": "Shared Angular component library for BC Ministry of Health applications.",
   "keywords": [
     "bcgov",
