@@ -1,0 +1,83 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Introduction" />
+
+# moh-common-lib-angular
+
+Shared Angular component library for BC Ministry of Health applications. Provides
+reusable standalone components, validator directives, services, models, and helpers
+for building government form-driven applications, plus a secondary entry point for
+captcha support.
+
+## Install
+
+```bash
+npm install moh-common-lib-angular
+```
+
+## Peer dependencies
+
+Install these alongside the library. Ranges match the library's `peerDependencies`
+(projects/common-lib/package.json).
+
+- `@angular/common` `^19.2.0`
+- `@angular/core` `^19.2.0`
+- `@angular/forms` `^19.2.0`
+- `@angular/router` `^19.2.0`
+- `@ng-select/ng-select` `^14.7.0`
+- `date-fns` `^4.1.0`
+- `ngx-bootstrap` `^19.0.2`
+- `ngx-mask` `^19.0.7`
+- `rxjs` `^7.8.0`
+- `uuid` `^11.1.0`
+- `pdfjs-dist` `^4.10.38` (optional)
+
+## Usage
+
+Components are standalone, so import the classes you need directly and add them to
+your own component's `imports` array. For example, `EmailComponent` (selector
+`common-email`):
+
+```ts
+import { Component } from '@angular/core';
+import { EmailComponent } from 'moh-common-lib-angular';
+
+@Component({
+  selector: 'app-example',
+  standalone: true,
+  imports: [EmailComponent],
+  template: `<common-email [(value)]="email" [required]="true"></common-email>`,
+})
+export class ExampleComponent {
+  email = '';
+}
+```
+
+`ngx-bootstrap` is required by any app that renders anything from the main entry
+point, since the main bundle imports `ngx-bootstrap/typeahead` at the top level. Apps
+that render `common-address-validator`, or set `[useGeoCoder]="true"` on
+`common-street`, also need an Angular animations provider: `provideAnimations()` or
+`provideNoopAnimations()`.
+
+### Secondary entry point: captcha
+
+`moh-common-lib-angular/captcha` is packaged separately, so an app that never renders
+a captcha does not pay for it.
+
+```ts
+import { CaptchaModule } from 'moh-common-lib-angular/captcha';
+```
+
+## Styles
+
+Component templates use Bootstrap 5 utility classes and Font Awesome 4.7 icon classes
+(Font Awesome 5+ also works if you load its v4 shims stylesheet, `css/v4-shims.css`,
+alongside it, since templates use FA4 class names). This library does not bundle
+either; your application must supply them (for example, by including Bootstrap 5 and
+Font Awesome stylesheets in your app's global styles).
+
+## More information
+
+- [npm package](https://www.npmjs.com/package/moh-common-lib-angular)
+- [GitHub repository](https://github.com/bcgov/moh-common-lib-angular)
+- [CHANGELOG](https://github.com/bcgov/moh-common-lib-angular/blob/main/CHANGELOG.md)

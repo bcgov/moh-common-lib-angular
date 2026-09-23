@@ -5,6 +5,8 @@ reusable standalone components, validator directives, services, models, and help
 for building government form-driven applications, plus a secondary entry point for
 captcha support.
 
+Component docs: https://bcgov.github.io/moh-common-lib-angular/
+
 ## Install
 
 ```bash

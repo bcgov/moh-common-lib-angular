@@ -1,3 +1,36 @@
+## 2.5.1 (2026-09-23)
+
+Documentation only. The published package README now links the component
+documentation site; no code, public API, or dependency change ships in this
+release, and there is no reason for an app already on 2.5.0 to upgrade.
+
+### Breaking
+
+- None.
+
+### Added
+
+- None.
+
+### Fixed
+
+- None.
+
+### Changed
+
+- `projects/common-lib/README.md` (the README that ships inside the npm
+  package) now links the component docs at
+  https://bcgov.github.io/moh-common-lib-angular/. Everything else in the
+  published tarball is byte-identical to 2.5.0.
+- Repo-level only, not part of the published package: Storybook now builds
+  and deploys to that GitHub Pages site on every push to main
+  (`.github/workflows/docs.yml`), and the Storybook config picks up
+  `@storybook/addon-docs` as a dev dependency.
+
+### Consumer action required
+
+- None. Apps already on 2.5.0 do not need to upgrade.
+
 ## 2.5.0 (2026-09-22)
 
 Restores three pieces of the pre-2.0 `moh-common-lib` 3.3.5 public contract that

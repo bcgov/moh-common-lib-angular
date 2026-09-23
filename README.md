@@ -9,7 +9,8 @@ point at `moh-common-lib-angular/captcha`. The workspace root stays
 `private: true`; the thing that gets published is the built package in
 `dist/moh-common-lib-angular`. Published to npm as
 [moh-common-lib-angular](https://www.npmjs.com/package/moh-common-lib-angular). See
-Packaging and release below.
+Packaging and release below. Component docs:
+https://bcgov.github.io/moh-common-lib-angular/
 
 ---
 

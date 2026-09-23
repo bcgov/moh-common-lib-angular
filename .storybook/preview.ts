@@ -6,6 +6,11 @@ const preview: Preview = {
       // 'todo' shows a11y violations in the panel without failing the build.
       test: 'todo',
     },
+    options: {
+      storySort: {
+        order: ['Introduction', '*'],
+      },
+    },
   },
 };
 
