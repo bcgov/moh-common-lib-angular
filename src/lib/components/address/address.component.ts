@@ -259,7 +259,9 @@ export class AddressComponent
 
   setStreetAddress(value: string) {
     // When emptying a search result from address validator, clear the rest of the fields as well.
-    if (value === '' && !this.disableGeocoder) {
+    // Only while the validator is the street field: outside Canada the plain
+    // street field is shown and clearing it must not touch the other fields.
+    if (value === '' && this.useAddressValidator) {
       this.addr.addressLine1 = '';
       this.addr.addressLine2 = '';
       this.addr.addressLine3 = '';

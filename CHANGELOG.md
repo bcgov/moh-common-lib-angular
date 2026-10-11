@@ -15,6 +15,10 @@ Also makes `common-phone-number` reject an incomplete number, which it never did
 
 - `common-date`: none. No input, output, validator or public API changes. The
   same errors are raised as before; only which message is rendered changes.
+- `common-address`: none. No input, output, validator or public API changes.
+  The address object now keeps its values in the two cases described under
+  Fixed. An app that relied on clearing a non-Canadian street to reset the
+  jurisdiction to Canada no longer gets that reset.
 - `common-phone-number`: the component now registers its own validator. A
   control holding a partial number (for example `9876`) is now invalid with the
   error `incompleteValue`, where it was valid before. An empty value is still
@@ -46,6 +50,28 @@ Also makes `common-phone-number` reject an incomplete number, which it never did
   number. A complete number is now 10 digits regardless of `allowInternational`.
   The validator counts digits only and accepts a numeric model value. The
   emitted and stored value is unchanged.
+- `AddressComponent` (`common-address`), two defects. The first affected any
+  address showing the plain street field (`disableGeocoder` true, or a
+  jurisdiction outside Canada). The second affected a jurisdiction outside
+  Canada with `disableGeocoder` false:
+  - Selecting text in the street input (select all, double click, drag) wiped
+    the address. The browser's native `select` event bubbles from the input to
+    the `common-street` host, where the address template's `(select)` binding
+    ran `setAddress()` with the DOM event as if it were a geocoder result. That
+    set `addressLine1`, `city`, `province` and `country` to `undefined` and left
+    `postal` alone, so the fields still showed their text while the controls
+    were empty and every one of them except postal code reported "is required.".
+    `common-address` never enables the street geocoder, so that binding only
+    ever received the DOM event. The binding is removed; `setAddress()` stays
+    as a public method.
+  - Clearing the street field with a jurisdiction outside Canada reset the
+    jurisdiction to Canada, province to BC and cleared city and postal code.
+    That reset exists for the Canadian address validator, but it ran whenever
+    `disableGeocoder` was false, including when the plain street field was
+    shown. The Province or state list was then filtered for the old country,
+    so the dropdown opened with "No items found". The reset now runs only
+    while the address validator is the street field (Canada, `disableGeocoder`
+    false). Elsewhere clearing the street changes `addressLine1` only.
 
 ### Changed
 
