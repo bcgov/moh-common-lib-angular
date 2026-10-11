@@ -54,7 +54,13 @@ class DateReactTestComponent extends DateTestComponent implements OnInit {
   template: '',
   imports: [DateComponent, FormsModule],
 })
-class DateNgModelTestComponent extends DateTestComponent {}
+class DateNgModelTestComponent extends DateTestComponent {
+  // Same shape an app passes to override the required message.
+  dobErrorMsg = {
+    required: '{label} is required.',
+    invalidRange: 'An applicant must be 16 years or older.',
+  };
+}
 
 // No forms module at all, so no NgControl is attached and the component is
 // driven purely through its own [date] input.
@@ -695,6 +701,62 @@ describe('DateComponent', () => {
       // [(ngModel)]="date1" round-trips through registerOnChange, so the
       // host's own bound field is proof _onChange was called with this Date.
       expect(fixture.componentInstance.date1).toEqual(new Date(2021, 2, 10));
+    }));
+  });
+
+  // A day out of range, or a partial entry, leaves the model null, so the
+  // required validator fires alongside dayOutOfRange / invalidValue. The
+  // rendered message must be the specific one; "is required" is only right
+  // when nothing at all was entered.
+  describe('required control with an invalid or empty entry', () => {
+    let fixture: ComponentFixture<DateNgModelTestComponent>;
+    let de: any;
+
+    function renderedError(): string {
+      return (
+        de
+          .query(By.css('common-error-container'))
+          ?.nativeElement.textContent.replace(/\s+/g, ' ')
+          .trim() ?? ''
+      );
+    }
+
+    beforeEach(fakeAsync(() => {
+      fixture = createTestingModule(
+        DateNgModelTestComponent,
+        `<form>
+          <common-date name="date1" label="Birthdate" [errorMessage]="dobErrorMsg" required [(ngModel)]="date1"></common-date>
+        </form>`
+      );
+      tickAndDetectChanges(fixture);
+      de = getDebugElement(fixture, 'common-date', 'date1');
+    }));
+
+    it('shows Invalid Birthdate. for day 0', fakeAsync(() => {
+      fillDate(fixture, de, { month: '0', day: '0', year: '1987' });
+
+      expect(renderedError()).toBe('Invalid Birthdate.');
+      expect(renderedError()).not.toContain('is required');
+    }));
+
+    it('shows Invalid Birthdate. for day 44', fakeAsync(() => {
+      fillDate(fixture, de, { month: '0', day: '44', year: '1987' });
+
+      expect(renderedError()).toBe('Invalid Birthdate.');
+      expect(renderedError()).not.toContain('is required');
+    }));
+
+    it('shows Invalid Birthdate. for a month and day with no year', fakeAsync(() => {
+      fillDate(fixture, de, { month: '0', day: '15' });
+
+      expect(renderedError()).toBe('Invalid Birthdate.');
+      expect(renderedError()).not.toContain('is required');
+    }));
+
+    it('shows Birthdate is required. when all three fields are empty after touch', fakeAsync(() => {
+      fillDate(fixture, de, { day: '', year: '' });
+
+      expect(renderedError()).toBe('Birthdate is required.');
     }));
   });
 });

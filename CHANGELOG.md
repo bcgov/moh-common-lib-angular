@@ -1,3 +1,51 @@
+## 2.5.2 (2026-10-09)
+
+Fixes the error text a required `common-date` shows for an impossible day. With
+the control marked `required`, entering a day of 0, or a day past the end of the
+month (for example January 44), showed "<label> is required." instead of
+"Invalid <label>.". Affects 2.3.0 through 2.5.1, every release that has shipped
+`common-date`. In legacy `moh-common-lib` 3.6.2, which `common-date` was ported
+from in 2.3.0, an impossible day rolled over to a real date, so the model was
+never null and the message did not come up.
+
+### Breaking
+
+- `common-date`: none. No input, output, validator or public API changes. The
+  same errors are raised as before; only which message is rendered changes.
+
+### Added
+
+- None.
+
+### Fixed
+
+- `DateComponent` (`common-date`): a `required` date with a day below 1 or past
+  the end of the month now renders "Invalid <label>." (the `dayOutOfRange`
+  message). It no longer renders "<label> is required.". The impossible day
+  leaves the model null, so Angular's `required` error fires together with the
+  component's own `dayOutOfRange` error, and the template let `required` win.
+  The template now shows the `required` message only when neither
+  `dayOutOfRange` nor `invalidValue` is also present. Fully empty fields still
+  render "<label> is required.".
+
+### Changed
+
+- Visible behaviour change, on purpose: a `required` date that is only
+  partially filled in (for example month and day with no year)
+  now renders "Invalid <label>." (the `invalidValue` message) instead of
+  "<label> is required.". This masking also existed in legacy
+  `moh-common-lib` 3.6.2, which `common-date` was ported from in 2.3.0. "Required"
+  now means nothing was entered. An app or test that asserts the old text for a
+  partial entry will see the new text. If the app passes `[errorMessage]`
+  with an `invalidValue` or `dayOutOfRange` key, that text is shown; keys not
+  overridden keep the default "Invalid <label>.".
+
+### Consumer action required
+
+- None to adopt. Apps on 2.3.0 through 2.5.1 get the fix by upgrading to 2.5.2.
+  Check any e2e or unit assertion that expects "is required" for a partially
+  filled or impossible date.
+
 ## 2.5.1 (2026-09-23)
 
 Documentation only. The published package README now links the component
