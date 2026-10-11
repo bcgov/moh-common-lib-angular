@@ -106,9 +106,7 @@ export class PhoneNumberComponent
       }
     }
 
-    // Self-validation is not registered, so validateSelf() below and the
-    // incompleteValue message never fire. Wire it up or remove both; either
-    // is a behaviour change.
+    this.registerValidation(this.controlDir, this.validateSelf);
   }
 
   setPhoneNumber(data: any) {
@@ -133,19 +131,19 @@ export class PhoneNumberComponent
 
   private validateSelf() {
     const value = this.phoneNumber;
-    const phoneLength = this.allowInternational ? 11 : 10;
+    // In masked mode the control holds 10 digits, with no '+1 ' prefix:
+    // ngx-mask 19.0.7 defaults dropSpecialCharacters to true
+    // (fesm2022/ngx-mask.mjs:63) and formControlResult() removes the prefix
+    // before emitting (fesm2022/ngx-mask.mjs:1392-1394). So a complete number
+    // is 10 digits whether or not allowInternational is set. The same count
+    // applies to unmasked input.
+    const phoneLength = 10;
 
-    if (value) {
-      const stripped = value
-        .replace(/_/g, '') // remove underlines
-        .replace(/\s/g, '') // spaces
-        .replace(/\+|-/g, '') // + or - symbol
-        .replace('(', '')
-        .replace(')', '');
-
-      const valid = stripped.length === phoneLength;
-      return valid ? null : { incompleteValue: true };
+    if (value === null || value === undefined || value === '') {
+      return null;
     }
-    return null;
+    // String() because ngx-mask can emit a number for a numeric model.
+    const digits = String(value).replace(/\D/g, '');
+    return digits.length === phoneLength ? null : { incompleteValue: true };
   }
 }

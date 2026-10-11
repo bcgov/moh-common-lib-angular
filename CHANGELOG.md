@@ -8,10 +8,20 @@ month (for example January 44), showed "<label> is required." instead of
 from in 2.3.0, an impossible day rolled over to a real date, so the model was
 never null and the message did not come up.
 
+Also makes `common-phone-number` reject an incomplete number, which it never did
+(see Fixed and Breaking below).
+
 ### Breaking
 
 - `common-date`: none. No input, output, validator or public API changes. The
   same errors are raised as before; only which message is rendered changes.
+- `common-phone-number`: the component now registers its own validator. A
+  control holding a partial number (for example `9876`) is now invalid with the
+  error `incompleteValue`, where it was valid before. An empty value is still
+  valid, and a `required` control still reports `required` when empty. With
+  `[displayMask]="false"` the value must contain exactly 10 digits; other
+  characters are ignored, so `250.123.4567` is accepted and `+1 250 123 4567`
+  (11 digits) is not. No input, output or public API changes.
 
 ### Added
 
@@ -27,6 +37,15 @@ never null and the message did not come up.
   The template now shows the `required` message only when neither
   `dayOutOfRange` nor `invalidValue` is also present. Fully empty fields still
   render "<label> is required.".
+- `PhoneNumberComponent` (`common-phone-number`): a partial number now shows
+  "<label> does not appear to be valid." and makes the control invalid, so a
+  form that gates Continue on validity no longer lets it through. The
+  validator existed but was never registered. It also counted 11 digits when
+  `allowInternational` is true, but the mask emits the 10 digits without the
+  `+1 ` prefix, so registering it unchanged would have rejected every complete
+  number. A complete number is now 10 digits regardless of `allowInternational`.
+  The validator counts digits only and accepts a numeric model value. The
+  emitted and stored value is unchanged.
 
 ### Changed
 
@@ -45,6 +64,10 @@ never null and the message did not come up.
 - None to adopt. Apps on 2.3.0 through 2.5.1 get the fix by upgrading to 2.5.2.
   Check any e2e or unit assertion that expects "is required" for a partially
   filled or impossible date.
+- Apps using `common-phone-number`: a partial number now blocks any form
+  gated on validity. If a page or test saves or submits a partial number
+  today, expect it to be blocked after upgrading. Apps that set
+  `[displayMask]="false"` must supply exactly 10 digits.
 
 ## 2.5.1 (2026-09-23)
 
