@@ -320,6 +320,18 @@ describe('Phone-Number.Component self validation', () => {
     expect(renderedError() ?? '').toBe('');
   });
 
+  it('accepts an optional control cleared with setValue(undefined) after a partial number', async () => {
+    await setup();
+    await typeDigits('9876');
+    const control = ngForm.controls['phone'];
+    expect(control.errors).toEqual({ incompleteValue: true });
+
+    control.setValue(undefined);
+
+    expect(control.errors).toBeNull();
+    expect(ngForm.valid).toBe(true);
+  });
+
   describe('when required', () => {
     const makeRequired = (host: PhoneNgModelHostComponent) => {
       host.required = true;

@@ -9,7 +9,7 @@ import {
   OnInit,
   ElementRef,
 } from '@angular/core';
-import { FormsModule, NgControl } from '@angular/forms';
+import { AbstractControl, FormsModule, NgControl } from '@angular/forms';
 import {
   ErrorMessage,
   LabelReplacementTag,
@@ -129,8 +129,10 @@ export class PhoneNumberComponent
     }
   }
 
-  private validateSelf() {
-    const value = this.phoneNumber;
+  // Reads the control value, not phoneNumber: writeValue() skips undefined,
+  // so phoneNumber can be stale after control.setValue(undefined).
+  private validateSelf(control: AbstractControl) {
+    const value = control.value;
     // In masked mode the control holds 10 digits, with no '+1 ' prefix:
     // ngx-mask 19.0.7 defaults dropSpecialCharacters to true
     // (fesm2022/ngx-mask.mjs:63) and formControlResult() removes the prefix

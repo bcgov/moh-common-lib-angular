@@ -1,4 +1,4 @@
-## 2.5.2 (2026-10-09)
+## 2.5.2 (2026-10-12)
 
 Fixes the error text a required `common-date` shows for an impossible day. With
 the control marked `required`, entering a day of 0, or a day past the end of the
@@ -9,7 +9,10 @@ from in 2.3.0, an impossible day rolled over to a real date, so the model was
 never null and the message did not come up.
 
 Also makes `common-phone-number` reject an incomplete number, which it never did
-(see Fixed and Breaking below).
+(see Fixed and Breaking below), and fixes `common-address` rejecting a complete
+address outside Canada: selecting text in the street field wiped the address,
+and clearing the street reset the jurisdiction to Canada with an empty Province
+or state list.
 
 ### Breaking
 
@@ -48,8 +51,9 @@ Also makes `common-phone-number` reject an incomplete number, which it never did
   `allowInternational` is true, but the mask emits the 10 digits without the
   `+1 ` prefix, so registering it unchanged would have rejected every complete
   number. A complete number is now 10 digits regardless of `allowInternational`.
-  The validator counts digits only and accepts a numeric model value. The
-  emitted and stored value is unchanged.
+  The validator counts digits only, accepts a numeric model value, and reads
+  the control's value, so a control cleared with `setValue(undefined)` is
+  valid again. The emitted and stored value is unchanged.
 - `AddressComponent` (`common-address`), two defects. The first affected any
   address showing the plain street field (`disableGeocoder` true, or a
   jurisdiction outside Canada). The second affected a jurisdiction outside
@@ -94,6 +98,10 @@ Also makes `common-phone-number` reject an incomplete number, which it never did
   gated on validity. If a page or test saves or submits a partial number
   today, expect it to be blocked after upgrading. Apps that set
   `[displayMask]="false"` must supply exactly 10 digits.
+- Apps using `common-address`: clearing the street on an address outside Canada
+  now changes only `addressLine1`. It no longer resets the jurisdiction to
+  Canada, the province to BC, or clears city and postal code. Check any app or
+  test that relies on that reset.
 
 ## 2.5.1 (2026-09-23)
 
