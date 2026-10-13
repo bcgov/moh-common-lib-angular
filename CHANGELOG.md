@@ -1,3 +1,40 @@
+## 2.5.3 (2026-10-13)
+
+Fixes PDF uploads in `common-file-uploader`. In an app that never sets
+`PdfService.workerSrc`, every PDF, valid or not, was rejected with the
+`CannotOpenPDF` error ("That PDF cannot be opened, please upload a different
+attachment." in MSP). Affects 2.1.0 through 2.5.2, every release that has
+shipped `PdfService`. Image uploads were not affected.
+
+### Breaking
+
+- None. No input, output or public API changes, and the `pdfjs-dist` peer
+  range is unchanged.
+
+### Added
+
+- None.
+
+### Fixed
+
+- `PdfService` (`common-file-uploader`): with `workerSrc` unset, pdfjs-dist 4.x
+  has no main-thread fallback of its own. `getDocument()` threw
+  `No "GlobalWorkerOptions.workerSrc" specified.`, which the uploader reports
+  as `CannotOpenPDF`. The doc comment said pdfjs would fall back to the main
+  thread; it did not. The service now imports
+  `pdfjs-dist/legacy/build/pdf.worker.mjs` and registers it as
+  `globalThis.pdfjsWorker`, so pdfjs runs the worker on the main thread. The
+  import keeps its `.catch()`, so `pdfjs-dist` stays an optional peer. pdfjs is
+  cached only after the worker is registered, so selecting several PDFs at once
+  or retrying after a failed load works.
+- Apps that set `PdfService.workerSrc` are unchanged.
+
+### Consumer action required
+
+- None to adopt. Apps on 2.1.0 through 2.5.2 that accept PDFs get the fix by
+  upgrading to 2.5.3. An app pinned by its lockfile must update the lockfile
+  (`npm install moh-common-lib-angular@2.5.3`).
+
 ## 2.5.2 (2026-10-12)
 
 Fixes the error text a required `common-date` shows for an impossible day. With
