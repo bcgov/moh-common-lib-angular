@@ -14,8 +14,8 @@ import { provideRouter } from '@angular/router';
 import { NgSelectComponent } from '@ng-select/ng-select';
 import { AddressComponent } from './address.component';
 import { StreetComponent } from '../street/street.component';
+import { AddressValidatorComponent } from '../address-validator/address-validator.component';
 import { Address } from '../../models/address.model';
-import { GeoAddressResult } from '../../services/geocoder.service';
 import { CANADA, COUNTRY_LIST } from '../country/country.component';
 import {
   BRITISH_COLUMBIA,
@@ -149,16 +149,40 @@ describe('AddressComponent', () => {
     expect(component['addr'].city).toBe('Victoria');
   });
 
-  it('setStreetAddress() should clear related fields when value is empty', () => {
+  it('setStreetAddress() should clear related fields when value is empty and the address validator is the street field', () => {
     const { component } = createComponent();
     const addr = new Address();
     addr.city = 'Victoria';
     addr.postal = 'V8V 1A1';
+    addr.province = 'AB';
+    addr.country = CANADA;
     component['addr'] = addr;
     component.disableGeocoder = false;
+    expect(component.useAddressValidator).toBe(true);
     component.setStreetAddress('');
     expect(component['addr'].city).toBe('');
     expect(component['addr'].postal).toBe('');
+    expect(component['addr'].province).toBe(BRITISH_COLUMBIA);
+    expect(component['addr'].country).toBe(CANADA);
+  });
+
+  it('setStreetAddress() should leave every other field alone when value is empty outside Canada', () => {
+    const { component } = createComponent();
+    const addr = new Address();
+    addr.addressLine1 = '1 Calle Uno';
+    addr.city = 'Santiago';
+    addr.postal = '8320000';
+    addr.province = 'Region Metropolitana';
+    addr.country = 'CHL';
+    component['addr'] = addr;
+    component.disableGeocoder = false;
+    expect(component.useAddressValidator).toBe(false);
+    component.setStreetAddress('');
+    expect(component['addr'].addressLine1).toBe('');
+    expect(component['addr'].city).toBe('Santiago');
+    expect(component['addr'].postal).toBe('8320000');
+    expect(component['addr'].province).toBe('Region Metropolitana');
+    expect(component['addr'].country).toBe('CHL');
   });
 });
 
@@ -275,22 +299,19 @@ describe('AddressComponent inside a template-driven form, with the address valid
 });
 
 /**
- * StreetComponent declares `@Output() select`, so the address template has to
- * listen for `select`. An earlier `(selectEvent)` binding compiled fine - an
- * unmatched output on a component element just becomes a DOM event listener -
- * and silently dropped every geocoder selection.
+ * With the address validator active, a suggestion picked in the search box
+ * reaches the address through the template's (select) listener on
+ * common-address-validator. common-street is not rendered in this state.
  */
 @Component({
   template: `
     <form>
-      <common-address
-        [(address)]="address"
-        [disableGeocoder]="true"></common-address>
+      <common-address [(address)]="address"></common-address>
     </form>
   `,
   imports: [FormsModule, AddressComponent],
 })
-class StreetSelectAddressHostComponent {
+class ValidatorSelectAddressHostComponent {
   @ViewChild(AddressComponent) addressComponent!: AddressComponent;
   address = Object.assign(new Address(), {
     country: CANADA,
@@ -298,13 +319,13 @@ class StreetSelectAddressHostComponent {
   });
 }
 
-describe('AddressComponent street selection', () => {
-  let fixture: ComponentFixture<StreetSelectAddressHostComponent>;
-  let host: StreetSelectAddressHostComponent;
+describe('AddressComponent suggestion selection', () => {
+  let fixture: ComponentFixture<ValidatorSelectAddressHostComponent>;
+  let host: ValidatorSelectAddressHostComponent;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [StreetSelectAddressHostComponent],
+      imports: [ValidatorSelectAddressHostComponent],
       providers: [
         provideRouter([]),
         provideHttpClient(),
@@ -312,35 +333,44 @@ describe('AddressComponent street selection', () => {
       ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(StreetSelectAddressHostComponent);
+    fixture = TestBed.createComponent(ValidatorSelectAddressHostComponent);
     host = fixture.componentInstance;
     fixture.detectChanges();
   });
 
-  it('copies a geocoder selection into the address when common-street emits select', () => {
-    const streetDe = fixture.debugElement.query(By.directive(StreetComponent));
-    expect(streetDe).toBeTruthy();
+  it('copies a suggestion into the address when common-address-validator emits select', () => {
+    const validatorDe = fixture.debugElement.query(
+      By.directive(AddressValidatorComponent)
+    );
+    expect(validatorDe).toBeTruthy();
+    expect(
+      fixture.debugElement.query(By.directive(StreetComponent))
+    ).toBeNull();
 
-    const selection: GeoAddressResult = {
-      fullAddress: '1012 Douglas St, Victoria, BC',
-      street: '1012 Douglas St',
-      city: 'Victoria',
-      province: BRITISH_COLUMBIA,
+    const selection = Object.assign(new Address(), {
+      addressLine1: '1012 Douglas St',
+      city: 'Calgary',
+      province: 'AB',
       country: CANADA,
-    };
+      postal: 'T2P 1A1',
+    });
 
     const emitted: Address[] = [];
     host.addressComponent.addressChange.subscribe((a) => emitted.push(a));
 
-    (streetDe.componentInstance as StreetComponent).select.emit(selection);
+    (validatorDe.componentInstance as AddressValidatorComponent).select.emit(
+      selection
+    );
     fixture.detectChanges();
 
     const addr = host.addressComponent.address;
-    expect(addr.addressLine1).toBe('1012 Douglas St');
-    expect(addr.city).toBe('Victoria');
-    expect(addr.province).toBe(BRITISH_COLUMBIA);
+    expect(addr.city).toBe('Calgary');
+    expect(addr.province).toBe('AB');
+    expect(addr.postal).toBe('T2P 1A1');
     expect(addr.country).toBe(CANADA);
-    expect(emitted.length).toBe(1);
+    // Two emits: setCity (via the city component's onValueChange), then
+    // selectSuggestedAddress itself with the complete address.
+    expect(emitted.length).toBe(2);
   });
 });
 
@@ -508,5 +538,140 @@ describe('AddressComponent as a form control with no [address] seed', () => {
     expect(codes).toEqual(PROVINCE_LIST.map((prov) => prov.provinceCode));
     expect(codes).toContain(BRITISH_COLUMBIA);
     expect(host.addressComponent.provList.length).toBe(PROVINCE_LIST.length);
+  });
+});
+
+/**
+ * A complete address outside Canada, rendered with the address validator
+ * disabled by the country (common-street is the street field). Required is on,
+ * as in the DEAM School Address.
+ */
+@Component({
+  template: `
+    <form>
+      <common-address [address]="address" [isRequired]="true"></common-address>
+    </form>
+  `,
+  imports: [FormsModule, AddressComponent],
+})
+class NonCanadianAddressHostComponent {
+  @ViewChild(NgForm) ngForm!: NgForm;
+  @ViewChild(AddressComponent) addressComponent!: AddressComponent;
+  address = Object.assign(new Address(), {
+    addressLine1: '1 Calle Uno',
+    city: 'Santiago',
+    province: 'Region Metropolitana',
+    country: 'CHL',
+    postal: '8320000',
+  });
+}
+
+describe('AddressComponent outside Canada, rendered', () => {
+  let fixture: ComponentFixture<NonCanadianAddressHostComponent>;
+  let host: NonCanadianAddressHostComponent;
+
+  function streetInput(): HTMLInputElement {
+    return fixture.nativeElement.querySelector('common-street input');
+  }
+
+  function controlValue(prefix: string) {
+    const key = Object.keys(host.ngForm.controls).find((k) =>
+      k.startsWith(prefix)
+    );
+    expect(key).toBeDefined();
+    return host.ngForm.controls[key!];
+  }
+
+  async function render() {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [NonCanadianAddressHostComponent],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(NonCanadianAddressHostComponent);
+    host = fixture.componentInstance;
+    await render();
+  });
+
+  it('starts valid with no required errors', () => {
+    // Sanity: the plain street field is the one rendering, and the starting
+    // point of the tests below is a complete, error-free address.
+    expect(host.addressComponent.useAddressValidator).toBe(false);
+    expect(streetInput()).toBeTruthy();
+    host.ngForm.form.markAllAsTouched();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('is required.');
+    expect(host.ngForm.valid).toBe(true);
+  });
+
+  it('keeps the address when text is selected in the street input', async () => {
+    // Selecting text in an input fires a native `select` event that bubbles to
+    // the common-street host. With a (select) listener on common-street in the
+    // address template, this test fails (addressLine1 is undefined).
+    streetInput().dispatchEvent(new Event('select', { bubbles: true }));
+    await render();
+    host.ngForm.form.markAllAsTouched();
+    fixture.detectChanges();
+
+    const addr = host.addressComponent.address;
+    expect(addr.addressLine1).toBe('1 Calle Uno');
+    expect(addr.city).toBe('Santiago');
+    expect(addr.province).toBe('Region Metropolitana');
+    expect(addr.country).toBe('CHL');
+    expect(addr.postal).toBe('8320000');
+
+    // The control values are what the required validator reads.
+    expect(controlValue('street_').value).toBe('1 Calle Uno');
+    expect(controlValue('city_').value).toBe('Santiago');
+    expect(controlValue('province_').value).toBe('Region Metropolitana');
+    expect(controlValue('country_').value).toBe('CHL');
+    expect(fixture.nativeElement.textContent).not.toContain('is required.');
+    expect(host.ngForm.valid).toBe(true);
+  });
+
+  it('shows the required error on the street only when the street is cleared', async () => {
+    const input = streetInput();
+    input.value = '';
+    input.dispatchEvent(new Event('change'));
+    await render();
+    host.ngForm.form.markAllAsTouched();
+    fixture.detectChanges();
+
+    const addr = host.addressComponent.address;
+    expect(addr.addressLine1).toBe('');
+    expect(addr.city).toBe('Santiago');
+    expect(addr.province).toBe('Region Metropolitana');
+    expect(addr.country).toBe('CHL');
+    expect(addr.postal).toBe('8320000');
+
+    expect(controlValue('street_').errors?.['required']).toBeTruthy();
+    expect(controlValue('city_').errors).toBeNull();
+    expect(controlValue('province_').errors).toBeNull();
+    expect(controlValue('country_').errors).toBeNull();
+    expect(controlValue('pc_').errors).toBeNull();
+
+    const errors = fixture.nativeElement.querySelectorAll(
+      'common-error-container'
+    );
+    const shown = Array.from<HTMLElement>(errors)
+      .map((e) => e.textContent!.trim())
+      .filter((t) => t.length > 0);
+    expect(shown.length).toBe(1);
+    expect(shown[0]).toContain('is required.');
+    expect(
+      fixture.nativeElement
+        .querySelector('common-street')
+        .textContent.includes('is required.')
+    ).toBe(true);
   });
 });

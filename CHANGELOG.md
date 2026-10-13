@@ -1,3 +1,108 @@
+## 2.5.2 (2026-10-12)
+
+Fixes the error text a required `common-date` shows for an impossible day. With
+the control marked `required`, entering a day of 0, or a day past the end of the
+month (for example January 44), showed "<label> is required." instead of
+"Invalid <label>.". Affects 2.3.0 through 2.5.1, every release that has shipped
+`common-date`. In legacy `moh-common-lib` 3.6.2, which `common-date` was ported
+from in 2.3.0, an impossible day rolled over to a real date, so the model was
+never null and the message did not come up.
+
+Also makes `common-phone-number` reject an incomplete number, which it never did
+(see Fixed and Breaking below), and fixes `common-address` rejecting a complete
+address outside Canada: selecting text in the street field wiped the address,
+and clearing the street reset the jurisdiction to Canada with an empty Province
+or state list.
+
+### Breaking
+
+- `common-date`: none. No input, output, validator or public API changes. The
+  same errors are raised as before; only which message is rendered changes.
+- `common-address`: none. No input, output, validator or public API changes.
+  The address object now keeps its values in the two cases described under
+  Fixed. An app that relied on clearing a non-Canadian street to reset the
+  jurisdiction to Canada no longer gets that reset.
+- `common-phone-number`: the component now registers its own validator. A
+  control holding a partial number (for example `9876`) is now invalid with the
+  error `incompleteValue`, where it was valid before. An empty value is still
+  valid, and a `required` control still reports `required` when empty. With
+  `[displayMask]="false"` the value must contain exactly 10 digits; other
+  characters are ignored, so `250.123.4567` is accepted and `+1 250 123 4567`
+  (11 digits) is not. No input, output or public API changes.
+
+### Added
+
+- None.
+
+### Fixed
+
+- `DateComponent` (`common-date`): a `required` date with a day below 1 or past
+  the end of the month now renders "Invalid <label>." (the `dayOutOfRange`
+  message). It no longer renders "<label> is required.". The impossible day
+  leaves the model null, so Angular's `required` error fires together with the
+  component's own `dayOutOfRange` error, and the template let `required` win.
+  The template now shows the `required` message only when neither
+  `dayOutOfRange` nor `invalidValue` is also present. Fully empty fields still
+  render "<label> is required.".
+- `PhoneNumberComponent` (`common-phone-number`): a partial number now shows
+  "<label> does not appear to be valid." and makes the control invalid, so a
+  form that gates Continue on validity no longer lets it through. The
+  validator existed but was never registered. It also counted 11 digits when
+  `allowInternational` is true, but the mask emits the 10 digits without the
+  `+1 ` prefix, so registering it unchanged would have rejected every complete
+  number. A complete number is now 10 digits regardless of `allowInternational`.
+  The validator counts digits only, accepts a numeric model value, and reads
+  the control's value, so a control cleared with `setValue(undefined)` is
+  valid again. The emitted and stored value is unchanged.
+- `AddressComponent` (`common-address`), two defects. The first affected any
+  address showing the plain street field (`disableGeocoder` true, or a
+  jurisdiction outside Canada). The second affected a jurisdiction outside
+  Canada with `disableGeocoder` false:
+  - Selecting text in the street input (select all, double click, drag) wiped
+    the address. The browser's native `select` event bubbles from the input to
+    the `common-street` host, where the address template's `(select)` binding
+    ran `setAddress()` with the DOM event as if it were a geocoder result. That
+    set `addressLine1`, `city`, `province` and `country` to `undefined` and left
+    `postal` alone, so the fields still showed their text while the controls
+    were empty and every one of them except postal code reported "is required.".
+    `common-address` never enables the street geocoder, so that binding only
+    ever received the DOM event. The binding is removed; `setAddress()` stays
+    as a public method.
+  - Clearing the street field with a jurisdiction outside Canada reset the
+    jurisdiction to Canada, province to BC and cleared city and postal code.
+    That reset exists for the Canadian address validator, but it ran whenever
+    `disableGeocoder` was false, including when the plain street field was
+    shown. The Province or state list was then filtered for the old country,
+    so the dropdown opened with "No items found". The reset now runs only
+    while the address validator is the street field (Canada, `disableGeocoder`
+    false). Elsewhere clearing the street changes `addressLine1` only.
+
+### Changed
+
+- Visible behaviour change, on purpose: a `required` date that is only
+  partially filled in (for example month and day with no year)
+  now renders "Invalid <label>." (the `invalidValue` message) instead of
+  "<label> is required.". This masking also existed in legacy
+  `moh-common-lib` 3.6.2, which `common-date` was ported from in 2.3.0. "Required"
+  now means nothing was entered. An app or test that asserts the old text for a
+  partial entry will see the new text. If the app passes `[errorMessage]`
+  with an `invalidValue` or `dayOutOfRange` key, that text is shown; keys not
+  overridden keep the default "Invalid <label>.".
+
+### Consumer action required
+
+- None to adopt. Apps on 2.3.0 through 2.5.1 get the fix by upgrading to 2.5.2.
+  Check any e2e or unit assertion that expects "is required" for a partially
+  filled or impossible date.
+- Apps using `common-phone-number`: a partial number now blocks any form
+  gated on validity. If a page or test saves or submits a partial number
+  today, expect it to be blocked after upgrading. Apps that set
+  `[displayMask]="false"` must supply exactly 10 digits.
+- Apps using `common-address`: clearing the street on an address outside Canada
+  now changes only `addressLine1`. It no longer resets the jurisdiction to
+  Canada, the province to BC, or clears city and postal code. Check any app or
+  test that relies on that reset.
+
 ## 2.5.1 (2026-09-23)
 
 Documentation only. The published package README now links the component

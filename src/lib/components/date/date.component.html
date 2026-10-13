@@ -64,7 +64,15 @@
       !!controlDir.errors) ??
     false
   ">
-  <div *ngIf="controlDir?.errors?.['required']; else ComponentErrors">
+  <!-- A day out of range or a partial entry leaves the model null, so
+       required fires too. Show required only when nothing was entered. -->
+  <div
+    *ngIf="
+      controlDir?.errors?.['required'] &&
+        !controlDir?.errors?.['dayOutOfRange'] &&
+        !controlDir?.errors?.['invalidValue'];
+      else ComponentErrors
+    ">
     {{ _defaultErrMsg['required'] }}
   </div>
 </common-error-container>
