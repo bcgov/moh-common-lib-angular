@@ -18,25 +18,41 @@ export class PdfService {
 
   /**
    * Where pdfjs should load its worker from. Set this before the first PDF is
-   * processed. Left unset, pdfjs falls back to running on the main thread,
-   * which works but blocks while rendering.
+   * processed. Left unset, the worker is bundled with the app and pdfjs runs it
+   * on the main thread, which works but blocks while rendering.
    */
   static workerSrc: string | undefined;
 
   /** Loads pdfjs on first use, so it is not pulled in unless a PDF is opened. */
   private async load(): Promise<any> {
     if (!this.pdfjs) {
-      // The .catch() is what keeps this optional. Without it a bundler resolves
-      // the specifier at build time and fails when pdfjs-dist is absent.
-      this.pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs').catch(() => {
+      // The .catch() on each import is what keeps pdfjs-dist optional. Without
+      // it a bundler resolves the specifier at build time and fails when
+      // pdfjs-dist is absent.
+      const missing = () => {
         throw new Error(
           'moh-common-lib-angular: uploading a PDF needs pdfjs-dist. ' +
             'Install it, or restrict common-file-uploader to images.'
         );
-      });
+      };
+      const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs').catch(
+        missing
+      );
       if (PdfService.workerSrc) {
-        this.pdfjs.GlobalWorkerOptions.workerSrc = PdfService.workerSrc;
+        pdfjs.GlobalWorkerOptions.workerSrc = PdfService.workerSrc;
+      } else {
+        // With no workerSrc, pdfjs reads globalThis.pdfjsWorker and runs that
+        // handler on the main thread; with neither, getDocument() throws
+        // 'No "GlobalWorkerOptions.workerSrc" specified.'
+        const worker = await import(
+          // @ts-expect-error pdfjs-dist ships no type declarations for the worker
+          'pdfjs-dist/legacy/build/pdf.worker.mjs'
+        ).catch(missing);
+        (globalThis as { pdfjsWorker?: unknown }).pdfjsWorker = worker;
       }
+      // Cached last, so a concurrent or retried call never sees pdfjs without
+      // its worker.
+      this.pdfjs = pdfjs;
     }
     return this.pdfjs;
   }
