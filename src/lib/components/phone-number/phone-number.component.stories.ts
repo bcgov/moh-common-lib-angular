@@ -20,12 +20,16 @@ const meta: Meta<PhoneNumberComponent> = {
     docs: {
       description: {
         component:
-          'A North American phone number. The value is always 10 digits and ' +
-          'the first digit (the area code) must be 2-9. The "+1 " shown when ' +
-          'allowInternational is true is display only and is never stored, ' +
-          'so typing +1, or a leading 1 or 0, is ignored: "+1 (234) 567-8978" ' +
-          'stores 2345678978. A partial number, or a value starting with 0 or ' +
-          '1, is invalid and shows "<label> does not appear to be valid."; ' +
+          'A North American phone number. To be valid, a non-empty value ' +
+          'must contain exactly 10 digits and the first digit (the area code) ' +
+          'must be 2-9; an empty value is valid unless the field is required. ' +
+          'With the default mask the model holds the digits only. The "+1 " ' +
+          'shown when allowInternational is true is display only and is ' +
+          'never stored, so typing +1, or a leading 1 or 0, is ignored: ' +
+          '"+1 (234) 567-8978" stores 2345678978. With displayMask false the ' +
+          'model keeps what was typed (250.123.4567) and only validation ' +
+          'reads the digits. A partial number, or one starting with 0 or 1, ' +
+          'is invalid and shows "<label> does not appear to be valid."; ' +
           'a value made only of 0s and 1s is dropped and becomes empty. In a ' +
           'custom [mask], N means a digit 2-9 and the stock ngx-mask tokens ' +
           '(0 any digit, S a letter, A a letter or digit) still work; the ' +
