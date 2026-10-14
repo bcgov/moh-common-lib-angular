@@ -251,6 +251,23 @@ describe('Phone-Number.Component self validation', () => {
     fixture.detectChanges();
   }
 
+  // One input event per character, caret at the end, as a keyboard produces.
+  async function typeKeys(text: string) {
+    const inputEl: HTMLInputElement =
+      fixture.nativeElement.querySelector('input');
+    inputEl.focus();
+    for (const ch of text) {
+      inputEl.value += ch;
+      inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length);
+      inputEl.dispatchEvent(new Event('input'));
+      await fixture.whenStable();
+      fixture.detectChanges();
+    }
+    inputEl.dispatchEvent(new Event('blur'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
   function renderedError(): string | null {
     const el = fixture.nativeElement.querySelector('common-error-container');
     return el ? el.textContent.trim() : null;
@@ -397,21 +414,75 @@ describe('Phone-Number.Component self validation', () => {
     expect(ngForm.valid).toBe(true);
   });
 
-  ['0', '000'].forEach((zeros) => {
-    it(`rejects the partial number ${zeros} with a numeric model`, async () => {
-      await setup(true, (host) => (host.phone = 2501234567));
-      // Observed: without this extra settle, the 0 and 000 tests pass on a
-      // validator that treats 0 as empty.
-      await fixture.whenStable();
-      fixture.detectChanges();
+  it('rejects a numeric 0 model as a partial number, not as empty', async () => {
+    // With the mask displayed, the N token drops the 0, the model becomes ''
+    // and an empty optional field is valid, so this case runs unmasked.
+    await setup(true, (host) => {
+      host.displayMask = false;
+      host.phone = 0;
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    fixture.nativeElement
+      .querySelector('input')
+      .dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
 
-      await typeDigits(zeros);
+    expect(ngForm.controls['phone'].errors).toEqual({
+      incompleteValue: true,
+    });
+    expect(ngForm.valid).toBe(false);
+    expect(renderedError()).toBe('Phone Number does not appear to be valid.');
+  });
 
-      expect(ngForm.controls['phone'].errors).toEqual({
-        incompleteValue: true,
+  describe('when typed key by key', () => {
+    it('keeps the first digit after +1 as the area code start', async () => {
+      await setup();
+      await typeKeys('+1 (234) 567-8978');
+
+      const inputEl: HTMLInputElement =
+        fixture.nativeElement.querySelector('input');
+      expect(inputEl.value).toBe('+1 (234) 567-8978');
+      expect(ngForm.controls['phone'].value).toBe('2345678978');
+      expect(ngForm.controls['phone'].errors).toBeNull();
+    });
+
+    ['1', '0'].forEach((lead) => {
+      it(`ignores a leading ${lead} before the area code`, async () => {
+        await setup();
+        await typeKeys(`${lead}2345678978`);
+
+        const inputEl: HTMLInputElement =
+          fixture.nativeElement.querySelector('input');
+        expect(inputEl.value).toBe('+1 (234) 567-8978');
+        expect(ngForm.controls['phone'].value).toBe('2345678978');
+        expect(ngForm.controls['phone'].errors).toBeNull();
       });
-      expect(ngForm.valid).toBe(false);
-      expect(renderedError()).toBe('Phone Number does not appear to be valid.');
+    });
+  });
+
+  describe('when the value is set without typing', () => {
+    ['1234567897', '0234567890'].forEach((value) => {
+      it(`rejects ${value} because the area code starts with ${value[0]}`, async () => {
+        await setup();
+        const control = ngForm.controls['phone'];
+        control.setValue(value);
+        control.markAsTouched();
+        fixture.detectChanges();
+
+        expect(control.errors).toEqual({ incompleteValue: true });
+        expect(ngForm.valid).toBe(false);
+        expect(renderedError()).toBe(
+          'Phone Number does not appear to be valid.'
+        );
+
+        // Once the mask has run, it drops the first digit and writes the 9
+        // remaining digits back to the model, which stays invalid.
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(control.value).toBe(value.slice(1));
+        expect(control.errors).toEqual({ incompleteValue: true });
+      });
     });
   });
 
@@ -428,6 +499,16 @@ describe('Phone-Number.Component self validation', () => {
       expect(ngForm.valid).toBe(true);
     });
 
+    it('rejects ten digits starting with 1', async () => {
+      await setup(true, unmasked);
+      await typeDigits('1234567890');
+
+      expect(ngForm.controls['phone'].errors).toEqual({
+        incompleteValue: true,
+      });
+      expect(ngForm.valid).toBe(false);
+    });
+
     it('rejects a value with no digits', async () => {
       await setup(true, unmasked);
       await typeDigits('abcdefghij');
@@ -437,5 +518,44 @@ describe('Phone-Number.Component self validation', () => {
       });
       expect(ngForm.valid).toBe(false);
     });
+  });
+});
+
+@Component({
+  template: `
+    <form #f="ngForm">
+      <common-phone-number
+        name="phone"
+        mask="SS-000"
+        [(ngModel)]="phone"></common-phone-number>
+    </form>
+  `,
+  imports: [PhoneNumberComponent, FormsModule],
+})
+class PhoneCustomMaskHostComponent {
+  phone = '';
+}
+
+describe('Phone-Number.Component with a custom mask', () => {
+  it('keeps the stock ngx-mask letter token S', async () => {
+    TestBed.configureTestingModule({
+      imports: [PhoneCustomMaskHostComponent],
+      providers: [provideNgxMask()],
+    });
+    const fixture = TestBed.createComponent(PhoneCustomMaskHostComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const inputEl: HTMLInputElement =
+      fixture.nativeElement.querySelector('input');
+    inputEl.focus();
+    for (const ch of 'AB-123') {
+      inputEl.value += ch;
+      inputEl.dispatchEvent(new Event('input'));
+      await fixture.whenStable();
+      fixture.detectChanges();
+    }
+
+    expect(inputEl.value).toBe('+1 AB-123');
+    expect(fixture.componentInstance.phone).toBe('AB123');
   });
 });

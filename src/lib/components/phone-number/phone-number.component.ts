@@ -16,7 +16,7 @@ import {
   RequiredMsg,
 } from '../../models/error-message.interface';
 import { AbstractFormControl } from '../../models/abstract-form-control';
-import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
+import { initialConfig, NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { CommonModule } from '@angular/common';
 import { ErrorContainerComponent } from '../error-container/error-container.component';
 
@@ -50,12 +50,21 @@ export class PhoneNumberComponent
   implements OnInit
 {
   static PhoneNumberRegEx = '^[2-9]{1}\\d{2}[\\-]?\\d{3}[\\-]?\\d{4}$';
+
+  // ngx-mask replaces its whole pattern table when [patterns] is bound, so the
+  // stock tokens are kept and 'N' (a digit 2-9) is added for the default mask.
+  // A custom [mask] that does not use 'N' behaves exactly as before.
+  readonly patterns = {
+    ...initialConfig.patterns,
+    N: { pattern: /[2-9]/ },
+  };
+
   @Input() displayMask: boolean = true;
   @Input() required: boolean = false;
   @Input() label: string = 'Mobile';
 
   @Input() allowInternational: boolean = true;
-  @Input() mask = '(000) 000-0000';
+  @Input() mask = '(N00) 000-0000';
 
   // TODO: Remove once all project using library remove placeholders -- Temporary solution
   @Input() enablePlaceHolder: boolean = true;
@@ -146,6 +155,11 @@ export class PhoneNumberComponent
     }
     // String() because ngx-mask can emit a number for a numeric model.
     const digits = String(value).replace(/\D/g, '');
-    return digits.length === phoneLength ? null : { incompleteValue: true };
+    // The mask only guards typing; a programmatic value or a custom mask can
+    // still reach here, so enforce 10 digits starting 2-9 as well.
+    return digits.length === phoneLength &&
+      new RegExp(PhoneNumberComponent.PhoneNumberRegEx).test(digits)
+      ? null
+      : { incompleteValue: true };
   }
 }
