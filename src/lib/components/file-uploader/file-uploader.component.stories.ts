@@ -17,8 +17,10 @@ const meta: Meta<FileUploaderComponent> = {
           'becomes one image thumbnail. PDF support needs pdfjs-dist, an ' +
           'optional peer dependency. PdfService.workerSrc is optional: set it ' +
           'to load the pdfjs worker from a URL, or leave it unset and the ' +
-          'worker is bundled with the app and runs on the main thread. A file ' +
-          'that cannot be read shows the CannotOpenPDF error.',
+          'worker is bundled with the app and runs on the main thread. The ' +
+          'component shows no message for a file it cannot read: it emits ' +
+          '(errorDocument) with a CommonImage whose error is CannotOpenPDF, ' +
+          'and the host app decides what to display.',
       },
     },
   },
