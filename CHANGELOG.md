@@ -1,3 +1,46 @@
+## 2.5.4 (2026-10-13)
+
+Fixes `common-phone-number` storing the wrong number when a user types the
+country code. The field already shows a `+1 ` prefix, but the mask accepted any
+digit in the first position, so typing `+1 (234) 567-8978` stored `1234567897`:
+the typed 1 became the area code and the last digit was dropped. The validator
+only counted digits, so the control stayed valid and the bad number reached the
+app. In MSP DEAM this failed submission with
+`should match pattern "^[2-9]([0-9]{9})$"`. The mask and prefix have behaved
+this way since 1.0.0; no release flagged the shifted number as invalid.
+
+### Breaking
+
+- `common-phone-number`: a value whose first digit is 0 or 1 is now invalid
+  (`incompleteValue`, "<label> does not appear to be valid."), including a
+  value set programmatically or loaded from saved data. With the default mask,
+  such a value also loses its first digit when it is written to the control,
+  which leaves 9 digits in the model. No North American area code starts with
+  0 or 1, but check stored phone and fax data before upgrading.
+- `common-phone-number`: `N` is now a mask token (a digit 2-9). A custom
+  `[mask]` that uses a literal `N` will treat it as that token. No app in the
+  BC MOH enrolment repos passes a custom `[mask]`.
+
+### Added
+
+- None.
+
+### Fixed
+
+- `PhoneNumberComponent` (`common-phone-number`): the default mask is now
+  `(N00) 000-0000`, where `N` accepts 2-9 only, so a typed leading 1 or 0 is
+  ignored and `+1 (234) 567-8978` stores `2345678978`. The validator now
+  requires `PhoneNumberRegEx` (10 digits, first digit 2-9) as well as the digit
+  count. The stock ngx-mask tokens are kept, so a custom `[mask]` without `N`
+  behaves as before.
+
+### Consumer action required
+
+- Apps using `common-phone-number`: upgrade to 2.5.4. If the app loads saved
+  phone or fax numbers into the control, confirm none start with 0 or 1.
+- An app pinned by its lockfile must update the lockfile
+  (`npm install moh-common-lib-angular@2.5.4`).
+
 ## 2.5.3 (2026-10-13)
 
 Fixes PDF uploads in `common-file-uploader`. In an app that never sets
