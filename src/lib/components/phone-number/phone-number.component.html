@@ -10,6 +10,7 @@
     (blur)="onBlur($event)"
     [placeholder]="placeholder"
     [mask]="mask"
+    [patterns]="patterns"
     [prefix]="allowInternational ? '+1 ' : ''"
     [required]="required"
     [disabled]="disabled" />
@@ -20,7 +21,8 @@
   [displayError]="
     (controlDir &&
       !disabled &&
-      (controlDir.dirty || controlDir.touched) && !!controlDir.errors) ??
+      (controlDir.dirty || controlDir.touched) &&
+      !!controlDir.errors) ??
     false
   ">
   <div *ngIf="controlDir?.errors?.['required']">
