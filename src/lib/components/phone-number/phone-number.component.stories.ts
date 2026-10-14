@@ -25,8 +25,10 @@ const meta: Meta<PhoneNumberComponent> = {
           'allowInternational is true is display only and is never stored, ' +
           'so typing +1, or a leading 1 or 0, is ignored: "+1 (234) 567-8978" ' +
           'stores 2345678978. A partial number, or a value starting with 0 or ' +
-          '1, is invalid and shows "<label> does not appear to be valid." ' +
-          'In a custom [mask], N means a digit 2-9 and 0 means any digit; the ' +
+          '1, is invalid and shows "<label> does not appear to be valid."; ' +
+          'a value made only of 0s and 1s is dropped and becomes empty. In a ' +
+          'custom [mask], N means a digit 2-9 and the stock ngx-mask tokens ' +
+          '(0 any digit, S a letter, A a letter or digit) still work; the ' +
           'default mask is (N00) 000-0000.',
       },
     },

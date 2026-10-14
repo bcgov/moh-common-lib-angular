@@ -415,8 +415,8 @@ describe('Phone-Number.Component self validation', () => {
   });
 
   it('rejects a numeric 0 model as a partial number, not as empty', async () => {
-    // Observed: with the mask displayed, a numeric 0 model leaves the control
-    // without an error, so this case runs unmasked.
+    // With the mask displayed, the N token drops the 0, the model becomes ''
+    // and an empty optional field is valid, so this case runs unmasked.
     await setup(true, (host) => {
       host.displayMask = false;
       host.phone = 0;
@@ -475,6 +475,13 @@ describe('Phone-Number.Component self validation', () => {
         expect(renderedError()).toBe(
           'Phone Number does not appear to be valid.'
         );
+
+        // Once the mask has run, it drops the first digit and writes the 9
+        // remaining digits back to the model, which stays invalid.
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(control.value).toBe(value.slice(1));
+        expect(control.errors).toEqual({ incompleteValue: true });
       });
     });
   });
@@ -511,5 +518,44 @@ describe('Phone-Number.Component self validation', () => {
       });
       expect(ngForm.valid).toBe(false);
     });
+  });
+});
+
+@Component({
+  template: `
+    <form #f="ngForm">
+      <common-phone-number
+        name="phone"
+        mask="SS-000"
+        [(ngModel)]="phone"></common-phone-number>
+    </form>
+  `,
+  imports: [PhoneNumberComponent, FormsModule],
+})
+class PhoneCustomMaskHostComponent {
+  phone = '';
+}
+
+describe('Phone-Number.Component with a custom mask', () => {
+  it('keeps the stock ngx-mask letter token S', async () => {
+    TestBed.configureTestingModule({
+      imports: [PhoneCustomMaskHostComponent],
+      providers: [provideNgxMask()],
+    });
+    const fixture = TestBed.createComponent(PhoneCustomMaskHostComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const inputEl: HTMLInputElement =
+      fixture.nativeElement.querySelector('input');
+    inputEl.focus();
+    for (const ch of 'AB-123') {
+      inputEl.value += ch;
+      inputEl.dispatchEvent(new Event('input'));
+      await fixture.whenStable();
+      fixture.detectChanges();
+    }
+
+    expect(inputEl.value).toBe('+1 AB-123');
+    expect(fixture.componentInstance.phone).toBe('AB123');
   });
 });

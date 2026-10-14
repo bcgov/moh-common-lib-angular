@@ -15,8 +15,12 @@ this way since 1.0.0; no release flagged the shifted number as invalid.
   (`incompleteValue`, "<label> does not appear to be valid."), including a
   value set programmatically or loaded from saved data. With the default mask,
   such a value also loses its first digit when it is written to the control,
-  which leaves 9 digits in the model. No North American area code starts with
-  0 or 1, but check stored phone and fax data before upgrading.
+  and once the mask has run the 9 remaining digits are written back to the
+  model, so the control stays invalid. A value made only of 0s and 1s (for
+  example a numeric `0`) is dropped entirely and becomes empty, which is valid
+  on an optional field.
+  No North American area code starts with 0 or 1, but check stored phone and
+  fax data before upgrading.
 - `common-phone-number`: `N` is now a mask token (a digit 2-9). A custom
   `[mask]` that uses a literal `N` will treat it as that token. No app in the
   BC MOH enrolment repos passes a custom `[mask]`.
